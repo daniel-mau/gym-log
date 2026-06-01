@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trainings Log</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #f7f7f5;
@@ -527,7 +528,10 @@
       <h1>Trainings Log <span>—</span> Halbmarathon-Aufbau</h1>
       <div class="header-meta" id="todayMeta"></div>
     </div>
-    <div class="header-meta">Woche <span id="weekNumber">—</span></div>
+    <div class="header-meta">
+      <span id="syncIndicator" style="margin-right:16px;">☁ Online</span>
+      Woche <span id="weekNumber">—</span>
+    </div>
   </header>
 
   <nav class="week-nav" id="weekNav"></nav>
@@ -671,13 +675,23 @@ function exerciseImageHTML(exId, exName) {
 }
 
 // ============================================================
+// SUPABASE SETUP
+// ============================================================
+
+const SUPABASE_URL = 'https://ulhlpnqqdgrphoqgqavl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_E8LasAO0Fybk-wAwgFlBWQ_PiRIOan7';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
 // STATE & PERSISTENCE
 // ============================================================
 
 let state = {
   selectedDay: null,
   todayData: null,
-  saveTimer: null
+  saveTimer: null,
+  syncStatus: 'idle'
 };
 
 function getDateKey(date) {
@@ -705,7 +719,12 @@ function getWeekDates() {
 function loadWorkout(dateKey) {
   try {
     const result = localStorage.getItem(`workout:${dateKey}`);
-    return result ? JSON.parse(result) : null;
+    const data = result ? JSON.parse(result) : null;
+
+    // Trigger background sync from Supabase (don't wait)
+    loadFromSupabase(dateKey);
+
+    return data;
   } catch (e) {
     return null;
   }
@@ -714,10 +733,47 @@ function loadWorkout(dateKey) {
 function saveWorkout(dateKey, data) {
   try {
     localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data));
+
+    // Trigger async sync to Supabase (don't block)
+    syncToSupabase(dateKey, data);
+
     return true;
   } catch (e) {
     console.error('Save failed:', e);
     return false;
+  }
+}
+
+async function loadFromSupabase(dateKey) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('workouts')
+      .select('data')
+      .eq('date', dateKey)
+      .single();
+
+    if (error) return;
+    if (data) {
+      localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data.data));
+    }
+  } catch (e) {
+    // Fail silently
+  }
+}
+
+async function syncToSupabase(dateKey, data) {
+  try {
+    state.syncStatus = 'syncing';
+    await supabaseClient
+      .from('workouts')
+      .upsert(
+        { date: dateKey, data: data },
+        { onConflict: 'date' }
+      );
+    state.syncStatus = 'synced';
+  } catch (e) {
+    console.log('Supabase sync failed:', e);
+    state.syncStatus = 'error';
   }
 }
 
@@ -738,9 +794,30 @@ function loadAllWorkouts() {
         } catch (e) { /* skip */ }
       }
     }
+
+    // Trigger async sync of all workouts from Supabase
+    syncAllFromSupabase();
+
     return workouts.sort((a, b) => b.date.localeCompare(a.date));
   } catch (e) {
     return [];
+  }
+}
+
+async function syncAllFromSupabase() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('workouts')
+      .select('date, data');
+
+    if (error) return;
+    if (data) {
+      data.forEach(wo => {
+        localStorage.setItem(`workout:${wo.date}`, JSON.stringify(wo.data));
+      });
+    }
+  } catch (e) {
+    // Fail silently
   }
 }
 
@@ -1062,8 +1139,18 @@ function collectAndSave() {
   const status = document.getElementById('saveStatus');
   if (status) {
     if (ok) {
-      status.textContent = '✓ Gespeichert · ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+      const time = new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+      status.textContent = '✓ Lokal gespeichert · ' + time;
       status.classList.add('saved');
+      // Update status in 2s to show sync progress
+      setTimeout(() => {
+        if (state.syncStatus === 'synced') {
+          status.textContent = '☁ Mit Supabase synchronisiert';
+        } else if (state.syncStatus === 'syncing') {
+          status.textContent = '⟳ Synchronisiere...';
+          status.classList.remove('saved');
+        }
+      }, 2000);
     } else {
       status.textContent = '⚠ Speichern fehlgeschlagen';
     }
@@ -1210,6 +1297,25 @@ function jumpToDate(dateStr) {
 // INIT
 // ============================================================
 
+function updateSyncIndicator() {
+  const indicator = document.getElementById('syncIndicator');
+  if (!indicator) return;
+
+  if (state.syncStatus === 'synced') {
+    indicator.textContent = '☁ Synchronisiert';
+    indicator.style.color = 'var(--success)';
+  } else if (state.syncStatus === 'syncing') {
+    indicator.textContent = '⟳ Synchronisiere...';
+    indicator.style.color = 'var(--text-dim)';
+  } else if (state.syncStatus === 'error') {
+    indicator.textContent = '⚠ Sync-Fehler';
+    indicator.style.color = 'var(--warn)';
+  } else {
+    indicator.textContent = '☁ Online';
+    indicator.style.color = 'var(--text-dim)';
+  }
+}
+
 function init() {
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
@@ -1217,6 +1323,12 @@ function init() {
   renderSession();
   renderStats();
   renderHistory();
+
+  // Trigger initial sync
+  syncAllFromSupabase();
+
+  // Update sync indicator every 500ms
+  setInterval(updateSyncIndicator, 500);
 }
 
 window.toggleExercise = toggleExercise;
