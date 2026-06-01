@@ -1486,12 +1486,13 @@ function renderDashboard() {
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
   const thisWeekWorkouts = workouts.filter(w => {
+    if (!w.data) return false;
     const date = new Date(w.date);
-    return date >= weekStart;
+    return date >= weekStart && (w.data.type === 'gym' || w.data.type === 'run' || w.data.type === 'long' || w.data.type === 'rest');
   });
 
-  const gymSessionsThisWeek = thisWeekWorkouts.filter(w => w.data.type === 'gym').length;
-  const completedGymThisWeek = thisWeekWorkouts.filter(w => w.data.type === 'gym' && w.data.completed).length;
+  const gymSessionsThisWeek = thisWeekWorkouts.length;
+  const completedThisWeek = thisWeekWorkouts.filter(w => w.data && w.data.completed).length;
 
   // Render charts
   renderChart('runVolumeChart', 'bar', {
@@ -1532,7 +1533,7 @@ function renderDashboard() {
   renderChart('completionChart', 'doughnut', {
     labels: ['Abgeschlossen', 'Offen'],
     datasets: [{
-      data: [completedGymThisWeek, Math.max(0, gymSessionsThisWeek - completedGymThisWeek)],
+      data: [completedThisWeek, Math.max(0, gymSessionsThisWeek - completedThisWeek)],
       backgroundColor: ['rgba(21, 128, 61, 0.6)', 'rgba(107, 114, 128, 0.2)'],
       borderColor: ['rgba(21, 128, 61, 1)', 'rgba(107, 114, 128, 0.5)'],
       borderWidth: 2
