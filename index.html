@@ -1433,134 +1433,175 @@ async function syncDeleteToSupabase(dateKey) {
 }
 
 function renderDashboard() {
-  const workouts = loadAllWorkouts();
-  const today = new Date();
-  const todayKey = getDateKey(today);
-  const todayPlan = WEEK_PLAN[state.selectedDay];
-
-  // Include today's data even if not completed
-  const todayData = loadWorkout(todayKey);
-  if (todayData && !workouts.find(w => w.date === todayKey)) {
-    workouts.push({ date: todayKey, data: todayData });
+  if (typeof Chart === 'undefined') {
+    setTimeout(renderDashboard, 200);
+    return;
   }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 28);
-  const cutoffKey = getDateKey(cutoff);
-  const recent = workouts.filter(w => w.date >= cutoffKey);
+  try {
+    const workouts = loadAllWorkouts();
+    const today = new Date();
+    const todayKey = getDateKey(today);
 
-  // Weekly volume
-  const weeklyRuns = {};
-  const weeklyPace = {};
-  const weeklyPain = {};
-
-  recent.forEach(w => {
-    const date = new Date(w.date);
-    const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay() + 1);
-    const weekKey = getDateKey(weekStart);
-
-    if (w.data.type === 'run' || w.data.type === 'long') {
-      if (!weeklyRuns[weekKey]) weeklyRuns[weekKey] = 0;
-      if (!weeklyPace[weekKey]) weeklyPace[weekKey] = [];
-      if (!weeklyPain[weekKey]) weeklyPain[weekKey] = [];
-
-      const dist = parseFloat(w.data.run?.distance);
-      if (!isNaN(dist)) weeklyRuns[weekKey] += dist;
-
-      const time = parseTime(w.data.run?.time);
-      if (dist && time) weeklyPace[weekKey].push(time / dist);
-
-      if (typeof w.data.run?.pain === 'number') weeklyPain[weekKey].push(w.data.run.pain);
+    const todayData = loadWorkout(todayKey);
+    if (todayData && !workouts.find(w => w.date === todayKey)) {
+      workouts.push({ date: todayKey, data: todayData });
     }
-  });
 
-  // Chart data
-  const weeks = Object.keys(weeklyRuns).sort().slice(-4);
-  const volumeData = weeks.map(w => weeklyRuns[w] || 0);
-  const paceData = weeks.map(w => weeklyPace[w] ? weeklyPace[w].reduce((a,b)=>a+b)/weeklyPace[w].length : 0);
-  const painData = weeks.map(w => weeklyPain[w] ? weeklyPain[w].reduce((a,b)=>a+b)/weeklyPain[w].length : 0);
-  const weekLabels = weeks.map(w => new Date(w).toLocaleDateString('de-DE', {month:'short',day:'numeric'}));
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 28);
+    const cutoffKey = getDateKey(cutoff);
+    const recent = workouts.filter(w => w.date >= cutoffKey && w.data);
 
-  // Gym completion (this week, including incomplete sessions)
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-  const thisWeekWorkouts = workouts.filter(w => {
-    if (!w.data) return false;
-    const date = new Date(w.date);
-    return date >= weekStart && (w.data.type === 'gym' || w.data.type === 'run' || w.data.type === 'long' || w.data.type === 'rest');
-  });
+    const weeklyRuns = {};
+    const weeklyPace = {};
+    const weeklyPain = {};
 
-  const gymSessionsThisWeek = thisWeekWorkouts.length;
-  const completedThisWeek = thisWeekWorkouts.filter(w => w.data && w.data.completed).length;
+    recent.forEach(w => {
+      if (!w.data || !w.data.type) return;
+      const date = new Date(w.date);
+      const ws = new Date(date);
+      ws.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+      const weekKey = getDateKey(ws);
 
-  // Render charts
-  renderChart('runVolumeChart', 'bar', {
-    labels: weekLabels,
-    datasets: [{
-      label: 'km pro Woche',
-      data: volumeData,
-      backgroundColor: 'rgba(74, 143, 0, 0.6)',
-      borderColor: 'rgba(74, 143, 0, 1)',
-      borderWidth: 2
-    }]
-  }, { scales: { y: { beginAtZero: true } } });
+      if (w.data.type === 'run' || w.data.type === 'long') {
+        if (!weeklyRuns[weekKey]) weeklyRuns[weekKey] = 0;
+        if (!weeklyPace[weekKey]) weeklyPace[weekKey] = [];
+        if (!weeklyPain[weekKey]) weeklyPain[weekKey] = [];
 
-  renderChart('paceChart', 'line', {
-    labels: weekLabels,
-    datasets: [{
-      label: 'Ø Pace (min/km)',
-      data: paceData.map(p => p ? p/60 : 0),
-      borderColor: 'rgba(29, 111, 235, 1)',
-      backgroundColor: 'rgba(29, 111, 235, 0.1)',
-      borderWidth: 2,
-      tension: 0.3
-    }]
-  }, { scales: { y: { beginAtZero: false } } });
+        const dist = parseFloat(w.data.run && w.data.run.distance);
+        if (!isNaN(dist) && dist > 0) weeklyRuns[weekKey] += dist;
 
-  renderChart('painChart', 'line', {
-    labels: weekLabels,
-    datasets: [{
-      label: 'Ø Schmerz-Level',
-      data: painData,
-      borderColor: 'rgba(217, 82, 14, 1)',
-      backgroundColor: 'rgba(217, 82, 14, 0.1)',
-      borderWidth: 2,
-      tension: 0.3
-    }]
-  }, { scales: { y: { min: 0, max: 10 } } });
+        const time = parseTime(w.data.run && w.data.run.time);
+        if (dist > 0 && time > 0) weeklyPace[weekKey].push(time / dist);
 
-  renderChart('completionChart', 'doughnut', {
-    labels: ['Abgeschlossen', 'Offen'],
-    datasets: [{
-      data: [completedThisWeek, Math.max(0, gymSessionsThisWeek - completedThisWeek)],
-      backgroundColor: ['rgba(21, 128, 61, 0.6)', 'rgba(107, 114, 128, 0.2)'],
-      borderColor: ['rgba(21, 128, 61, 1)', 'rgba(107, 114, 128, 0.5)'],
-      borderWidth: 2
-    }]
-  }, { plugins: { legend: { position: 'bottom' } } });
+        const pain = w.data.run && w.data.run.pain;
+        if (typeof pain === 'number') weeklyPain[weekKey].push(pain);
+      }
+    });
+
+    const weeks = Object.keys(weeklyRuns).sort().slice(-4);
+    const volumeData = weeks.map(w => weeklyRuns[w] || 0);
+    const paceData = weeks.map(w => {
+      const arr = weeklyPace[w];
+      return arr && arr.length > 0 ? arr.reduce((a,b)=>a+b) / arr.length : 0;
+    });
+    const painData = weeks.map(w => {
+      const arr = weeklyPain[w];
+      return arr && arr.length > 0 ? arr.reduce((a,b)=>a+b) / arr.length : 0;
+    });
+    const weekLabels = weeks.map(w => {
+      const d = new Date(w);
+      return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
+    });
+
+    const noRunData = weeks.length === 0;
+    const emptyLabel = noRunData ? ['Noch keine Daten'] : weekLabels;
+    const emptyData = noRunData ? [0] : null;
+
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+    weekStart.setHours(0,0,0,0);
+
+    const thisWeekWorkouts = workouts.filter(w => {
+      if (!w.data) return false;
+      const date = new Date(w.date);
+      return date >= weekStart;
+    });
+
+    const totalSessionsThisWeek = thisWeekWorkouts.length;
+    const completedThisWeek = thisWeekWorkouts.filter(w => w.data && w.data.completed).length;
+    const plannedSessions = 6;
+
+    renderChart('runVolumeChart', 'bar', {
+      labels: noRunData ? emptyLabel : weekLabels,
+      datasets: [{
+        label: 'km pro Woche',
+        data: noRunData ? emptyData : volumeData,
+        backgroundColor: 'rgba(74, 143, 0, 0.6)',
+        borderColor: 'rgba(74, 143, 0, 1)',
+        borderWidth: 2
+      }]
+    }, { scales: { y: { beginAtZero: true } } });
+
+    renderChart('paceChart', 'line', {
+      labels: noRunData ? emptyLabel : weekLabels,
+      datasets: [{
+        label: 'Ø Pace (min/km)',
+        data: noRunData ? emptyData : paceData.map(p => p > 0 ? +(p/60).toFixed(2) : 0),
+        borderColor: 'rgba(29, 111, 235, 1)',
+        backgroundColor: 'rgba(29, 111, 235, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    }, { scales: { y: { beginAtZero: false } } });
+
+    renderChart('painChart', 'line', {
+      labels: noRunData ? emptyLabel : weekLabels,
+      datasets: [{
+        label: 'Ø Schmerz-Level',
+        data: noRunData ? emptyData : painData,
+        borderColor: 'rgba(217, 82, 14, 1)',
+        backgroundColor: 'rgba(217, 82, 14, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    }, { scales: { y: { min: 0, max: 10 } } });
+
+    renderChart('completionChart', 'doughnut', {
+      labels: ['Abgeschlossen', 'Offen', 'Geplant'],
+      datasets: [{
+        data: [
+          completedThisWeek,
+          Math.max(0, totalSessionsThisWeek - completedThisWeek),
+          Math.max(0, plannedSessions - totalSessionsThisWeek)
+        ],
+        backgroundColor: [
+          'rgba(21, 128, 61, 0.6)',
+          'rgba(74, 143, 0, 0.3)',
+          'rgba(107, 114, 128, 0.15)'
+        ],
+        borderColor: [
+          'rgba(21, 128, 61, 1)',
+          'rgba(74, 143, 0, 0.6)',
+          'rgba(107, 114, 128, 0.3)'
+        ],
+        borderWidth: 2
+      }]
+    }, { plugins: { legend: { position: 'bottom' } } });
+
+  } catch (e) {
+    console.error('Dashboard render error:', e);
+  }
 }
 
-function renderChart(canvasId, type, data, options = {}) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
+function renderChart(canvasId, type, data, options) {
+  try {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === 'undefined') return;
 
-  if (window.chartInstances && window.chartInstances[canvasId]) {
-    window.chartInstances[canvasId].destroy();
-  }
-
-  if (!window.chartInstances) window.chartInstances = {};
-
-  window.chartInstances[canvasId] = new Chart(canvas, {
-    type: type,
-    data: data,
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: { legend: { labels: { color: 'var(--text-dim)', font: { size: 11 } } } },
-      ...options
+    if (!window.chartInstances) window.chartInstances = {};
+    if (window.chartInstances[canvasId]) {
+      window.chartInstances[canvasId].destroy();
     }
-  });
+
+    window.chartInstances[canvasId] = new Chart(canvas, {
+      type: type,
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { labels: { color: '#666', font: { size: 11 } } }
+        },
+        ...(options || {})
+      }
+    });
+  } catch (e) {
+    console.error('Chart render error (' + canvasId + '):', e);
+  }
 }
 
 function init() {
@@ -1570,7 +1611,6 @@ function init() {
   renderSession();
   renderHistory();
 
-  // Restore preferred view from localStorage (default: dashboard)
   const preferredView = localStorage.getItem('preferredView') || 'dashboard';
   const dashboardSection = document.getElementById('dashboardSection');
   const statsSection = document.getElementById('statsSection');
@@ -1582,13 +1622,11 @@ function init() {
   } else {
     dashboardSection.style.display = 'block';
     statsSection.style.display = 'none';
-    renderDashboard();
+    // Delay dashboard render to ensure Chart.js is loaded and canvas is visible
+    setTimeout(renderDashboard, 100);
   }
 
-  // Trigger initial sync
   syncAllFromSupabase();
-
-  // Update sync indicator every 500ms
   setInterval(updateSyncIndicator, 500);
 }
 
@@ -1601,7 +1639,11 @@ window.toggleStats = toggleStats;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
 
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
