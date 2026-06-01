@@ -6,21 +6,21 @@
 <title>Trainings Log</title>
 <style>
   :root {
-    --bg: #0a0a0a;
-    --bg-elevated: #141414;
-    --bg-card: #1a1a1a;
-    --border: #2a2a2a;
-    --text: #e8e8e8;
-    --text-dim: #8a8a8a;
-    --text-mute: #555;
-    --accent: #c4ff3d;
-    --accent-dim: #a0d030;
-    --warn: #ff6b35;
-    --success: #4ade80;
+    --bg: #f7f7f5;
+    --bg-elevated: #ffffff;
+    --bg-card: #ffffff;
+    --border: #e4e4e0;
+    --text: #111111;
+    --text-dim: #666666;
+    --text-mute: #b8b8b8;
+    --accent: #4a8f00;
+    --accent-dim: #3a7000;
+    --warn: #d9520e;
+    --success: #15803d;
     --rest: #6b7280;
-    --gym: #c4ff3d;
-    --run: #60a5fa;
-    --long: #f59e0b;
+    --gym: #4a8f00;
+    --run: #1d6feb;
+    --long: #c07a00;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -158,10 +158,10 @@
     text-transform: uppercase;
     font-weight: 600;
   }
-  .badge-gym { background: rgba(196, 255, 61, 0.12); color: var(--accent); }
-  .badge-run { background: rgba(96, 165, 250, 0.12); color: var(--run); }
-  .badge-long { background: rgba(245, 158, 11, 0.12); color: var(--long); }
-  .badge-rest { background: rgba(107, 114, 128, 0.15); color: var(--text-dim); }
+  .badge-gym { background: rgba(74, 143, 0, 0.1); color: var(--accent); }
+  .badge-run { background: rgba(29, 111, 235, 0.1); color: var(--run); }
+  .badge-long { background: rgba(192, 122, 0, 0.1); color: var(--long); }
+  .badge-rest { background: rgba(107, 114, 128, 0.12); color: var(--text-dim); }
 
   /* Exercise list */
   .exercise-card {
@@ -215,7 +215,7 @@
     font-weight: 700;
     color: var(--accent);
     letter-spacing: 0.02em;
-    background: linear-gradient(135deg, rgba(196,255,61,0.08), rgba(196,255,61,0.02));
+    background: linear-gradient(135deg, rgba(74,143,0,0.08), rgba(74,143,0,0.02));
   }
   .exercise-info { flex: 1; min-width: 0; }
   .exercise-name {
@@ -241,7 +241,7 @@
     border-top: 1px solid var(--border);
     padding: 18px;
     display: none;
-    background: rgba(0,0,0,0.2);
+    background: #f9f9f7;
   }
   .exercise-card.expanded .exercise-body { display: block; }
   .exercise-detail {
@@ -363,7 +363,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
   }
   .save-status {
     font-family: 'SF Mono', monospace;
@@ -557,7 +557,7 @@ const WEEK_PLAN = {
     name: 'Gym A',
     subtitle: 'Press · 5/3/1-Welle · Hip Thrust · Pull-Assistance',
     exercises: [
-      { id: 'shoulder_press', name: 'Geführtes Schulterdrücken Maschine', target: '5/3/1-Welle · Hauptlift', sets: 4, detail: 'Hauptlift der Einheit. 5/3/1-Schema: W1=5/5/5+ bei 65/75/85% TM, W2=3/3/3+ bei 70/80/90%, W3=5/3/1+ bei 75/85/95%, W4=Deload 40/50/60%. TM-Start: 35 kg. Letzter Satz "+" = AMRAP, Form sauber.' },
+      { id: 'shoulder_press', name: 'Schulterdrücken Kurzhanteln', target: '5/3/1-Welle · Hauptlift', sets: 4, detail: 'Hauptlift der Einheit. 5/3/1-Schema: W1=5/5/5+ bei 65/75/85% TM, W2=3/3/3+ bei 70/80/90%, W3=5/3/1+ bei 75/85/95%, W4=Deload 40/50/60%. Kurzhanteln auf Schulterhöhe, neutral oder supiniert greifen, sitzend oder stehend. TM-Start: je 15 kg (= 30 kg total). Letzter Satz "+" = AMRAP, Form sauber.' },
       { id: 'hip_thrust', name: 'Hip Thrust Langhantel', target: '3 × 8–10 · 90s Pause', sets: 3, detail: 'Schultern auf Bank, Langhantel über Hüfte. Po aktiv hoch, oben 1 Sek halten. Glute-Aktivierung als Knie-Schutz.' },
       { id: 'pullups', name: 'Klimmzüge / Latzug breit', target: '5 Sätze, 25–40 Wdh total · 2min', sets: 5, detail: 'Falls Klimmzüge zu schwer: Latzug breit. Voller Bewegungsumfang. Reps so verteilen, dass insgesamt 25–40 Wdh zusammenkommen.' },
       { id: 'dips', name: 'Dips an Maschine', target: '3 × 10–12 · 90s Pause', sets: 3, detail: 'Push-Assistance, trifft Brust und Trizeps. Kontrolliert runter, explosiv hoch. Bei Maschinen-Dips schwerer einstellen, bei Eigengewicht ggf. mit Gurt-Gewicht.' },
@@ -638,7 +638,7 @@ const DAY_TYPE_LABELS = { gym: 'Gym', run: 'Easy Run', long: 'Long Run', rest: '
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 
 const EXERCISE_IMG = {
-  shoulder_press:     'Smith_Machine_Overhead_Shoulder_Press/0.jpg',
+  shoulder_press:     'Dumbbell_Shoulder_Press/0.jpg',
   hip_thrust:         'Barbell_Hip_Thrust/0.jpg',
   pullups:            'Pullups/0.jpg',
   dips:               'Dips_-_Triceps_Version/0.jpg',
