@@ -505,6 +505,21 @@
     line-height: 1.6;
   }
 
+  @keyframes blink {
+    0%, 49%, 100% { opacity: 1; }
+    50%, 99% { opacity: 0.3; }
+  }
+
+  #syncIndicator.synced {
+    animation: blink 1.5s infinite;
+    color: var(--success) !important;
+  }
+
+  #syncIndicator.offline {
+    animation: blink 1s infinite;
+    color: var(--warn) !important;
+  }
+
   @media (max-width: 600px) {
     body { padding: 16px 12px; }
     .day-btn { padding: 8px 2px 10px; }
@@ -525,7 +540,7 @@
 
   <header class="header">
     <div>
-      <h1>Trainings Log <span>—</span> Halbmarathon-Aufbau</h1>
+      <h1>Trainings Log</h1>
       <div class="header-meta" id="todayMeta"></div>
     </div>
     <div class="header-meta">
@@ -1301,15 +1316,17 @@ function updateSyncIndicator() {
   const indicator = document.getElementById('syncIndicator');
   if (!indicator) return;
 
+  indicator.classList.remove('synced', 'offline');
+
   if (state.syncStatus === 'synced') {
-    indicator.textContent = '☁ Synchronisiert';
-    indicator.style.color = 'var(--success)';
+    indicator.textContent = '🟢 Synchronisiert';
+    indicator.classList.add('synced');
   } else if (state.syncStatus === 'syncing') {
     indicator.textContent = '⟳ Synchronisiere...';
     indicator.style.color = 'var(--text-dim)';
   } else if (state.syncStatus === 'error') {
-    indicator.textContent = '⚠ Sync-Fehler';
-    indicator.style.color = 'var(--warn)';
+    indicator.textContent = '🔴 Offline';
+    indicator.classList.add('offline');
   } else {
     indicator.textContent = '☁ Online';
     indicator.style.color = 'var(--text-dim)';
