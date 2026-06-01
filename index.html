@@ -516,6 +516,104 @@
     animation: blink-green 0.8s infinite;
   }
 
+  /* Password screen */
+  #passwordScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  #passwordScreen.hidden {
+    display: none;
+  }
+
+  .password-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 380px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+  }
+
+  .password-modal h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .password-modal p {
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+
+  .password-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .password-input-group input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', monospace;
+  }
+
+  .password-input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+  }
+
+  .password-submit {
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .password-submit:hover {
+    background: var(--accent-dim);
+  }
+
+  .password-submit:active {
+    transform: scale(0.98);
+  }
+
+  .password-error {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .password-error.show {
+    display: block;
+  }
+
   @media (max-width: 600px) {
     body { padding: 16px 12px; }
     .day-btn { padding: 8px 2px 10px; }
@@ -532,6 +630,20 @@
 </style>
 </head>
 <body>
+
+<div id="passwordScreen">
+  <div class="password-modal">
+    <h2>🔒 Trainings Log</h2>
+    <p>Passwort erforderlich</p>
+    <div class="password-input-group">
+      <input type="password" id="passwordInput" placeholder="Passwort eingeben" autofocus>
+    </div>
+    <button class="password-submit" onclick="checkPassword()">Zugriff</button>
+    <div class="password-error" id="passwordError">Passwort falsch</div>
+  </div>
+</div>
+
+<div id="mainContent" style="display:none;">
 <div class="container">
 
   <header class="header">
@@ -591,6 +703,7 @@
     <div class="history-list" id="historyList"></div>
   </section>
 
+</div>
 </div>
 
 <script>
@@ -1604,6 +1717,49 @@ function renderChart(canvasId, type, data, options) {
   }
 }
 
+// ============================================================
+// PASSWORD PROTECTION
+// ============================================================
+
+const CORRECT_PASSWORD = '6845d4n13l';
+
+function checkPassword() {
+  const input = document.getElementById('passwordInput');
+  const password = input.value;
+  const errorEl = document.getElementById('passwordError');
+
+  if (password === CORRECT_PASSWORD) {
+    errorEl.classList.remove('show');
+    localStorage.setItem('gymLogAuth', 'true');
+    unlockApp();
+  } else {
+    errorEl.classList.add('show');
+    input.value = '';
+    input.focus();
+  }
+}
+
+function unlockApp() {
+  document.getElementById('passwordScreen').classList.add('hidden');
+  document.getElementById('mainContent').style.display = 'block';
+  window.dispatchEvent(new Event('gymLogUnlocked'));
+}
+
+function initializeAuthScreen() {
+  const isAuthed = localStorage.getItem('gymLogAuth') === 'true';
+
+  if (isAuthed) {
+    unlockApp();
+  } else {
+    document.getElementById('passwordInput').focus();
+  }
+
+  // Allow Enter key to submit password
+  document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+}
+
 function init() {
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
@@ -1638,11 +1794,17 @@ window.toggleDashboard = toggleDashboard;
 window.toggleStats = toggleStats;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
+window.checkPassword = checkPassword;
+
+function handleDOMReady() {
+  window.addEventListener('gymLogUnlocked', init);
+  initializeAuthScreen();
+}
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', handleDOMReady);
 } else {
-  init();
+  handleDOMReady();
 }
 </script>
 </body>
