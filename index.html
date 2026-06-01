@@ -25,6 +25,24 @@
     --long: #c07a00;
   }
 
+  [data-theme="dark"] {
+    --bg: #1a1a1a;
+    --bg-elevated: #242424;
+    --bg-card: #2a2a2a;
+    --border: #3a3a3a;
+    --text: #e8e8e8;
+    --text-dim: #a0a0a0;
+    --text-mute: #606060;
+    --accent: #6abf00;
+    --accent-dim: #5aa000;
+    --warn: #f07020;
+    --success: #22c55e;
+    --rest: #8b929a;
+    --gym: #6abf00;
+    --run: #4d9fff;
+    --long: #e09000;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
   body {
@@ -243,7 +261,7 @@
     border-top: 1px solid var(--border);
     padding: 18px;
     display: none;
-    background: #f9f9f7;
+    background: var(--bg);
   }
   .exercise-card.expanded .exercise-body { display: block; }
   .exercise-detail {
@@ -614,6 +632,103 @@
     display: block;
   }
 
+  /* Theme toggle */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .theme-switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+
+  .theme-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--bg-elevated);
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  [data-theme="dark"] .theme-switch {
+    background: var(--accent);
+  }
+
+  [data-theme="dark"] .theme-switch::after {
+    transform: translateX(16px);
+  }
+
+  /* Body metrics */
+  .body-metrics {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+
+  .body-metrics-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .body-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .body-metric-field label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .body-metric-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', monospace;
+    font-size: 14px;
+  }
+
+  .body-metric-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .body-metric-field .target-label {
+    font-size: 10px;
+    color: var(--text-mute);
+    margin-top: 4px;
+  }
+
   @media (max-width: 600px) {
     body { padding: 16px 12px; }
     .day-btn { padding: 8px 2px 10px; }
@@ -651,9 +766,16 @@
       <h1>Trainings Log</h1>
       <div class="header-meta" id="todayMeta"></div>
     </div>
-    <div class="header-meta">
-      <span id="syncIndicator" style="margin-right:16px;">☁ Online</span>
-      Woche <span id="weekNumber">—</span>
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <span id="themeIcon">☀</span>
+        <div class="theme-switch"></div>
+        <span id="themeLabel">Light</span>
+      </div>
+      <div class="header-meta">
+        <span id="syncIndicator" style="margin-right:16px;">☁ Online</span>
+        Woche <span id="weekNumber">—</span>
+      </div>
     </div>
   </header>
 
@@ -662,6 +784,30 @@
   <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
     <button class="secondary" onclick="toggleDashboard()" style="font-size:12px;padding:10px 16px;">📊 Dashboard</button>
     <button class="secondary" onclick="toggleStats()" style="font-size:12px;padding:10px 16px;">📈 Statistik</button>
+  </div>
+
+  <div class="body-metrics" id="bodyMetricsSection">
+    <div class="body-metrics-title">Körperdaten · heute</div>
+    <div class="body-metrics-grid">
+      <div class="body-metric-field">
+        <label>Gewicht (kg)</label>
+        <input type="number" step="0.1" id="bodyWeight" placeholder="—" oninput="saveBodyMetrics()">
+        <div class="target-label">Ziel: <span id="weightTargetDisplay">—</span> kg</div>
+      </div>
+      <div class="body-metric-field">
+        <label>KFA (%)</label>
+        <input type="number" step="0.1" id="bodyFat" placeholder="—" oninput="saveBodyMetrics()">
+        <div class="target-label">Ziel: <span id="fatTargetDisplay">—</span> %</div>
+      </div>
+      <div class="body-metric-field">
+        <label>Ziel-Gewicht (kg)</label>
+        <input type="number" step="0.1" id="targetWeight" placeholder="z.B. 89" oninput="saveBodyTargets()">
+      </div>
+      <div class="body-metric-field">
+        <label>Ziel-KFA (%)</label>
+        <input type="number" step="0.1" id="targetFat" placeholder="z.B. 15" oninput="saveBodyTargets()">
+      </div>
+    </div>
   </div>
 
   <div id="dashboardSection" style="display:none;margin-bottom:40px;">
@@ -682,6 +828,14 @@
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
         <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Gym-Completion · letzte 4 Wochen</h3>
         <canvas id="completionChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Gewicht · Verlauf</h3>
+        <canvas id="weightChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Körperfettanteil · Verlauf</h3>
+        <canvas id="bodyFatChart" style="max-height:250px;"></canvas>
       </div>
     </div>
   </div>
@@ -1685,6 +1839,89 @@ function renderDashboard() {
       }]
     }, { plugins: { legend: { position: 'bottom' } } });
 
+    // Body metrics charts
+    const bodyMetrics = loadAllBodyMetrics();
+    const targets = loadBodyTargets();
+
+    if (bodyMetrics.length > 0) {
+      const bmLabels = bodyMetrics.map(m => {
+        const d = new Date(m.date);
+        return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+      });
+
+      const weightData = bodyMetrics.map(m => parseFloat(m.data.weight) || null);
+      const fatData = bodyMetrics.map(m => parseFloat(m.data.fat) || null);
+      const targetWeight = parseFloat(targets.weight);
+      const targetFat = parseFloat(targets.fat);
+
+      const weightDatasets = [{
+        label: 'Gewicht (kg)',
+        data: weightData,
+        borderColor: 'rgba(74, 143, 0, 1)',
+        backgroundColor: 'rgba(74, 143, 0, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+        spanGaps: true
+      }];
+
+      if (!isNaN(targetWeight)) {
+        weightDatasets.push({
+          label: 'Ziel',
+          data: bmLabels.map(() => targetWeight),
+          borderColor: 'rgba(21, 128, 61, 0.5)',
+          borderWidth: 1,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false
+        });
+      }
+
+      renderChart('weightChart', 'line', {
+        labels: bmLabels,
+        datasets: weightDatasets
+      }, { scales: { y: { beginAtZero: false } } });
+
+      const fatDatasets = [{
+        label: 'KFA (%)',
+        data: fatData,
+        borderColor: 'rgba(29, 111, 235, 1)',
+        backgroundColor: 'rgba(29, 111, 235, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+        spanGaps: true
+      }];
+
+      if (!isNaN(targetFat)) {
+        fatDatasets.push({
+          label: 'Ziel',
+          data: bmLabels.map(() => targetFat),
+          borderColor: 'rgba(21, 128, 61, 0.5)',
+          borderWidth: 1,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false
+        });
+      }
+
+      renderChart('bodyFatChart', 'line', {
+        labels: bmLabels,
+        datasets: fatDatasets
+      }, { scales: { y: { beginAtZero: false } } });
+
+    } else {
+      renderChart('weightChart', 'line', {
+        labels: ['Noch keine Daten'],
+        datasets: [{ label: 'Gewicht (kg)', data: [0], borderColor: 'rgba(74,143,0,0.3)', borderWidth: 1 }]
+      }, { scales: { y: { beginAtZero: true } } });
+
+      renderChart('bodyFatChart', 'line', {
+        labels: ['Noch keine Daten'],
+        datasets: [{ label: 'KFA (%)', data: [0], borderColor: 'rgba(29,111,235,0.3)', borderWidth: 1 }]
+      }, { scales: { y: { beginAtZero: true } } });
+    }
+
   } catch (e) {
     console.error('Dashboard render error:', e);
   }
@@ -1707,7 +1944,7 @@ function renderChart(canvasId, type, data, options) {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-          legend: { labels: { color: '#666', font: { size: 11 } } }
+          legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim(), font: { size: 11 } } }
         },
         ...(options || {})
       }
@@ -1715,6 +1952,131 @@ function renderChart(canvasId, type, data, options) {
   } catch (e) {
     console.error('Chart render error (' + canvasId + '):', e);
   }
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeUI(newTheme);
+}
+
+function updateThemeUI(theme) {
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀';
+  if (label) label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+}
+
+applyTheme();
+
+// ============================================================
+// BODY METRICS
+// ============================================================
+
+function loadBodyTargets() {
+  try {
+    const raw = localStorage.getItem('bodyTargets');
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveBodyTargets() {
+  const targets = {
+    weight: document.getElementById('targetWeight').value,
+    fat: document.getElementById('targetFat').value
+  };
+  localStorage.setItem('bodyTargets', JSON.stringify(targets));
+  updateTargetDisplays();
+  syncBodyTargetsToSupabase(targets);
+}
+
+function loadBodyMetrics(dateKey) {
+  try {
+    const raw = localStorage.getItem(`bodyMetrics:${dateKey}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveBodyMetrics() {
+  const dateKey = getDateKey(new Date());
+  const metrics = {
+    weight: document.getElementById('bodyWeight').value,
+    fat: document.getElementById('bodyFat').value
+  };
+  localStorage.setItem(`bodyMetrics:${dateKey}`, JSON.stringify(metrics));
+  syncBodyMetricsToSupabase(dateKey, metrics);
+}
+
+function loadAllBodyMetrics() {
+  const metrics = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('bodyMetrics:')) {
+      try {
+        const val = localStorage.getItem(key);
+        if (val) {
+          metrics.push({
+            date: key.replace('bodyMetrics:', ''),
+            data: JSON.parse(val)
+          });
+        }
+      } catch (e) { /* skip */ }
+    }
+  }
+  return metrics.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function updateTargetDisplays() {
+  const targets = loadBodyTargets();
+  const wd = document.getElementById('weightTargetDisplay');
+  const fd = document.getElementById('fatTargetDisplay');
+  if (wd) wd.textContent = targets.weight || '—';
+  if (fd) fd.textContent = targets.fat || '—';
+}
+
+function initBodyMetrics() {
+  const targets = loadBodyTargets();
+  const todayMetrics = loadBodyMetrics(getDateKey(new Date()));
+
+  const tw = document.getElementById('targetWeight');
+  const tf = document.getElementById('targetFat');
+  const bw = document.getElementById('bodyWeight');
+  const bf = document.getElementById('bodyFat');
+
+  if (tw && targets.weight) tw.value = targets.weight;
+  if (tf && targets.fat) tf.value = targets.fat;
+  if (bw && todayMetrics.weight) bw.value = todayMetrics.weight;
+  if (bf && todayMetrics.fat) bf.value = todayMetrics.fat;
+
+  updateTargetDisplays();
+}
+
+async function syncBodyMetricsToSupabase(dateKey, metrics) {
+  try {
+    await supabaseClient
+      .from('body_metrics')
+      .upsert({ date: dateKey, data: metrics }, { onConflict: 'date' });
+  } catch (e) { /* fail silently */ }
+}
+
+async function syncBodyTargetsToSupabase(targets) {
+  try {
+    await supabaseClient
+      .from('body_targets')
+      .upsert({ id: 'default', data: targets }, { onConflict: 'id' });
+  } catch (e) { /* fail silently */ }
 }
 
 // ============================================================
@@ -1766,6 +2128,7 @@ function init() {
   renderWeekNav();
   renderSession();
   renderHistory();
+  initBodyMetrics();
 
   const preferredView = localStorage.getItem('preferredView') || 'dashboard';
   const dashboardSection = document.getElementById('dashboardSection');
@@ -1778,7 +2141,6 @@ function init() {
   } else {
     dashboardSection.style.display = 'block';
     statsSection.style.display = 'none';
-    // Delay dashboard render to ensure Chart.js is loaded and canvas is visible
     setTimeout(renderDashboard, 100);
   }
 
@@ -1795,6 +2157,9 @@ window.toggleStats = toggleStats;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
 window.checkPassword = checkPassword;
+window.toggleTheme = toggleTheme;
+window.saveBodyMetrics = saveBodyMetrics;
+window.saveBodyTargets = saveBodyTargets;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
