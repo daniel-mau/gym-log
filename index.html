@@ -702,18 +702,18 @@ function getWeekDates() {
   });
 }
 
-async function loadWorkout(dateKey) {
+function loadWorkout(dateKey) {
   try {
-    const result = await window.storage.get(`workout:${dateKey}`);
-    return result ? JSON.parse(result.value) : null;
+    const result = localStorage.getItem(`workout:${dateKey}`);
+    return result ? JSON.parse(result) : null;
   } catch (e) {
     return null;
   }
 }
 
-async function saveWorkout(dateKey, data) {
+function saveWorkout(dateKey, data) {
   try {
-    await window.storage.set(`workout:${dateKey}`, JSON.stringify(data));
+    localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data));
     return true;
   } catch (e) {
     console.error('Save failed:', e);
@@ -721,21 +721,22 @@ async function saveWorkout(dateKey, data) {
   }
 }
 
-async function loadAllWorkouts() {
+function loadAllWorkouts() {
   try {
-    const result = await window.storage.list('workout:');
-    if (!result || !result.keys) return [];
     const workouts = [];
-    for (const key of result.keys) {
-      try {
-        const wo = await window.storage.get(key);
-        if (wo) {
-          workouts.push({
-            date: key.replace('workout:', ''),
-            data: JSON.parse(wo.value)
-          });
-        }
-      } catch (e) { /* skip */ }
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('workout:')) {
+        try {
+          const val = localStorage.getItem(key);
+          if (val) {
+            workouts.push({
+              date: key.replace('workout:', ''),
+              data: JSON.parse(val)
+            });
+          }
+        } catch (e) { /* skip */ }
+      }
     }
     return workouts.sort((a, b) => b.date.localeCompare(a.date));
   } catch (e) {
@@ -763,15 +764,15 @@ function renderHeader() {
   document.getElementById('weekNumber').textContent = wn;
 }
 
-async function renderWeekNav() {
+function renderWeekNav() {
   const dates = getWeekDates();
   const today = new Date();
   const todayKey = getDateKey(today);
   const todayDay = getDayOfWeek(today);
-  
+
   const nav = document.getElementById('weekNav');
   nav.innerHTML = '';
-  
+
   for (let i = 0; i < DAYS.length; i++) {
     const dayKey = DAYS[i];
     const date = dates[i];
@@ -779,7 +780,7 @@ async function renderWeekNav() {
     const plan = WEEK_PLAN[dayKey];
     const isToday = dateKey === todayKey;
     const isSelected = dayKey === state.selectedDay;
-    const wo = await loadWorkout(dateKey);
+    const wo = loadWorkout(dateKey);
     const isDone = wo && wo.completed;
     
     const btn = document.createElement('button');
@@ -798,23 +799,22 @@ async function renderWeekNav() {
   }
 }
 
-async function selectDay(dayKey) {
-  // Auto-save current session if needed
-  await collectAndSave();
-  
+function selectDay(dayKey) {
+  collectAndSave();
+
   state.selectedDay = dayKey;
-  await renderWeekNav();
-  await renderSession();
+  renderWeekNav();
+  renderSession();
 }
 
-async function renderSession() {
+function renderSession() {
   const dates = getWeekDates();
   const dayIdx = DAYS.indexOf(state.selectedDay);
   const date = dates[dayIdx];
   const dateKey = getDateKey(date);
   const plan = WEEK_PLAN[state.selectedDay];
-  
-  state.todayData = await loadWorkout(dateKey) || { date: dateKey, type: plan.type };
+
+  state.todayData = loadWorkout(dateKey) || { date: dateKey, type: plan.type };
   
   const container = document.getElementById('sessionContent');
   
@@ -1026,11 +1026,11 @@ function updatePace() {
   }
 }
 
-async function collectAndSave() {
+function collectAndSave() {
   if (!state.todayData) return;
   const plan = WEEK_PLAN[state.selectedDay];
   if (!plan) return;
-  
+
   if (plan.type === 'gym') {
     const exercises = {};
     plan.exercises.forEach(ex => {
@@ -1054,11 +1054,11 @@ async function collectAndSave() {
     if (painActive) run.pain = parseInt(painActive.dataset.pain, 10);
     state.todayData.run = run;
   }
-  
+
   const notes = document.getElementById('sessionNotes');
   if (notes) state.todayData.notes = notes.value;
-  
-  const ok = await saveWorkout(state.todayData.date, state.todayData);
+
+  const ok = saveWorkout(state.todayData.date, state.todayData);
   const status = document.getElementById('saveStatus');
   if (status) {
     if (ok) {
@@ -1068,20 +1068,20 @@ async function collectAndSave() {
       status.textContent = '⚠ Speichern fehlgeschlagen';
     }
   }
-  await renderWeekNav();
-  await renderStats();
-  await renderHistory();
+  renderWeekNav();
+  renderStats();
+  renderHistory();
 }
 
-async function markComplete() {
-  await collectAndSave();
+function markComplete() {
+  collectAndSave();
   if (state.todayData) {
     state.todayData.completed = true;
     state.todayData.completedAt = new Date().toISOString();
-    await saveWorkout(state.todayData.date, state.todayData);
-    await renderWeekNav();
-    await renderStats();
-    await renderHistory();
+    saveWorkout(state.todayData.date, state.todayData);
+    renderWeekNav();
+    renderStats();
+    renderHistory();
     const status = document.getElementById('saveStatus');
     if (status) {
       status.textContent = '✓ Einheit abgeschlossen';
@@ -1090,20 +1090,20 @@ async function markComplete() {
   }
 }
 
-async function markIncomplete() {
+function markIncomplete() {
   if (!confirm('Einheit zurücksetzen – Eingaben behalten, nur Häkchen entfernen?')) return;
   if (state.todayData) {
     state.todayData.completed = false;
     delete state.todayData.completedAt;
-    await saveWorkout(state.todayData.date, state.todayData);
-    await renderWeekNav();
-    await renderStats();
-    await renderHistory();
+    saveWorkout(state.todayData.date, state.todayData);
+    renderWeekNav();
+    renderStats();
+    renderHistory();
   }
 }
 
-async function renderStats() {
-  const workouts = await loadAllWorkouts();
+function renderStats() {
+  const workouts = loadAllWorkouts();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 28);
   const cutoffKey = getDateKey(cutoff);
@@ -1153,8 +1153,8 @@ async function renderStats() {
   `;
 }
 
-async function renderHistory() {
-  const workouts = await loadAllWorkouts();
+function renderHistory() {
+  const workouts = loadAllWorkouts();
   const completed = workouts.filter(w => w.data.completed).slice(0, 15);
   
   const list = document.getElementById('historyList');
@@ -1194,7 +1194,7 @@ async function renderHistory() {
   }).join('');
 }
 
-async function jumpToDate(dateStr) {
+function jumpToDate(dateStr) {
   const date = new Date(dateStr);
   const today = new Date();
   const diff = Math.floor((today - date) / 86400000);
@@ -1203,20 +1203,20 @@ async function jumpToDate(dateStr) {
     return;
   }
   const dayKey = getDayOfWeek(date);
-  await selectDay(dayKey);
+  selectDay(dayKey);
 }
 
 // ============================================================
 // INIT
 // ============================================================
 
-async function init() {
+function init() {
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
-  await renderWeekNav();
-  await renderSession();
-  await renderStats();
-  await renderHistory();
+  renderWeekNav();
+  renderSession();
+  renderStats();
+  renderHistory();
 }
 
 window.toggleExercise = toggleExercise;
