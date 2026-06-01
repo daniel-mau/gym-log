@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trainings Log</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   :root {
     --bg: #f7f7f5;
@@ -551,7 +552,39 @@
 
   <nav class="week-nav" id="weekNav"></nav>
 
+  <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+    <button class="secondary" onclick="toggleDashboard()" style="font-size:12px;padding:10px 16px;">📊 Dashboard</button>
+    <button class="secondary" onclick="toggleStats()" style="font-size:12px;padding:10px 16px;">📈 Statistik</button>
+  </div>
+
+  <div id="dashboardSection" style="display:none;margin-bottom:40px;">
+    <h2 style="font-size:18px;margin-bottom:20px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">Dashboard · Fortschritt</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Lauf-Volumen · pro Woche (km)</h3>
+        <canvas id="runVolumeChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Durchschnittspace · pro Woche</h3>
+        <canvas id="paceChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Lauf-Schmerz · Trend</h3>
+        <canvas id="painChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Gym-Completion · letzte 4 Wochen</h3>
+        <canvas id="completionChart" style="max-height:250px;"></canvas>
+      </div>
+    </div>
+  </div>
+
   <main id="sessionContent"></main>
+
+  <section class="stats-section" id="statsSection">
+    <div class="section-title">Statistik · letzte 4 Wochen</div>
+    <div class="stats-grid" id="statsGrid"></div>
+  </section>
 
   <section class="stats-section">
     <div class="section-title">Statistik · letzte 4 Wochen</div>
@@ -977,6 +1010,9 @@ function renderSession() {
         <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dim);font-weight:600;display:block;margin-bottom:8px;">Notizen zur Einheit</label>
         <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist...">${state.todayData.notes || ''}</textarea>
       </div>
+      <div style="margin-top:16px;">
+        <button class="secondary" onclick="deleteCurrentWorkout()" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:11px;">🗑 Diesen Eintrag löschen</button>
+      </div>
     `;
   } else if (plan.type === 'run' || plan.type === 'long') {
     const r = state.todayData.run || {};
@@ -1022,10 +1058,13 @@ function renderSession() {
           <label>Notizen zum Lauf</label>
           <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen...">${state.todayData.notes || ''}</textarea>
         </div>
+        <div class="run-field run-field-full" style="margin-top:16px;">
+          <button class="secondary" onclick="deleteCurrentWorkout()" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:11px;width:100%;">🗑 Diesen Lauf löschen</button>
+        </div>
       </div>
     `;
   }
-  
+
   // Save bar
   html += `
     <div class="save-bar">
@@ -1286,10 +1325,13 @@ function renderHistory() {
       stats = `${totalSets} Sätze`;
     }
     return `
-      <div class="history-item" onclick="jumpToDate('${w.date}')">
-        <div class="history-date">${dateStr}</div>
-        <div class="history-type">${plan ? plan.name : d.type}</div>
-        <div class="history-stats">${stats}</div>
+      <div class="history-item" style="justify-content:space-between;">
+        <div style="flex:1;cursor:pointer;" onclick="jumpToDate('${w.date}')">
+          <div class="history-date">${dateStr}</div>
+          <div class="history-type">${plan ? plan.name : d.type}</div>
+          <div class="history-stats">${stats}</div>
+        </div>
+        <button class="secondary" onclick="deleteWorkoutDate('${w.date}')" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:10px;padding:6px 10px;margin-left:10px;white-space:nowrap;">🗑 Löschen</button>
       </div>
     `;
   }).join('');
@@ -1332,13 +1374,193 @@ function updateSyncIndicator() {
   }
 }
 
+function toggleDashboard() {
+  const dashboard = document.getElementById('dashboardSection');
+  const stats = document.getElementById('statsSection');
+  if (dashboard.style.display === 'none') {
+    dashboard.style.display = 'block';
+    stats.style.display = 'none';
+    renderDashboard();
+  } else {
+    dashboard.style.display = 'none';
+    stats.style.display = 'block';
+    renderStats();
+  }
+}
+
+function toggleStats() {
+  const dashboard = document.getElementById('dashboardSection');
+  const stats = document.getElementById('statsSection');
+  if (stats.style.display === 'none') {
+    stats.style.display = 'block';
+    dashboard.style.display = 'none';
+    renderStats();
+  } else {
+    stats.style.display = 'none';
+    dashboard.style.display = 'block';
+    renderDashboard();
+  }
+}
+
+function deleteCurrentWorkout() {
+  if (!state.todayData || !confirm('Diesen Eintrag wirklich löschen?')) return;
+  deleteWorkoutDate(state.todayData.date);
+}
+
+function deleteWorkoutDate(dateKey) {
+  if (!confirm('Eintrag vom ' + dateKey + ' löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  try {
+    localStorage.removeItem(`workout:${dateKey}`);
+    syncDeleteToSupabase(dateKey);
+    renderWeekNav();
+    renderStats();
+    renderHistory();
+    alert('Eintrag gelöscht');
+  } catch (e) {
+    alert('Fehler beim Löschen');
+  }
+}
+
+async function syncDeleteToSupabase(dateKey) {
+  try {
+    await supabaseClient
+      .from('workouts')
+      .delete()
+      .eq('date', dateKey);
+  } catch (e) {
+    console.log('Supabase delete failed:', e);
+  }
+}
+
+function renderDashboard() {
+  const workouts = loadAllWorkouts();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 28);
+  const cutoffKey = getDateKey(cutoff);
+  const recent = workouts.filter(w => w.date >= cutoffKey && w.data.completed);
+
+  // Weekly volume
+  const weeklyRuns = {};
+  const weeklyPace = {};
+  const weeklyPain = {};
+
+  recent.forEach(w => {
+    const date = new Date(w.date);
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay() + 1);
+    const weekKey = getDateKey(weekStart);
+
+    if (w.data.type === 'run' || w.data.type === 'long') {
+      if (!weeklyRuns[weekKey]) weeklyRuns[weekKey] = 0;
+      if (!weeklyPace[weekKey]) weeklyPace[weekKey] = [];
+      if (!weeklyPain[weekKey]) weeklyPain[weekKey] = [];
+
+      const dist = parseFloat(w.data.run?.distance);
+      if (!isNaN(dist)) weeklyRuns[weekKey] += dist;
+
+      const time = parseTime(w.data.run?.time);
+      if (dist && time) weeklyPace[weekKey].push(time / dist);
+
+      if (typeof w.data.run?.pain === 'number') weeklyPain[weekKey].push(w.data.run.pain);
+    }
+  });
+
+  // Chart data
+  const weeks = Object.keys(weeklyRuns).sort().slice(-4);
+  const volumeData = weeks.map(w => weeklyRuns[w] || 0);
+  const paceData = weeks.map(w => weeklyPace[w] ? weeklyPace[w].reduce((a,b)=>a+b)/weeklyPace[w].length : 0);
+  const painData = weeks.map(w => weeklyPain[w] ? weeklyPain[w].reduce((a,b)=>a+b)/weeklyPain[w].length : 0);
+  const weekLabels = weeks.map(w => new Date(w).toLocaleDateString('de-DE', {month:'short',day:'numeric'}));
+
+  // Gym completion
+  const planDays = DAYS.length;
+  const completedThisWeek = recent.filter(w => {
+    const date = new Date(w.date);
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    return date >= weekStart;
+  }).length;
+
+  // Render charts
+  renderChart('runVolumeChart', 'bar', {
+    labels: weekLabels,
+    datasets: [{
+      label: 'km pro Woche',
+      data: volumeData,
+      backgroundColor: 'rgba(74, 143, 0, 0.6)',
+      borderColor: 'rgba(74, 143, 0, 1)',
+      borderWidth: 2
+    }]
+  }, { scales: { y: { beginAtZero: true } } });
+
+  renderChart('paceChart', 'line', {
+    labels: weekLabels,
+    datasets: [{
+      label: 'Ø Pace (min/km)',
+      data: paceData.map(p => p ? p/60 : 0),
+      borderColor: 'rgba(29, 111, 235, 1)',
+      backgroundColor: 'rgba(29, 111, 235, 0.1)',
+      borderWidth: 2,
+      tension: 0.3
+    }]
+  }, { scales: { y: { beginAtZero: false } } });
+
+  renderChart('painChart', 'line', {
+    labels: weekLabels,
+    datasets: [{
+      label: 'Ø Schmerz-Level',
+      data: painData,
+      borderColor: 'rgba(217, 82, 14, 1)',
+      backgroundColor: 'rgba(217, 82, 14, 0.1)',
+      borderWidth: 2,
+      tension: 0.3
+    }]
+  }, { scales: { y: { min: 0, max: 10 } } });
+
+  renderChart('completionChart', 'doughnut', {
+    labels: ['Completed', 'Remaining'],
+    datasets: [{
+      data: [completedThisWeek, Math.max(0, planDays - completedThisWeek)],
+      backgroundColor: ['rgba(21, 128, 61, 0.6)', 'rgba(107, 114, 128, 0.2)'],
+      borderColor: ['rgba(21, 128, 61, 1)', 'rgba(107, 114, 128, 0.5)'],
+      borderWidth: 2
+    }]
+  }, { plugins: { legend: { position: 'bottom' } } });
+}
+
+function renderChart(canvasId, type, data, options = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  if (window.chartInstances && window.chartInstances[canvasId]) {
+    window.chartInstances[canvasId].destroy();
+  }
+
+  if (!window.chartInstances) window.chartInstances = {};
+
+  window.chartInstances[canvasId] = new Chart(canvas, {
+    type: type,
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: 'var(--text-dim)', font: { size: 11 } } } },
+      ...options
+    }
+  });
+}
+
 function init() {
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
   renderWeekNav();
   renderSession();
-  renderStats();
   renderHistory();
+
+  // Show dashboard by default
+  document.getElementById('dashboardSection').style.display = 'block';
+  document.getElementById('statsSection').style.display = 'none';
+  renderDashboard();
 
   // Trigger initial sync
   syncAllFromSupabase();
@@ -1351,6 +1573,10 @@ window.toggleExercise = toggleExercise;
 window.markComplete = markComplete;
 window.markIncomplete = markIncomplete;
 window.jumpToDate = jumpToDate;
+window.toggleDashboard = toggleDashboard;
+window.toggleStats = toggleStats;
+window.deleteCurrentWorkout = deleteCurrentWorkout;
+window.deleteWorkoutDate = deleteWorkoutDate;
 
 init();
 </script>
