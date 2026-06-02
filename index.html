@@ -1428,7 +1428,7 @@ function renderSession() {
   // Save bar
   if (plan.type === 'gym') {
     html += `
-      <div class="save-bar gym-bar" style="flex-direction:column;gap:10px;">
+      <div class="save-bar gym-bar" style="flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
         <div class="stopwatch">
           <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
           <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
@@ -1439,7 +1439,7 @@ function renderSession() {
             <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;">
+        <div style="display:flex;gap:8px;">
           <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
           <button class="primary" onclick="markComplete()">Einheit abschließen</button>
         </div>
