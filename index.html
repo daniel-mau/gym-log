@@ -729,6 +729,77 @@
     margin-top: 4px;
   }
 
+  /* Stopwatch */
+  .stopwatch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stopwatch-display {
+    font-family: 'SF Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 70px;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  .stopwatch-display.running {
+    color: var(--accent);
+  }
+
+  .stopwatch-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+  }
+
+  .stopwatch-btn:hover {
+    border-color: var(--text-mute);
+    color: var(--text);
+  }
+
+  .stopwatch-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .stopwatch-presets {
+    display: flex;
+    gap: 4px;
+    margin-left: 4px;
+  }
+
+  .preset-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .preset-btn:hover {
+    border-color: var(--text-mute);
+    color: var(--text);
+  }
+
   @media (max-width: 600px) {
     body { padding: 16px 12px; }
     .day-btn { padding: 8px 2px 10px; }
@@ -1346,15 +1417,39 @@ function renderSession() {
   }
 
   // Save bar
-  html += `
-    <div class="save-bar">
-      <div class="save-status" id="saveStatus">Auto-Save aktiv</div>
-      <div style="display:flex;gap:8px;">
-        <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
-        <button class="primary" onclick="markComplete()">Einheit abschließen</button>
+  if (plan.type === 'gym') {
+    html += `
+      <div class="save-bar" style="flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px;">
+          <div class="stopwatch">
+            <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
+            <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
+            <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
+            <div class="stopwatch-presets">
+              <button class="preset-btn" onclick="setCountdown(60)">1:00</button>
+              <button class="preset-btn" onclick="setCountdown(90)">1:30</button>
+              <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
+            </div>
+          </div>
+          <div class="save-status" id="saveStatus" style="margin-left:auto;">Auto-Save aktiv</div>
+        </div>
+        <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;">
+          <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
+          <button class="primary" onclick="markComplete()">Einheit abschließen</button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  } else {
+    html += `
+      <div class="save-bar">
+        <div class="save-status" id="saveStatus">Auto-Save aktiv</div>
+        <div style="display:flex;gap:8px;">
+          <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
+          <button class="primary" onclick="markComplete()">Einheit abschließen</button>
+        </div>
+      </div>
+    `;
+  }
   
   container.innerHTML = html;
   
@@ -1976,6 +2071,93 @@ function renderChart(canvasId, type, data, options) {
 }
 
 // ============================================================
+// STOPWATCH
+// ============================================================
+
+let stopwatch = {
+  running: false,
+  seconds: 0,
+  interval: null,
+  countdown: false
+};
+
+function toggleStopwatch() {
+  if (stopwatch.running) {
+    pauseStopwatch();
+  } else {
+    startStopwatch();
+  }
+}
+
+function startStopwatch() {
+  stopwatch.running = true;
+  const btn = document.getElementById('stopwatchToggle');
+  const display = document.getElementById('stopwatchDisplay');
+  if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
+  if (display) display.classList.add('running');
+
+  stopwatch.interval = setInterval(() => {
+    if (stopwatch.countdown) {
+      stopwatch.seconds--;
+      if (stopwatch.seconds <= 0) {
+        stopwatch.seconds = 0;
+        pauseStopwatch();
+        notifyTimerDone();
+      }
+    } else {
+      stopwatch.seconds++;
+    }
+    updateStopwatchDisplay();
+  }, 1000);
+}
+
+function pauseStopwatch() {
+  stopwatch.running = false;
+  clearInterval(stopwatch.interval);
+  const btn = document.getElementById('stopwatchToggle');
+  const display = document.getElementById('stopwatchDisplay');
+  if (btn) { btn.textContent = '▶'; btn.classList.remove('active'); }
+  if (display) display.classList.remove('running');
+}
+
+function resetStopwatch() {
+  pauseStopwatch();
+  stopwatch.seconds = 0;
+  stopwatch.countdown = false;
+  updateStopwatchDisplay();
+}
+
+function setCountdown(seconds) {
+  pauseStopwatch();
+  stopwatch.seconds = seconds;
+  stopwatch.countdown = true;
+  updateStopwatchDisplay();
+  startStopwatch();
+}
+
+function updateStopwatchDisplay() {
+  const display = document.getElementById('stopwatchDisplay');
+  if (!display) return;
+  const m = Math.floor(stopwatch.seconds / 60);
+  const s = stopwatch.seconds % 60;
+  display.textContent = `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function notifyTimerDone() {
+  const display = document.getElementById('stopwatchDisplay');
+  if (display) {
+    display.style.color = 'var(--warn)';
+    display.textContent = '0:00 ✓';
+    setTimeout(() => {
+      if (display) display.style.color = '';
+    }, 3000);
+  }
+  if ('vibrate' in navigator) {
+    navigator.vibrate([200, 100, 200]);
+  }
+}
+
+// ============================================================
 // EXERCISE HISTORY & SPARKLINES
 // ============================================================
 
@@ -2379,6 +2561,9 @@ window.checkPassword = checkPassword;
 window.toggleTheme = toggleTheme;
 window.saveBodyMetrics = saveBodyMetrics;
 window.saveBodyTargets = saveBodyTargets;
+window.toggleStopwatch = toggleStopwatch;
+window.resetStopwatch = resetStopwatch;
+window.setCountdown = setCountdown;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
