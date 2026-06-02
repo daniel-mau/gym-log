@@ -730,19 +730,19 @@
   }
 
   /* Stopwatch */
+  .save-bar.gym-bar {
+    border-color: var(--accent);
+    box-shadow: 0 -4px 24px rgba(74, 143, 0, 0.2), 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  [data-theme="dark"] .save-bar.gym-bar {
+    box-shadow: 0 -4px 24px rgba(106, 191, 0, 0.25), 0 4px 16px rgba(0,0,0,0.3);
+  }
+
   .stopwatch {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--bg);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    padding: 8px 12px;
-    box-shadow: 0 2px 8px rgba(74, 143, 0, 0.1);
-  }
-
-  [data-theme="dark"] .stopwatch {
-    box-shadow: 0 2px 8px rgba(106, 191, 0, 0.15);
   }
 
   .stopwatch-display {
@@ -1428,24 +1428,22 @@ function renderSession() {
   // Save bar
   if (plan.type === 'gym') {
     html += `
-      <div class="save-bar" style="flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px;">
-          <div class="stopwatch">
-            <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
-            <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
-            <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
-            <div class="stopwatch-presets">
-              <button class="preset-btn" onclick="setCountdown(60)">1:00</button>
-              <button class="preset-btn" onclick="setCountdown(90)">1:30</button>
-              <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
-            </div>
+      <div class="save-bar gym-bar" style="flex-direction:column;gap:10px;">
+        <div class="stopwatch">
+          <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
+          <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
+          <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
+          <div class="stopwatch-presets">
+            <button class="preset-btn" onclick="setCountdown(60)">1:00</button>
+            <button class="preset-btn" onclick="setCountdown(90)">1:30</button>
+            <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
           </div>
-          <div class="save-status" id="saveStatus" style="margin-left:auto;">Auto-Save aktiv</div>
         </div>
         <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;">
           <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
           <button class="primary" onclick="markComplete()">Einheit abschließen</button>
         </div>
+        <div class="save-status" id="saveStatus" style="text-align:center;width:100%;">Auto-Save aktiv</div>
       </div>
     `;
   } else {
