@@ -1130,9 +1130,9 @@ async function syncAllFromSupabase() {
       .from('body_targets')
       .select('id, data')
       .eq('id', 'default')
-      .single();
+      .maybeSingle();
 
-    if (targetsError && targetsError.code !== 'PGRST116') {
+    if (targetsError) {
       console.error('Supabase body_targets load error:', targetsError.message, targetsError);
     } else if (targetsData) {
       localStorage.setItem('bodyTargets', JSON.stringify(targetsData.data));
