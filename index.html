@@ -1055,17 +1055,20 @@ function saveWorkout(dateKey, data) {
 async function syncToSupabase(dateKey, data) {
   try {
     state.syncStatus = 'syncing';
-    const { error } = await supabaseClient
+    console.log('Syncing workout:', dateKey, data);
+    const result = await supabaseClient
       .from('workouts')
       .upsert(
         { date: dateKey, data: data },
         { onConflict: 'date' }
       );
-    if (error) {
-      console.error('Supabase workout sync error:', error.message, error);
+    console.log('Workout sync result:', result);
+    if (result.error) {
+      console.error('Supabase workout sync error:', result.error);
       state.syncStatus = 'error';
     } else {
       state.syncStatus = 'synced';
+      console.log('Workout synced successfully');
     }
   } catch (e) {
     console.error('Supabase workout sync exception:', e);
@@ -2237,11 +2240,15 @@ function initBodyMetrics() {
 
 async function syncBodyMetricsToSupabase(dateKey, metrics) {
   try {
-    const { error } = await supabaseClient
+    console.log('Syncing body metrics:', dateKey, metrics);
+    const result = await supabaseClient
       .from('body_metrics')
       .upsert({ date: dateKey, data: metrics }, { onConflict: 'date' });
-    if (error) {
-      console.error('Supabase body_metrics sync error:', error.message, error);
+    console.log('Body metrics sync result:', result);
+    if (result.error) {
+      console.error('Supabase body_metrics sync error:', result.error);
+    } else {
+      console.log('Body metrics synced successfully');
     }
   } catch (e) {
     console.error('Supabase body_metrics sync exception:', e);
@@ -2250,11 +2257,15 @@ async function syncBodyMetricsToSupabase(dateKey, metrics) {
 
 async function syncBodyTargetsToSupabase(targets) {
   try {
-    const { error } = await supabaseClient
+    console.log('Syncing body targets:', targets);
+    const result = await supabaseClient
       .from('body_targets')
       .upsert({ id: 'default', data: targets }, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase body_targets sync error:', error.message, error);
+    console.log('Body targets sync result:', result);
+    if (result.error) {
+      console.error('Supabase body_targets sync error:', result.error);
+    } else {
+      console.log('Body targets synced successfully');
     }
   } catch (e) {
     console.error('Supabase body_targets sync exception:', e);
