@@ -1032,12 +1032,7 @@ function getWeekDates() {
 function loadWorkout(dateKey) {
   try {
     const result = localStorage.getItem(`workout:${dateKey}`);
-    const data = result ? JSON.parse(result) : null;
-
-    // Trigger background sync from Supabase (don't wait)
-    loadFromSupabase(dateKey);
-
-    return data;
+    return result ? JSON.parse(result) : null;
   } catch (e) {
     return null;
   }
@@ -1057,35 +1052,23 @@ function saveWorkout(dateKey, data) {
   }
 }
 
-async function loadFromSupabase(dateKey) {
-  try {
-    const { data, error } = await supabaseClient
-      .from('workouts')
-      .select('data')
-      .eq('date', dateKey)
-      .single();
-
-    if (error) return;
-    if (data) {
-      localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data.data));
-    }
-  } catch (e) {
-    // Fail silently
-  }
-}
-
 async function syncToSupabase(dateKey, data) {
   try {
     state.syncStatus = 'syncing';
-    await supabaseClient
+    const { error } = await supabaseClient
       .from('workouts')
       .upsert(
         { date: dateKey, data: data },
         { onConflict: 'date' }
       );
-    state.syncStatus = 'synced';
+    if (error) {
+      console.error('Supabase workout sync error:', error.message, error);
+      state.syncStatus = 'error';
+    } else {
+      state.syncStatus = 'synced';
+    }
   } catch (e) {
-    console.log('Supabase sync failed:', e);
+    console.error('Supabase workout sync exception:', e);
     state.syncStatus = 'error';
   }
 }
@@ -1108,9 +1091,6 @@ function loadAllWorkouts() {
       }
     }
 
-    // Trigger async sync of all workouts from Supabase
-    syncAllFromSupabase();
-
     return workouts.sort((a, b) => b.date.localeCompare(a.date));
   } catch (e) {
     return [];
@@ -1119,18 +1099,50 @@ function loadAllWorkouts() {
 
 async function syncAllFromSupabase() {
   try {
-    const { data, error } = await supabaseClient
+    // Sync workouts
+    const { data: workoutData, error: workoutError } = await supabaseClient
       .from('workouts')
       .select('date, data');
 
-    if (error) return;
-    if (data) {
-      data.forEach(wo => {
+    if (workoutError) {
+      console.error('Supabase workouts load error:', workoutError.message, workoutError);
+    } else if (workoutData) {
+      workoutData.forEach(wo => {
         localStorage.setItem(`workout:${wo.date}`, JSON.stringify(wo.data));
       });
     }
+
+    // Sync body metrics
+    const { data: metricsData, error: metricsError } = await supabaseClient
+      .from('body_metrics')
+      .select('date, data');
+
+    if (metricsError) {
+      console.error('Supabase body_metrics load error:', metricsError.message, metricsError);
+    } else if (metricsData) {
+      metricsData.forEach(m => {
+        localStorage.setItem(`bodyMetrics:${m.date}`, JSON.stringify(m.data));
+      });
+    }
+
+    // Sync body targets
+    const { data: targetsData, error: targetsError } = await supabaseClient
+      .from('body_targets')
+      .select('id, data')
+      .eq('id', 'default')
+      .single();
+
+    if (targetsError && targetsError.code !== 'PGRST116') {
+      console.error('Supabase body_targets load error:', targetsError.message, targetsError);
+    } else if (targetsData) {
+      localStorage.setItem('bodyTargets', JSON.stringify(targetsData.data));
+    }
+
+    state.syncStatus = 'synced';
+    console.log('Supabase full sync completed');
   } catch (e) {
-    // Fail silently
+    console.error('Supabase full sync exception:', e);
+    state.syncStatus = 'error';
   }
 }
 
@@ -1695,12 +1707,15 @@ function deleteWorkoutDate(dateKey) {
 
 async function syncDeleteToSupabase(dateKey) {
   try {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from('workouts')
       .delete()
       .eq('date', dateKey);
+    if (error) {
+      console.error('Supabase delete error:', error.message, error);
+    }
   } catch (e) {
-    console.log('Supabase delete failed:', e);
+    console.error('Supabase delete exception:', e);
   }
 }
 
@@ -2222,18 +2237,28 @@ function initBodyMetrics() {
 
 async function syncBodyMetricsToSupabase(dateKey, metrics) {
   try {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from('body_metrics')
       .upsert({ date: dateKey, data: metrics }, { onConflict: 'date' });
-  } catch (e) { /* fail silently */ }
+    if (error) {
+      console.error('Supabase body_metrics sync error:', error.message, error);
+    }
+  } catch (e) {
+    console.error('Supabase body_metrics sync exception:', e);
+  }
 }
 
 async function syncBodyTargetsToSupabase(targets) {
   try {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from('body_targets')
       .upsert({ id: 'default', data: targets }, { onConflict: 'id' });
-  } catch (e) { /* fail silently */ }
+    if (error) {
+      console.error('Supabase body_targets sync error:', error.message, error);
+    }
+  } catch (e) {
+    console.error('Supabase body_targets sync exception:', e);
+  }
 }
 
 // ============================================================
@@ -2301,7 +2326,15 @@ function init() {
     setTimeout(renderDashboard, 100);
   }
 
-  syncAllFromSupabase();
+  syncAllFromSupabase().then(() => {
+    renderWeekNav();
+    renderSession();
+    renderHistory();
+    initBodyMetrics();
+    if (document.getElementById('dashboardSection').style.display !== 'none') {
+      renderDashboard();
+    }
+  });
   setInterval(updateSyncIndicator, 500);
 }
 
