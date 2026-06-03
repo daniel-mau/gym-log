@@ -2496,14 +2496,18 @@ const CORRECT_PASSWORD = '6845d4n13l';
 
 function checkPassword() {
   const input = document.getElementById('passwordInput');
-  const password = input.value;
+  const password = input.value.trim();
   const errorEl = document.getElementById('passwordError');
 
+  console.log('Password check:', { entered: password, expected: CORRECT_PASSWORD, match: password === CORRECT_PASSWORD });
+
   if (password === CORRECT_PASSWORD) {
+    console.log('Password correct, unlocking app');
     errorEl.classList.remove('show');
     localStorage.setItem('gymLogAuth', 'true');
     unlockApp();
   } else {
+    console.log('Password incorrect');
     errorEl.classList.add('show');
     input.value = '';
     input.focus();
