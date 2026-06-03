@@ -1324,7 +1324,8 @@ function renderSession() {
     html += '<div class="exercises">';
     plan.exercises.forEach((ex, idx) => {
       const exData = (state.todayData.exercises && state.todayData.exercises[ex.id]) || { sets: [] };
-      const doneCount = (exData.sets || []).filter(s => s && (s.reps || s.weight)).length;
+      const isTimeBased = ex.target.includes('sec');
+      const doneCount = (exData.sets || []).filter(s => s && (isTimeBased ? s.duration : (s.reps || s.weight))).length;
       html += `
         <div class="exercise-card" data-ex="${ex.id}">
           <div class="exercise-header" onclick="toggleExercise(this)">
@@ -1338,25 +1339,43 @@ function renderSession() {
           </div>
           <div class="exercise-body">
             <div class="exercise-detail">${ex.detail}</div>
-            <div class="sets-grid header">
-              <div>Satz</div>
-              <div>Gewicht (kg)</div>
-              <div>Wiederholungen</div>
-            </div>
-            ${Array.from({length: ex.sets}, (_, i) => {
-              const set = (exData.sets && exData.sets[i]) || {};
-              return `
-                <div class="sets-grid">
-                  <div class="set-num">${i + 1}</div>
-                  <input type="number" step="0.5" placeholder="—" inputmode="decimal"
-                    data-ex="${ex.id}" data-set="${i}" data-field="weight"
-                    value="${set.weight || ''}" />
-                  <input type="number" placeholder="—" inputmode="numeric"
-                    data-ex="${ex.id}" data-set="${i}" data-field="reps"
-                    value="${set.reps || ''}" />
-                </div>
-              `;
-            }).join('')}
+            ${ex.target.includes('sec') ? `
+              <div class="sets-grid header">
+                <div>Satz</div>
+                <div colspan="2">Dauer (Sekunden)</div>
+              </div>
+              ${Array.from({length: ex.sets}, (_, i) => {
+                const set = (exData.sets && exData.sets[i]) || {};
+                return \`
+                  <div class="sets-grid">
+                    <div class="set-num">\${i + 1}</div>
+                    <input type="number" placeholder="—" inputmode="numeric"
+                      data-ex="\${ex.id}" data-set="\${i}" data-field="duration"
+                      value="\${set.duration || ''}" style="grid-column: span 2;" />
+                  </div>
+                \`;
+              }).join('')}
+            ` : `
+              <div class="sets-grid header">
+                <div>Satz</div>
+                <div>Gewicht (kg)</div>
+                <div>Wiederholungen</div>
+              </div>
+              ${Array.from({length: ex.sets}, (_, i) => {
+                const set = (exData.sets && exData.sets[i]) || {};
+                return \`
+                  <div class="sets-grid">
+                    <div class="set-num">\${i + 1}</div>
+                    <input type="number" step="0.5" placeholder="—" inputmode="decimal"
+                      data-ex="\${ex.id}" data-set="\${i}" data-field="weight"
+                      value="\${set.weight || ''}" />
+                    <input type="number" placeholder="—" inputmode="numeric"
+                      data-ex="\${ex.id}" data-set="\${i}" data-field="reps"
+                      value="\${set.reps || ''}" />
+                  </div>
+                \`;
+              }).join('')}
+            `}
             ${renderExerciseSparkline(ex.id)}
           </div>
         </div>
@@ -1547,13 +1566,21 @@ function collectAndSave() {
     const exercises = {};
     plan.exercises.forEach(ex => {
       exercises[ex.id] = { sets: [] };
+      const isTimeBased = ex.target.includes('sec');
       for (let i = 0; i < ex.sets; i++) {
-        const w = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="weight"]`);
-        const r = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="reps"]`);
-        exercises[ex.id].sets.push({
-          weight: w ? w.value : '',
-          reps: r ? r.value : ''
-        });
+        if (isTimeBased) {
+          const d = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="duration"]`);
+          exercises[ex.id].sets.push({
+            duration: d ? d.value : ''
+          });
+        } else {
+          const w = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="weight"]`);
+          const r = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="reps"]`);
+          exercises[ex.id].sets.push({
+            weight: w ? w.value : '',
+            reps: r ? r.value : ''
+          });
+        }
       }
     });
     state.todayData.exercises = exercises;
