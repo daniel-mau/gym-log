@@ -1464,13 +1464,12 @@ function renderSession() {
   bindInputs();
   if (plan.type === 'run' || plan.type === 'long') updatePace();
   if (plan.type === 'gym' && plan.exercises.length > 0) {
-    // Auto-expand first incomplete exercise
+    // Keep all incomplete exercises expanded
     const cards = container.querySelectorAll('.exercise-card');
     for (const card of cards) {
       const status = card.querySelector('.exercise-status');
       if (!status.classList.contains('done')) {
         card.classList.add('expanded');
-        break;
       }
     }
   }
@@ -1617,6 +1616,9 @@ function markComplete() {
       status.textContent = '✓ Einheit abgeschlossen';
       status.classList.add('saved');
     }
+    // Collapse all exercises
+    const exerciseCards = document.querySelectorAll('.exercise-card');
+    exerciseCards.forEach(card => card.classList.remove('expanded'));
   }
 }
 
