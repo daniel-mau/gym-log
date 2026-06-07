@@ -778,22 +778,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
   .calendar-nav button {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 14px;
+    border-radius: 4px;
+    padding: 4px 10px;
     cursor: pointer;
     color: var(--text);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     transition: border-color 0.15s;
   }
   .calendar-nav button:hover { border-color: var(--text-mute); }
   .calendar-month-label {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text);
   }
@@ -812,12 +812,11 @@
     font-weight: 600;
   }
   .calendar-day {
-    aspect-ratio: 1 / 1.2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 2px;
+    justify-content: center;
+    padding: 4px 0;
     border-radius: 4px;
     font-family: 'SF Mono', monospace;
     font-size: 11px;
@@ -826,6 +825,7 @@
     cursor: default;
     border: 1px solid transparent;
     transition: all 0.15s;
+    line-height: 1;
   }
   .calendar-day.other-month { color: var(--text-mute); opacity: 0.3; }
   .calendar-day.today {
@@ -1216,7 +1216,10 @@ let state = {
 };
 
 function getDateKey(date) {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function getDayOfWeek(date) {
