@@ -1256,9 +1256,6 @@ function saveWorkout(dateKey, data) {
     // Trigger async sync to Supabase (don't block)
     syncToSupabase(dateKey, data);
 
-    // Notify other tabs about the change
-    window.dispatchEvent(new CustomEvent('workoutChanged', { detail: { dateKey, data } }));
-
     return true;
   } catch (e) {
     console.error('Save failed:', e);
@@ -2641,7 +2638,6 @@ function saveBodyTargets() {
   localStorage.setItem('bodyTargets', JSON.stringify(targets));
   updateTargetDisplays();
   syncBodyTargetsToSupabase(targets);
-  window.dispatchEvent(new CustomEvent('bodyTargetsChanged', { detail: { targets } }));
 }
 
 function loadBodyMetrics(dateKey) {
@@ -2659,7 +2655,6 @@ function saveBodyMetrics() {
   };
   localStorage.setItem(`bodyMetrics:${dateKey}`, JSON.stringify(metrics));
   syncBodyMetricsToSupabase(dateKey, metrics);
-  window.dispatchEvent(new CustomEvent('bodyMetricsChanged', { detail: { dateKey, metrics } }));
 }
 
 function loadAllBodyMetrics() {
@@ -2826,22 +2821,20 @@ function init() {
   });
   setInterval(updateSyncIndicator, 500);
 
-  // Tab sync listeners
-  window.addEventListener('workoutChanged', (e) => {
-    renderWeekNav();
-    renderSession();
-    renderHistory();
-    renderStats();
-  });
-
-  window.addEventListener('bodyMetricsChanged', () => {
-    initBodyMetrics();
-    renderDashboard();
-  });
-
-  window.addEventListener('bodyTargetsChanged', () => {
-    updateTargetDisplays();
-    renderDashboard();
+  // Cross-tab sync via storage event (only fires in OTHER tabs)
+  window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith('workout:')) {
+      renderWeekNav();
+      renderSession();
+      renderHistory();
+      renderStats();
+    } else if (e.key && e.key.startsWith('bodyMetrics:')) {
+      initBodyMetrics();
+      renderDashboard();
+    } else if (e.key === 'bodyTargets') {
+      updateTargetDisplays();
+      renderDashboard();
+    }
   });
 }
 
