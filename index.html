@@ -800,107 +800,139 @@
   .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 2px;
   }
   .calendar-weekday {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-mute);
     text-align: center;
-    padding: 6px 0;
+    padding: 4px 0;
     font-weight: 600;
   }
   .calendar-day {
-    aspect-ratio: 1;
+    aspect-ratio: 1 / 1.2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    border-radius: 6px;
+    justify-content: flex-start;
+    padding-top: 2px;
+    border-radius: 4px;
     font-family: 'SF Mono', monospace;
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-dim);
     position: relative;
     cursor: default;
     border: 1px solid transparent;
     transition: all 0.15s;
   }
-  .calendar-day.other-month { color: var(--text-mute); opacity: 0.4; }
+  .calendar-day.other-month { color: var(--text-mute); opacity: 0.3; }
   .calendar-day.today {
     font-weight: 700;
     color: var(--text);
     border-color: var(--border);
   }
-  .calendar-day.has-workout {
+  .calendar-day.has-workout, .calendar-day.planned {
     cursor: pointer;
   }
-  .calendar-day.has-workout:hover {
+  .calendar-day.has-workout:hover, .calendar-day.planned:hover {
     border-color: var(--text-mute);
     background: var(--bg-elevated);
   }
-  .calendar-day.selected {
-    border-color: var(--accent);
-    background: var(--bg-elevated);
-  }
   .calendar-dot {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
-    margin-top: 3px;
+    margin-top: 1px;
   }
   .calendar-dot.completed { background: var(--success); }
   .calendar-dot.open { background: var(--warn); }
-  .calendar-dot.gym { background: var(--gym); }
-  .calendar-dot.run { background: var(--run); }
-  .calendar-dot.long { background: var(--long); }
+  .calendar-dot.planned { background: var(--text-mute); opacity: 0.5; }
 
-  .calendar-detail-card {
+  /* Calendar modal */
+  .calendar-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+  }
+  .calendar-modal.open {
+    display: flex;
+  }
+  .calendar-modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-top: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
+    border-radius: 12px;
+    padding: 28px 24px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   }
-  .calendar-detail-info { flex: 1; min-width: 0; }
-  .calendar-detail-date {
+  .calendar-modal-date {
     font-family: 'SF Mono', monospace;
     font-size: 11px;
     color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     margin-bottom: 4px;
   }
-  .calendar-detail-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 2px;
+  .calendar-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
   }
-  .calendar-detail-stats {
+  .calendar-modal-stats {
     font-family: 'SF Mono', monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.6;
   }
-  .calendar-detail-status {
+  .calendar-modal-status {
+    display: inline-block;
     font-size: 11px;
     font-weight: 600;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 4px;
+    margin-bottom: 16px;
   }
-  .calendar-detail-status.completed {
+  .calendar-modal-status.completed {
     background: rgba(21, 128, 61, 0.1);
     color: var(--success);
   }
-  .calendar-detail-status.open {
+  .calendar-modal-status.open {
     background: rgba(217, 82, 14, 0.1);
     color: var(--warn);
   }
-  .calendar-detail-actions {
+  .calendar-modal-actions {
     display: flex;
     gap: 8px;
+    margin-top: 20px;
+  }
+  .calendar-modal-actions button {
+    flex: 1;
+  }
+  .calendar-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-dim);
+    padding: 4px 8px;
+  }
+  .calendar-modal-close:hover {
+    color: var(--text);
   }
 
   @media (max-width: 600px) {
@@ -1028,8 +1060,14 @@
   <section class="stats-section">
     <div class="section-title">Historie</div>
     <div id="calendarSection"></div>
-    <div id="calendarDetail" style="display:none;"></div>
   </section>
+
+  <div class="calendar-modal" id="calendarModal">
+    <div class="calendar-modal-content" style="position:relative;">
+      <button class="calendar-modal-close" onclick="closeCalendarModal()">✕</button>
+      <div id="calendarModalContent"></div>
+    </div>
+  </div>
 
 </div>
 </div>
@@ -1833,24 +1871,33 @@ function renderCalendar() {
     const dateKey = getDateKey(date);
     const wo = workoutMap[dateKey];
     const isToday = dateKey === todayKey;
-    const isSelected = dateKey === calendarSelectedDate;
+    const isFuture = date > today;
 
     let classes = 'calendar-day';
     if (isToday) classes += ' today';
-    if (wo) classes += ' has-workout';
-    if (isSelected) classes += ' selected';
 
     let dot = '';
+    let onclick = '';
+
     if (wo) {
-      const typeClass = wo.type || '';
+      classes += ' has-workout';
       if (wo.completed) {
         dot = `<div class="calendar-dot completed"></div>`;
       } else {
         dot = `<div class="calendar-dot open"></div>`;
       }
+      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+    } else if (isFuture) {
+      // Show planned workouts for future dates
+      const dayKey = getDayOfWeek(date);
+      const plan = WEEK_PLAN[dayKey];
+      if (plan && plan.type !== 'rest') {
+        classes += ' planned';
+        dot = `<div class="calendar-dot planned"></div>`;
+        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+      }
     }
 
-    const onclick = wo ? ` onclick="selectCalendarDay('${dateKey}')"` : '';
     html += `<div class="${classes}"${onclick}>${day}${dot}</div>`;
   }
 
@@ -1863,86 +1910,82 @@ function renderCalendar() {
 
   html += '</div>';
   container.innerHTML = html;
-
-  // Render detail if a day is selected
-  renderCalendarDetail(workoutMap);
 }
 
-function renderCalendarDetail(workoutMap) {
-  const detailEl = document.getElementById('calendarDetail');
-  if (!calendarSelectedDate) {
-    detailEl.style.display = 'none';
-    return;
-  }
-
-  const wo = workoutMap ? workoutMap[calendarSelectedDate] : loadWorkout(calendarSelectedDate);
-  if (!wo) {
-    detailEl.style.display = 'none';
-    calendarSelectedDate = null;
-    return;
-  }
-
-  const date = new Date(calendarSelectedDate);
+function openCalendarModal(dateKey) {
+  const wo = loadWorkout(dateKey);
+  const date = new Date(dateKey);
   const dateStr = date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const dayKey = getDayOfWeek(date);
   const plan = WEEK_PLAN[dayKey];
-  const typeName = plan ? plan.name : (wo.type || '—');
+  const typeName = plan ? plan.name : '—';
 
   let stats = '';
-  if (wo.type === 'run' || wo.type === 'long') {
-    const dist = wo.run?.distance ? `${parseFloat(wo.run.distance).toFixed(2)} km` : '';
-    const time = wo.run?.time || '';
-    const hr = wo.run?.hr ? `${wo.run.hr} Herzschläge/min` : '';
-    stats = [dist, time, hr].filter(Boolean).join(' · ');
-  } else if (wo.type === 'gym') {
-    let totalSets = 0;
-    if (wo.exercises) {
-      Object.values(wo.exercises).forEach(ex => {
-        (ex.sets || []).forEach(s => { if (s && (s.reps || s.weight || s.duration)) totalSets++; });
-      });
+  let statusHtml = '';
+  let openBtn = '';
+
+  if (wo) {
+    if (wo.type === 'run' || wo.type === 'long') {
+      const dist = wo.run?.distance ? `${parseFloat(wo.run.distance).toFixed(2)} km` : '';
+      const time = wo.run?.time || '';
+      const hr = wo.run?.hr ? `${wo.run.hr} Herzschläge/min` : '';
+      stats = [dist, time, hr].filter(Boolean).join(' · ');
+    } else if (wo.type === 'gym') {
+      let totalSets = 0;
+      if (wo.exercises) {
+        Object.values(wo.exercises).forEach(ex => {
+          (ex.sets || []).forEach(s => { if (s && (s.reps || s.weight || s.duration)) totalSets++; });
+        });
+      }
+      stats = `${totalSets} Sätze eingetragen`;
     }
-    stats = `${totalSets} Sätze eingetragen`;
+
+    const statusClass = wo.completed ? 'completed' : 'open';
+    const statusText = wo.completed ? '✓ Abgeschlossen' : 'Offen';
+    statusHtml = `<div class="calendar-modal-status ${statusClass}">${statusText}</div>`;
+
+    // Check if date is in current week
+    const today = new Date();
+    const todayDay = getDayOfWeek(today);
+    const todayIdx = DAYS.indexOf(todayDay);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - todayIdx);
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23,59,59,999);
+    const isCurrentWeek = date >= monday && date <= sunday;
+
+    if (isCurrentWeek) {
+      openBtn = `<button class="primary" onclick="jumpToDate('${dateKey}'); closeCalendarModal();" style="font-size:12px;">Öffnen</button>`;
+    }
+  } else {
+    stats = 'Noch keine Einträge';
+    statusHtml = '<div class="calendar-modal-status" style="background:rgba(107,114,128,0.1);color:var(--text-mute);">Geplant</div>';
   }
 
-  const statusClass = wo.completed ? 'completed' : 'open';
-  const statusText = wo.completed ? '✓ Abgeschlossen' : 'Offen';
-
-  // Check if date is in current week
-  const today = new Date();
-  const todayDay = getDayOfWeek(today);
-  const todayIdx = DAYS.indexOf(todayDay);
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - todayIdx);
-  monday.setHours(0,0,0,0);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23,59,59,999);
-  const isCurrentWeek = date >= monday && date <= sunday;
-
-  const openBtn = isCurrentWeek
-    ? `<button class="secondary" onclick="jumpToDate('${calendarSelectedDate}')" style="font-size:11px;padding:8px 14px;">Öffnen</button>`
-    : '';
-
-  detailEl.style.display = 'block';
-  detailEl.innerHTML = `
-    <div class="calendar-detail-card">
-      <div class="calendar-detail-info">
-        <div class="calendar-detail-date">${dateStr}</div>
-        <div class="calendar-detail-title">${typeName}</div>
-        <div class="calendar-detail-stats">${stats || 'Keine Daten'}</div>
-      </div>
-      <span class="calendar-detail-status ${statusClass}">${statusText}</span>
-      <div class="calendar-detail-actions">
-        ${openBtn}
-        <button class="secondary" onclick="deleteWorkoutDate('${calendarSelectedDate}')" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:11px;padding:8px 14px;">Löschen</button>
-      </div>
+  const modalContent = document.getElementById('calendarModalContent');
+  modalContent.innerHTML = `
+    <div class="calendar-modal-date">${dateStr}</div>
+    <div class="calendar-modal-title">${typeName}</div>
+    <div class="calendar-modal-stats">${stats}</div>
+    ${statusHtml}
+    <div class="calendar-modal-actions">
+      ${openBtn}
+      ${wo ? `<button class="secondary" onclick="deleteWorkoutDate('${dateKey}'); closeCalendarModal();" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:12px;">Löschen</button>` : ''}
+      <button class="secondary" onclick="closeCalendarModal()" style="font-size:12px;">Schließen</button>
     </div>
   `;
+
+  const modal = document.getElementById('calendarModal');
+  modal.classList.add('open');
+  modal.onclick = (e) => {
+    if (e.target === modal) closeCalendarModal();
+  };
 }
 
-function selectCalendarDay(dateKey) {
-  calendarSelectedDate = calendarSelectedDate === dateKey ? null : dateKey;
-  renderCalendar();
+function closeCalendarModal() {
+  document.getElementById('calendarModal').classList.remove('open');
 }
 
 function calendarPrev() {
@@ -2812,7 +2855,8 @@ window.resetStopwatch = resetStopwatch;
 window.setCountdown = setCountdown;
 window.calendarPrev = calendarPrev;
 window.calendarNext = calendarNext;
-window.selectCalendarDay = selectCalendarDay;
+window.openCalendarModal = openCalendarModal;
+window.closeCalendarModal = closeCalendarModal;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
