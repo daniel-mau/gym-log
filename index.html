@@ -465,43 +465,7 @@
     margin-left: 2px;
   }
 
-  /* History */
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 320px;
-    overflow-y: auto;
-    padding-right: 8px;
-  }
-  .history-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .history-item:hover { border-color: var(--text-mute); }
-  .history-date {
-    font-family: 'SF Mono', monospace;
-    color: var(--text-dim);
-    font-size: 11px;
-  }
-  .history-type {
-    font-weight: 600;
-    flex: 1;
-    margin-left: 14px;
-  }
-  .history-stats {
-    font-family: 'SF Mono', monospace;
-    font-size: 11px;
-    color: var(--text-dim);
-  }
+  /* History (calendar) */
 
   /* Rest day */
   .rest-message {
@@ -809,6 +773,136 @@
     color: var(--text);
   }
 
+  /* Calendar */
+  .calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .calendar-nav button {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s;
+  }
+  .calendar-nav button:hover { border-color: var(--text-mute); }
+  .calendar-month-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .calendar-weekday {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-mute);
+    text-align: center;
+    padding: 6px 0;
+    font-weight: 600;
+  }
+  .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    position: relative;
+    cursor: default;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .calendar-day.other-month { color: var(--text-mute); opacity: 0.4; }
+  .calendar-day.today {
+    font-weight: 700;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .calendar-day.has-workout {
+    cursor: pointer;
+  }
+  .calendar-day.has-workout:hover {
+    border-color: var(--text-mute);
+    background: var(--bg-elevated);
+  }
+  .calendar-day.selected {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+  }
+  .calendar-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 3px;
+  }
+  .calendar-dot.completed { background: var(--success); }
+  .calendar-dot.open { background: var(--warn); }
+  .calendar-dot.gym { background: var(--gym); }
+  .calendar-dot.run { background: var(--run); }
+  .calendar-dot.long { background: var(--long); }
+
+  .calendar-detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .calendar-detail-info { flex: 1; min-width: 0; }
+  .calendar-detail-date {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .calendar-detail-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .calendar-detail-stats {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .calendar-detail-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .calendar-detail-status.completed {
+    background: rgba(21, 128, 61, 0.1);
+    color: var(--success);
+  }
+  .calendar-detail-status.open {
+    background: rgba(217, 82, 14, 0.1);
+    color: var(--warn);
+  }
+  .calendar-detail-actions {
+    display: flex;
+    gap: 8px;
+  }
+
   @media (max-width: 600px) {
     body { padding: 16px 12px; }
     .day-btn { padding: 8px 2px 10px; }
@@ -933,7 +1027,8 @@
 
   <section class="stats-section">
     <div class="section-title">Historie</div>
-    <div class="history-list" id="historyList"></div>
+    <div id="calendarSection"></div>
+    <div id="calendarDetail" style="display:none;"></div>
   </section>
 
 </div>
@@ -1685,60 +1780,190 @@ function renderStats() {
   `;
 }
 
+// Calendar state
+let calendarMonth = new Date().getMonth();
+let calendarYear = new Date().getFullYear();
+let calendarSelectedDate = null;
+
 function renderHistory() {
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendarSection');
   const workouts = loadAllWorkouts();
-  const completed = workouts.filter(w => w.data.completed).slice(0, 15);
-  
-  const list = document.getElementById('historyList');
-  if (completed.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-mute);font-size:12px;padding:20px;text-align:center;">Noch keine abgeschlossenen Einheiten. Sobald du eine Einheit markiert, erscheint sie hier.</div>';
+  const workoutMap = {};
+  workouts.forEach(w => { workoutMap[w.date] = w.data; });
+
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  const firstDay = new Date(calendarYear, calendarMonth, 1);
+  const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+  let startOffset = (firstDay.getDay() + 6) % 7;
+
+  const today = new Date();
+  const todayKey = getDateKey(today);
+
+  let html = `
+    <div class="calendar-nav">
+      <button onclick="calendarPrev()">‹</button>
+      <span class="calendar-month-label">${monthNames[calendarMonth]} ${calendarYear}</span>
+      <button onclick="calendarNext()">›</button>
+    </div>
+    <div class="calendar-grid">
+      <div class="calendar-weekday">Mo</div>
+      <div class="calendar-weekday">Di</div>
+      <div class="calendar-weekday">Mi</div>
+      <div class="calendar-weekday">Do</div>
+      <div class="calendar-weekday">Fr</div>
+      <div class="calendar-weekday">Sa</div>
+      <div class="calendar-weekday">So</div>
+  `;
+
+  // Fill leading empty days from previous month
+  const prevMonthLast = new Date(calendarYear, calendarMonth, 0);
+  for (let i = startOffset - 1; i >= 0; i--) {
+    const day = prevMonthLast.getDate() - i;
+    html += `<div class="calendar-day other-month">${day}</div>`;
+  }
+
+  // Current month days
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const date = new Date(calendarYear, calendarMonth, day);
+    const dateKey = getDateKey(date);
+    const wo = workoutMap[dateKey];
+    const isToday = dateKey === todayKey;
+    const isSelected = dateKey === calendarSelectedDate;
+
+    let classes = 'calendar-day';
+    if (isToday) classes += ' today';
+    if (wo) classes += ' has-workout';
+    if (isSelected) classes += ' selected';
+
+    let dot = '';
+    if (wo) {
+      const typeClass = wo.type || '';
+      if (wo.completed) {
+        dot = `<div class="calendar-dot completed"></div>`;
+      } else {
+        dot = `<div class="calendar-dot open"></div>`;
+      }
+    }
+
+    const onclick = wo ? ` onclick="selectCalendarDay('${dateKey}')"` : '';
+    html += `<div class="${classes}"${onclick}>${day}${dot}</div>`;
+  }
+
+  // Fill trailing empty days
+  const totalCells = startOffset + lastDay.getDate();
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="calendar-day other-month">${i}</div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Render detail if a day is selected
+  renderCalendarDetail(workoutMap);
+}
+
+function renderCalendarDetail(workoutMap) {
+  const detailEl = document.getElementById('calendarDetail');
+  if (!calendarSelectedDate) {
+    detailEl.style.display = 'none';
     return;
   }
-  
-  list.innerHTML = completed.map(w => {
-    const d = w.data;
-    const date = new Date(w.date);
-    const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    const dayKey = getDayOfWeek(date);
-    const plan = WEEK_PLAN[dayKey];
-    let stats = '';
-    if (d.type === 'run' || d.type === 'long') {
-      const dist = d.run?.distance ? `${parseFloat(d.run.distance).toFixed(2)} km` : '—';
-      const time = d.run?.time || '';
-      const hr = d.run?.hr ? `${d.run.hr} bpm` : '';
-      stats = [dist, time, hr].filter(Boolean).join(' · ');
-    } else if (d.type === 'gym') {
-      let totalSets = 0;
-      if (d.exercises) {
-        Object.values(d.exercises).forEach(ex => {
-          (ex.sets || []).forEach(s => { if (s && (s.reps || s.weight)) totalSets++; });
-        });
-      }
-      stats = `${totalSets} Sätze`;
+
+  const wo = workoutMap ? workoutMap[calendarSelectedDate] : loadWorkout(calendarSelectedDate);
+  if (!wo) {
+    detailEl.style.display = 'none';
+    calendarSelectedDate = null;
+    return;
+  }
+
+  const date = new Date(calendarSelectedDate);
+  const dateStr = date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const dayKey = getDayOfWeek(date);
+  const plan = WEEK_PLAN[dayKey];
+  const typeName = plan ? plan.name : (wo.type || '—');
+
+  let stats = '';
+  if (wo.type === 'run' || wo.type === 'long') {
+    const dist = wo.run?.distance ? `${parseFloat(wo.run.distance).toFixed(2)} km` : '';
+    const time = wo.run?.time || '';
+    const hr = wo.run?.hr ? `${wo.run.hr} Herzschläge/min` : '';
+    stats = [dist, time, hr].filter(Boolean).join(' · ');
+  } else if (wo.type === 'gym') {
+    let totalSets = 0;
+    if (wo.exercises) {
+      Object.values(wo.exercises).forEach(ex => {
+        (ex.sets || []).forEach(s => { if (s && (s.reps || s.weight || s.duration)) totalSets++; });
+      });
     }
-    return `
-      <div class="history-item" style="justify-content:space-between;">
-        <div style="flex:1;cursor:pointer;" onclick="jumpToDate('${w.date}')">
-          <div class="history-date">${dateStr}</div>
-          <div class="history-type">${plan ? plan.name : d.type}</div>
-          <div class="history-stats">${stats}</div>
-        </div>
-        <button class="secondary" onclick="deleteWorkoutDate('${w.date}')" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:10px;padding:6px 10px;margin-left:10px;white-space:nowrap;">🗑 Löschen</button>
+    stats = `${totalSets} Sätze eingetragen`;
+  }
+
+  const statusClass = wo.completed ? 'completed' : 'open';
+  const statusText = wo.completed ? '✓ Abgeschlossen' : 'Offen';
+
+  // Check if date is in current week
+  const today = new Date();
+  const todayDay = getDayOfWeek(today);
+  const todayIdx = DAYS.indexOf(todayDay);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - todayIdx);
+  monday.setHours(0,0,0,0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+  const isCurrentWeek = date >= monday && date <= sunday;
+
+  const openBtn = isCurrentWeek
+    ? `<button class="secondary" onclick="jumpToDate('${calendarSelectedDate}')" style="font-size:11px;padding:8px 14px;">Öffnen</button>`
+    : '';
+
+  detailEl.style.display = 'block';
+  detailEl.innerHTML = `
+    <div class="calendar-detail-card">
+      <div class="calendar-detail-info">
+        <div class="calendar-detail-date">${dateStr}</div>
+        <div class="calendar-detail-title">${typeName}</div>
+        <div class="calendar-detail-stats">${stats || 'Keine Daten'}</div>
       </div>
-    `;
-  }).join('');
+      <span class="calendar-detail-status ${statusClass}">${statusText}</span>
+      <div class="calendar-detail-actions">
+        ${openBtn}
+        <button class="secondary" onclick="deleteWorkoutDate('${calendarSelectedDate}')" style="background:rgba(217,82,14,0.1);color:var(--warn);font-size:11px;padding:8px 14px;">Löschen</button>
+      </div>
+    </div>
+  `;
+}
+
+function selectCalendarDay(dateKey) {
+  calendarSelectedDate = calendarSelectedDate === dateKey ? null : dateKey;
+  renderCalendar();
+}
+
+function calendarPrev() {
+  calendarMonth--;
+  if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+  calendarSelectedDate = null;
+  renderCalendar();
+}
+
+function calendarNext() {
+  calendarMonth++;
+  if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+  calendarSelectedDate = null;
+  renderCalendar();
 }
 
 function jumpToDate(dateStr) {
   const date = new Date(dateStr);
-  const today = new Date();
-  const diff = Math.floor((today - date) / 86400000);
-  if (diff > 7) {
-    alert('Tag liegt mehr als eine Woche zurück. Aktuelle Woche-Navigation zeigt nur diese Woche.');
-    return;
-  }
   const dayKey = getDayOfWeek(date);
   selectDay(dayKey);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ============================================================
@@ -1809,10 +2034,10 @@ function deleteWorkoutDate(dateKey) {
   try {
     localStorage.removeItem(`workout:${dateKey}`);
     syncDeleteToSupabase(dateKey);
+    calendarSelectedDate = null;
     renderWeekNav();
     renderStats();
     renderHistory();
-    alert('Eintrag gelöscht');
   } catch (e) {
     alert('Fehler beim Löschen');
   }
@@ -2585,6 +2810,9 @@ window.saveBodyTargets = saveBodyTargets;
 window.toggleStopwatch = toggleStopwatch;
 window.resetStopwatch = resetStopwatch;
 window.setCountdown = setCountdown;
+window.calendarPrev = calendarPrev;
+window.calendarNext = calendarNext;
+window.selectCalendarDay = selectCalendarDay;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
