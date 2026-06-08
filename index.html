@@ -1934,28 +1934,30 @@ function renderCalendar() {
     let dot = '';
     let onclick = '';
 
-    if (isToday && plan && plan.type !== 'rest') {
-      // Today's workout (any state): always orange
-      classes += ' has-workout';
-      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
-      dot = `<div class="calendar-dot today-dot"></div>`;
-    } else if (wo && wo.type !== 'rest') {
-      // Existing non-rest workout
-      classes += ' has-workout';
-      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+    // Only show dots for non-rest days
+    if (plan && plan.type !== 'rest') {
+      const isCompleted = wo && wo.completed;
 
-      if (wo.completed) {
-        // Completed: green
-        dot = `<div class="calendar-dot completed"></div>`;
+      if (isToday) {
+        // Today: orange if not done, green if done
+        classes += ' has-workout';
+        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+        dot = isCompleted
+          ? `<div class="calendar-dot completed"></div>`
+          : `<div class="calendar-dot today-dot"></div>`;
       } else if (isPast) {
-        // Missed (past and not completed): red
-        dot = `<div class="calendar-dot missed"></div>`;
+        // Past: red if not done, green if done
+        classes += ' has-workout';
+        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+        dot = isCompleted
+          ? `<div class="calendar-dot completed"></div>`
+          : `<div class="calendar-dot missed"></div>`;
+      } else if (isFuture) {
+        // Future: gray (can't be completed in future)
+        classes += ' planned';
+        dot = `<div class="calendar-dot planned"></div>`;
+        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
       }
-    } else if (!wo && isFuture && plan && plan.type !== 'rest') {
-      // Planned future workout: gray
-      classes += ' planned';
-      dot = `<div class="calendar-dot planned"></div>`;
-      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
     }
 
     html += `<div class="${classes}"${onclick}>${day}${dot}</div>`;
