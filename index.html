@@ -850,7 +850,8 @@
     margin-top: 2px;
   }
   .calendar-dot.completed { background: var(--success); }
-  .calendar-dot.open { background: var(--warn); }
+  .calendar-dot.missed { background: #dc2626; }
+  .calendar-dot.today-dot { background: var(--warn); }
   .calendar-dot.planned { background: var(--text-mute); opacity: 0.5; }
 
   /* Calendar modal */
@@ -1922,7 +1923,10 @@ function renderCalendar() {
     const dateKey = getDateKey(date);
     const wo = workoutMap[dateKey];
     const isToday = dateKey === todayKey;
+    const isPast = date < today;
     const isFuture = date > today;
+    const dayKey = getDayOfWeek(date);
+    const plan = WEEK_PLAN[dayKey];
 
     let classes = 'calendar-day';
     if (isToday) classes += ' today';
@@ -1930,27 +1934,33 @@ function renderCalendar() {
     let dot = '';
     let onclick = '';
 
-    if (wo) {
-      if (wo.type === 'rest') {
-        // Rest days: no dot
+    if (wo && wo.type !== 'rest') {
+      classes += ' has-workout';
+      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+
+      if (wo.completed) {
+        // Completed: green
+        dot = `<div class="calendar-dot completed"></div>`;
+      } else if (isPast) {
+        // Missed (past and not completed): red
+        dot = `<div class="calendar-dot missed"></div>`;
+      } else if (isToday) {
+        // Today: orange
+        dot = `<div class="calendar-dot today-dot"></div>`;
       } else {
-        classes += ' has-workout';
-        if (wo.completed) {
-          dot = `<div class="calendar-dot completed"></div>`;
-        } else {
-          dot = `<div class="calendar-dot open"></div>`;
-        }
-        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+        // Future and not completed: shouldn't happen
+        dot = `<div class="calendar-dot open"></div>`;
       }
-    } else if (isFuture) {
-      // Show planned workouts for future dates
-      const dayKey = getDayOfWeek(date);
-      const plan = WEEK_PLAN[dayKey];
-      if (plan && plan.type !== 'rest') {
-        classes += ' planned';
-        dot = `<div class="calendar-dot planned"></div>`;
-        onclick = ` onclick="openCalendarModal('${dateKey}')"`;
-      }
+    } else if (!wo && isFuture && plan && plan.type !== 'rest') {
+      // Planned future workout: gray
+      classes += ' planned';
+      dot = `<div class="calendar-dot planned"></div>`;
+      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+    } else if (!wo && isToday && plan && plan.type !== 'rest') {
+      // Today's planned workout (no entry yet): orange
+      classes += ' has-workout';
+      dot = `<div class="calendar-dot today-dot"></div>`;
+      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
     }
 
     html += `<div class="${classes}"${onclick}>${day}${dot}</div>`;
