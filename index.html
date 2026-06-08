@@ -1048,7 +1048,7 @@
         <canvas id="paceChart" style="max-height:250px;"></canvas>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
-        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Schmerz · pro Tag (letzte 4 Wochen)</h3>
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Schmerz Trend · letzte 4 Wochen</h3>
         <canvas id="dailyPainChart" style="max-height:250px;"></canvas>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
@@ -2262,9 +2262,18 @@ function renderDashboard() {
     const workoutMap = {};
     workouts.forEach(w => { if (w.data) workoutMap[w.date] = w.data; });
 
+    const painWorkouts = workouts.filter(w => w.data && w.data.run && typeof w.data.run.pain === 'number');
+    let startDaysAgo = 27;
+    if (painWorkouts.length > 0) {
+      const oldestDate = new Date(painWorkouts[0].date);
+      const today = new Date();
+      const diffMs = today - oldestDate;
+      startDaysAgo = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
     const dailyPainData = [];
     const dailyPainLabels = [];
-    for (let i = 27; i >= 0; i--) {
+    for (let i = startDaysAgo; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateKey = getDateKey(d);
