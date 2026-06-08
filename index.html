@@ -1934,7 +1934,13 @@ function renderCalendar() {
     let dot = '';
     let onclick = '';
 
-    if (wo && wo.type !== 'rest') {
+    if (isToday && plan && plan.type !== 'rest') {
+      // Today's workout (any state): always orange
+      classes += ' has-workout';
+      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
+      dot = `<div class="calendar-dot today-dot"></div>`;
+    } else if (wo && wo.type !== 'rest') {
+      // Existing non-rest workout
       classes += ' has-workout';
       onclick = ` onclick="openCalendarModal('${dateKey}')"`;
 
@@ -1944,22 +1950,11 @@ function renderCalendar() {
       } else if (isPast) {
         // Missed (past and not completed): red
         dot = `<div class="calendar-dot missed"></div>`;
-      } else if (isToday) {
-        // Today: orange
-        dot = `<div class="calendar-dot today-dot"></div>`;
-      } else {
-        // Future and not completed: shouldn't happen
-        dot = `<div class="calendar-dot open"></div>`;
       }
     } else if (!wo && isFuture && plan && plan.type !== 'rest') {
       // Planned future workout: gray
       classes += ' planned';
       dot = `<div class="calendar-dot planned"></div>`;
-      onclick = ` onclick="openCalendarModal('${dateKey}')"`;
-    } else if (!wo && isToday && plan && plan.type !== 'rest') {
-      // Today's planned workout (no entry yet): orange
-      classes += ' has-workout';
-      dot = `<div class="calendar-dot today-dot"></div>`;
       onclick = ` onclick="openCalendarModal('${dateKey}')"`;
     }
 
