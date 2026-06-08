@@ -308,6 +308,9 @@
     outline: none;
     border-color: var(--accent);
   }
+  input[type="number"].prefilled, input[type="text"].prefilled {
+    color: var(--text-mute);
+  }
 
   /* Run inputs */
   .run-form {
@@ -1249,6 +1252,25 @@ function loadWorkout(dateKey) {
   }
 }
 
+function loadPreviousWeekWorkout(dayKey) {
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+
+  // Find the same day of week from last week
+  const todayDay = getDayOfWeek(today);
+  const todayIdx = DAYS.indexOf(todayDay);
+  const lastWeekMonday = new Date(sevenDaysAgo);
+  lastWeekMonday.setDate(sevenDaysAgo.getDate() - sevenDaysAgo.getDay() + 1);
+
+  const dayIdx = DAYS.indexOf(dayKey);
+  const lastWeekDate = new Date(lastWeekMonday);
+  lastWeekDate.setDate(lastWeekMonday.getDate() + dayIdx);
+
+  const lastWeekDateKey = getDateKey(lastWeekDate);
+  return loadWorkout(lastWeekDateKey);
+}
+
 function saveWorkout(dateKey, data) {
   try {
     localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data));
@@ -1455,8 +1477,10 @@ function renderSession() {
     `;
   } else if (plan.type === 'gym') {
     html += '<div class="exercises">';
+    const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
     plan.exercises.forEach((ex, idx) => {
       const exData = (state.todayData.exercises && state.todayData.exercises[ex.id]) || { sets: [] };
+      const prevExData = (prevWeekWorkout && prevWeekWorkout.exercises && prevWeekWorkout.exercises[ex.id]) || { sets: [] };
       const isTimeBased = ex.target.includes('sec');
       const doneCount = (exData.sets || []).filter(s => s && (isTimeBased ? s.duration : (s.reps || s.weight))).length;
       html += `
@@ -1479,13 +1503,22 @@ function renderSession() {
                 html += '<div class="sets-grid header"><div>Satz</div><div colspan="2">Dauer (Sekunden)</div></div>';
                 for (let i = 0; i < ex.sets; i++) {
                   const set = (exData.sets && exData.sets[i]) || {};
-                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" placeholder="—" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="duration" value="${set.duration || ''}" style="grid-column: span 2;" /></div>`;
+                  const prevSet = (prevExData.sets && prevExData.sets[i]) || {};
+                  const value = set.duration || prevSet.duration || '';
+                  const isPrefilled = !set.duration && prevSet.duration;
+                  const className = isPrefilled ? 'prefilled' : '';
+                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" placeholder="—" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="duration" value="${value}" class="${className}" style="grid-column: span 2;" /></div>`;
                 }
               } else {
                 html += '<div class="sets-grid header"><div>Satz</div><div>Gewicht (kg)</div><div>Wiederholungen</div></div>';
                 for (let i = 0; i < ex.sets; i++) {
                   const set = (exData.sets && exData.sets[i]) || {};
-                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" step="0.5" placeholder="—" inputmode="decimal" data-ex="${ex.id}" data-set="${i}" data-field="weight" value="${set.weight || ''}" /><input type="number" placeholder="—" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="reps" value="${set.reps || ''}" /></div>`;
+                  const prevSet = (prevExData.sets && prevExData.sets[i]) || {};
+                  const weightValue = set.weight || prevSet.weight || '';
+                  const repsValue = set.reps || prevSet.reps || '';
+                  const weightPrefilled = !set.weight && prevSet.weight;
+                  const repsPrefilled = !set.reps && prevSet.reps;
+                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" step="0.5" placeholder="—" inputmode="decimal" data-ex="${ex.id}" data-set="${i}" data-field="weight" value="${weightValue}" class="${weightPrefilled ? 'prefilled' : ''}" /><input type="number" placeholder="—" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="reps" value="${repsValue}" class="${repsPrefilled ? 'prefilled' : ''}" /></div>`;
                 }
               }
               return html;
@@ -1509,15 +1542,21 @@ function renderSession() {
     `;
   } else if (plan.type === 'run' || plan.type === 'long') {
     const r = state.todayData.run || {};
+    const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
+    const prevRun = (prevWeekWorkout && prevWeekWorkout.run) || {};
+
+    const getRunValue = (field) => r[field] || prevRun[field] || '';
+    const isRunPrefilled = (field) => !r[field] && prevRun[field];
+
     html += `
       <div class="run-form">
         <div class="run-field">
           <label>Distanz</label>
-          <input type="number" step="0.01" placeholder="${plan.targetDistance}" inputmode="decimal" data-run="distance" value="${r.distance || ''}" />
+          <input type="number" step="0.01" placeholder="${plan.targetDistance}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Gesamtzeit (mm:ss)</label>
-          <input type="text" placeholder="z.B. 42:30" data-run="time" value="${r.time || ''}" />
+          <input type="text" placeholder="z.B. 42:30" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Pace (berechnet)</label>
@@ -1525,15 +1564,15 @@ function renderSession() {
         </div>
         <div class="run-field">
           <label>Ø Puls (Herzschläge/min)</label>
-          <input type="number" placeholder="Ziel: ${plan.targetHR}" inputmode="numeric" data-run="hr" value="${r.hr || ''}" />
+          <input type="number" placeholder="Ziel: ${plan.targetHR}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Kalorien (kcal)</label>
-          <input type="number" placeholder="kcal" inputmode="numeric" data-run="kcal" value="${r.kcal || ''}" />
+          <input type="number" placeholder="kcal" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Ø Kadenz (Schritte/min)</label>
-          <input type="number" placeholder="Schritte/min" inputmode="numeric" data-run="cadence" value="${r.cadence || ''}" />
+          <input type="number" placeholder="Schritte/min" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field run-field-full">
           <label>Schmerz-Level (0 = nichts, 10 = abbrechen)</label>
