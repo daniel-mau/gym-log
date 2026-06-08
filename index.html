@@ -1052,6 +1052,10 @@
         <canvas id="painChart" style="max-height:250px;"></canvas>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Schmerz · pro Tag (letzte 4 Wochen)</h3>
+        <canvas id="dailyPainChart" style="max-height:250px;"></canvas>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:20px;">
         <h3 style="font-size:12px;color:var(--text-dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em;">Gym-Completion · letzte 4 Wochen</h3>
         <canvas id="completionChart" style="max-height:250px;"></canvas>
       </div>
@@ -2277,6 +2281,33 @@ function renderDashboard() {
         borderWidth: 2,
         tension: 0.3,
         fill: true
+      }]
+    }, { scales: { y: { min: 0, max: 10 } } });
+
+    // Daily pain chart
+    const dailyPainData = [];
+    const dailyPainLabels = [];
+    for (let i = 27; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateKey = getDateKey(d);
+      const wo = workoutMap[dateKey];
+      const painValue = (wo && typeof wo.run?.pain === 'number') ? wo.run.pain : null;
+      dailyPainData.push(painValue);
+      dailyPainLabels.push(d.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' }));
+    }
+
+    renderChart('dailyPainChart', 'line', {
+      labels: dailyPainLabels,
+      datasets: [{
+        label: 'Schmerz-Level',
+        data: dailyPainData,
+        borderColor: 'rgba(217, 82, 14, 1)',
+        backgroundColor: 'rgba(217, 82, 14, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true,
+        spanGaps: true
       }]
     }, { scales: { y: { min: 0, max: 10 } } });
 
