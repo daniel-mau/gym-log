@@ -2265,7 +2265,7 @@ function renderDashboard() {
     const painWorkouts = workouts.filter(w => w.data && w.data.run && typeof w.data.run.pain === 'number');
     let startDaysAgo = 27;
     if (painWorkouts.length > 0) {
-      const oldestDate = new Date(painWorkouts[0].date);
+      const oldestDate = new Date(painWorkouts[painWorkouts.length - 1].date);
       const today = new Date();
       const diffMs = today - oldestDate;
       startDaysAgo = Math.floor(diffMs / (1000 * 60 * 60 * 24));
