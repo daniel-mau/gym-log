@@ -1923,8 +1923,8 @@ function renderCalendar() {
     const dateKey = getDateKey(date);
     const wo = workoutMap[dateKey];
     const isToday = dateKey === todayKey;
-    const isPast = date < today;
-    const isFuture = date > today;
+    const isPast = dateKey < todayKey;
+    const isFuture = dateKey > todayKey;
     const dayKey = getDayOfWeek(date);
     const plan = WEEK_PLAN[dayKey];
 
