@@ -1496,7 +1496,19 @@ function renderSession() {
       const exData = (state.todayData.exercises && state.todayData.exercises[ex.id]) || { sets: [] };
       const prevExData = (prevWeekWorkout && prevWeekWorkout.exercises && prevWeekWorkout.exercises[ex.id]) || { sets: [] };
       const isTimeBased = ex.target.includes('sec');
-      const doneCount = (exData.sets || []).filter(s => s && (isTimeBased ? s.duration : (s.reps || s.weight))).length;
+      const notDone = !state.todayData.completed;
+      const doneCount = (exData.sets || []).filter((s, i) => {
+        if (!s) return false;
+        const prev = (prevExData.sets && prevExData.sets[i]) || {};
+        if (isTimeBased) {
+          if (notDone && s.duration && prev.duration && String(s.duration) === String(prev.duration)) return false;
+          return !!s.duration;
+        } else {
+          const wStale = notDone && s.weight && prev.weight && String(s.weight) === String(prev.weight);
+          const rStale = notDone && s.reps && prev.reps && String(s.reps) === String(prev.reps);
+          return (!wStale && s.weight) || (!rStale && s.reps);
+        }
+      }).length;
       html += `
         <div class="exercise-card" data-ex="${ex.id}">
           <div class="exercise-header" onclick="toggleExercise(this)">
@@ -1513,14 +1525,16 @@ function renderSession() {
             ${(() => {
               const isTimeBased = ex.target.includes('sec');
               let html = '';
+              const notCompleted = !state.todayData.completed;
               if (isTimeBased) {
                 html += '<div class="sets-grid header"><div>Satz</div><div colspan="2">Dauer (Sekunden)</div></div>';
                 for (let i = 0; i < ex.sets; i++) {
                   const set = (exData.sets && exData.sets[i]) || {};
                   const prevSet = (prevExData.sets && prevExData.sets[i]) || {};
-                  const value = set.duration || '';
+                  const isStale = notCompleted && set.duration && prevSet.duration && String(set.duration) === String(prevSet.duration);
+                  const value = isStale ? '' : (set.duration || '');
                   const placeholder = prevSet.duration ? prevSet.duration : '—';
-                  const className = !set.duration && prevSet.duration ? 'prefilled' : '';
+                  const className = (!value && prevSet.duration) ? 'prefilled' : '';
                   html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" placeholder="${placeholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="duration" value="${value}" class="${className}" style="grid-column: span 2;" /></div>`;
                 }
               } else {
@@ -1528,12 +1542,14 @@ function renderSession() {
                 for (let i = 0; i < ex.sets; i++) {
                   const set = (exData.sets && exData.sets[i]) || {};
                   const prevSet = (prevExData.sets && prevExData.sets[i]) || {};
-                  const weightValue = set.weight || '';
-                  const repsValue = set.reps || '';
+                  const weightStale = notCompleted && set.weight && prevSet.weight && String(set.weight) === String(prevSet.weight);
+                  const repsStale = notCompleted && set.reps && prevSet.reps && String(set.reps) === String(prevSet.reps);
+                  const weightValue = weightStale ? '' : (set.weight || '');
+                  const repsValue = repsStale ? '' : (set.reps || '');
                   const weightPlaceholder = prevSet.weight ? prevSet.weight : '—';
                   const repsPlaceholder = prevSet.reps ? prevSet.reps : '—';
-                  const weightClassName = !set.weight && prevSet.weight ? 'prefilled' : '';
-                  const repsClassName = !set.reps && prevSet.reps ? 'prefilled' : '';
+                  const weightClassName = (!weightValue && prevSet.weight) ? 'prefilled' : '';
+                  const repsClassName = (!repsValue && prevSet.reps) ? 'prefilled' : '';
                   html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" step="0.5" placeholder="${weightPlaceholder}" inputmode="decimal" data-ex="${ex.id}" data-set="${i}" data-field="weight" value="${weightValue}" class="${weightClassName}" /><input type="number" placeholder="${repsPlaceholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="reps" value="${repsValue}" class="${repsClassName}" /></div>`;
                 }
               }
@@ -1561,18 +1577,24 @@ function renderSession() {
     const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
     const prevRun = (prevWeekWorkout && prevWeekWorkout.run) || {};
 
-    const getRunValue = (field) => r[field] || prevRun[field] || '';
-    const isRunPrefilled = (field) => !r[field] && prevRun[field];
+    const notCompletedRun = !state.todayData.completed;
+    const getRunValue = (field) => {
+      const val = r[field] || '';
+      if (notCompletedRun && val && prevRun[field] && String(val) === String(prevRun[field])) return '';
+      return val;
+    };
+    const getRunPlaceholder = (field, fallback) => prevRun[field] ? prevRun[field] : fallback;
+    const isRunPrefilled = (field) => !getRunValue(field) && prevRun[field];
 
     html += `
       <div class="run-form">
         <div class="run-field">
           <label>Distanz</label>
-          <input type="number" step="0.01" placeholder="${plan.targetDistance}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" />
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Gesamtzeit (mm:ss)</label>
-          <input type="text" placeholder="z.B. 42:30" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" />
+          <input type="text" placeholder="${getRunPlaceholder('time', 'z.B. 42:30')}" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Pace (berechnet)</label>
@@ -1580,15 +1602,15 @@ function renderSession() {
         </div>
         <div class="run-field">
           <label>Ø Puls (Herzschläge/min)</label>
-          <input type="number" placeholder="Ziel: ${plan.targetHR}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('hr', 'Ziel: ' + plan.targetHR)}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Kalorien (kcal)</label>
-          <input type="number" placeholder="kcal" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('kcal', 'kcal')}" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field">
           <label>Ø Kadenz (Schritte/min)</label>
-          <input type="number" placeholder="Schritte/min" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('cadence', 'Schritte/min')}" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" />
         </div>
         <div class="run-field run-field-full">
           <label>Schmerz-Level (0 = nichts, 10 = abbrechen)</label>
