@@ -2753,9 +2753,13 @@ function loadBodyMetrics(dateKey) {
 
 function saveBodyMetrics() {
   const dateKey = getDateKey(new Date());
+  const bw = document.getElementById('bodyWeight');
+  const bf = document.getElementById('bodyFat');
+  if (bw && bw.value) bw.classList.remove('prefilled');
+  if (bf && bf.value) bf.classList.remove('prefilled');
   const metrics = {
-    weight: document.getElementById('bodyWeight').value,
-    fat: document.getElementById('bodyFat').value
+    weight: bw ? bw.value : '',
+    fat: bf ? bf.value : ''
   };
   localStorage.setItem(`bodyMetrics:${dateKey}`, JSON.stringify(metrics));
   syncBodyMetricsToSupabase(dateKey, metrics);
@@ -2790,7 +2794,12 @@ function updateTargetDisplays() {
 
 function initBodyMetrics() {
   const targets = loadBodyTargets();
-  const todayMetrics = loadBodyMetrics(getDateKey(new Date()));
+  const todayKey = getDateKey(new Date());
+  const todayMetrics = loadBodyMetrics(todayKey);
+
+  const allMetrics = loadAllBodyMetrics();
+  const lastEntry = allMetrics.filter(m => m.date < todayKey).pop();
+  const lastMetrics = (lastEntry && lastEntry.data) || {};
 
   const tw = document.getElementById('targetWeight');
   const tf = document.getElementById('targetFat');
@@ -2799,8 +2808,27 @@ function initBodyMetrics() {
 
   if (tw && targets.weight) tw.value = targets.weight;
   if (tf && targets.fat) tf.value = targets.fat;
-  if (bw && todayMetrics.weight) bw.value = todayMetrics.weight;
-  if (bf && todayMetrics.fat) bf.value = todayMetrics.fat;
+
+  if (bw) {
+    if (todayMetrics.weight) {
+      bw.value = todayMetrics.weight;
+      bw.classList.remove('prefilled');
+    } else if (lastMetrics.weight) {
+      bw.value = '';
+      bw.placeholder = lastMetrics.weight;
+      bw.classList.add('prefilled');
+    }
+  }
+  if (bf) {
+    if (todayMetrics.fat) {
+      bf.value = todayMetrics.fat;
+      bf.classList.remove('prefilled');
+    } else if (lastMetrics.fat) {
+      bf.value = '';
+      bf.placeholder = lastMetrics.fat;
+      bf.classList.add('prefilled');
+    }
+  }
 
   updateTargetDisplays();
 
