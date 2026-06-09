@@ -2763,6 +2763,13 @@ function saveBodyMetrics() {
   };
   localStorage.setItem(`bodyMetrics:${dateKey}`, JSON.stringify(metrics));
   syncBodyMetricsToSupabase(dateKey, metrics);
+
+  // Update sparklines and dashboard
+  const ws = document.getElementById('weightSparkline');
+  const fs = document.getElementById('fatSparkline');
+  if (ws) ws.innerHTML = renderBodyMetricSparkline('weight');
+  if (fs) fs.innerHTML = renderBodyMetricSparkline('fat');
+  renderDashboard();
 }
 
 function loadAllBodyMetrics() {
