@@ -141,11 +141,19 @@
   .day-btn[data-type="rest"] .indicator { background: var(--rest); opacity: 0.4; }
   .day-btn .completed {
     position: absolute;
-    bottom: 3px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    color: var(--success);
+    top: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    background: var(--success);
+    border-radius: 50%;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 
   /* Session header — iOS card style */
