@@ -1615,14 +1615,18 @@ function renderSession() {
         <div class="run-field run-field-full">
           <label>Schmerz-Level (0 = nichts, 10 = abbrechen)</label>
           <div class="pain-scale">
-            ${Array.from({length: 11}, (_, i) => `
-              <button class="pain-btn pain-${i} ${r.pain === i ? 'active' : ''}" data-pain="${i}">${i}</button>
-            `).join('')}
+            ${(() => {
+              const painVal = r.pain;
+              const prevPainVal = prevRun.pain;
+              const painStale = notCompletedRun && typeof painVal === 'number' && typeof prevPainVal === 'number' && painVal === prevPainVal;
+              const activePain = painStale ? -1 : painVal;
+              return Array.from({length: 11}, (_, i) => '<button class="pain-btn pain-' + i + (activePain === i ? ' active' : '') + '" data-pain="' + i + '">' + i + '</button>').join('');
+            })()}
           </div>
         </div>
         <div class="run-field run-field-full">
           <label>Wo / Was hat geschmerzt</label>
-          <input type="text" placeholder="z.B. linkes Knie außen, ab km 5" data-run="painLocation" value="${r.painLocation || ''}" />
+          <input type="text" placeholder="${prevRun.painLocation ? prevRun.painLocation : 'z.B. linkes Knie außen, ab km 5'}" data-run="painLocation" value="${(() => { const v = r.painLocation || ''; return (notCompletedRun && v && prevRun.painLocation && v === prevRun.painLocation) ? '' : v; })()}" class="${(() => { const v = r.painLocation || ''; return (notCompletedRun && (!v || (prevRun.painLocation && v === prevRun.painLocation)) && prevRun.painLocation) ? 'prefilled' : ''; })()}" />
         </div>
         <div class="run-field run-field-full">
           <label>Notizen zum Lauf</label>
