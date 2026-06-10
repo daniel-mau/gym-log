@@ -134,81 +134,81 @@
     transform: scaleY(1.1);
   }
 
-  /* Week navigator — glossy pill */
+  /* Week navigator — pill layout */
   .week-nav {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    display: flex;
+    gap: 8px;
     margin-bottom: 16px;
-    background: var(--bg-card);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    border-radius: var(--radius-lg);
-    padding: 4px;
-    box-shadow: var(--glass-shadow);
+    overflow-x: auto;
+    justify-content: center;
+    padding: 4px 0;
   }
   .day-btn {
+    min-width: 56px;
+    width: 56px;
+    height: 72px;
     background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 8px 3px 10px;
+    border: 1.5px solid var(--text-dim);
+    border-radius: 12px;
+    padding: 8px 2px;
     cursor: pointer;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
     color: var(--text);
     font-family: inherit;
     position: relative;
   }
-  .day-btn:hover { background: var(--surface-hover); }
+  .day-btn:hover { background: var(--surface-subtle); }
   .day-btn.active {
-    background: var(--surface-active);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
   }
+  .day-btn.active .day-label { color: white; }
+  .day-btn.active .day-date { color: white; }
   .day-btn .day-label {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: -0.01em;
     text-transform: uppercase;
-    color: var(--text-mute);
-    margin-bottom: 4px;
+    color: var(--text-dim);
+    font-weight: 500;
+    line-height: 1;
+  }
+  .day-btn.active .day-label { color: white; }
+  .day-btn .day-date {
+    font-size: 13px;
     font-weight: 600;
+    color: var(--text);
+    margin-top: 2px;
+    line-height: 1;
   }
-  .day-btn.active .day-label { color: var(--text); }
-  .day-btn .day-type {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-weight: 600;
-    color: var(--text-mute);
-  }
-  .day-btn.active .day-type { color: var(--text-dim); }
-  .day-btn .indicator {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .day-btn[data-type="gym"] .indicator { background: var(--gym); }
-  .day-btn[data-type="run"] .indicator { background: var(--run); }
-  .day-btn[data-type="long"] .indicator { background: var(--long); }
-  .day-btn[data-type="rest"] .indicator { background: var(--rest); opacity: 0.4; }
+  .day-btn.active .day-date { color: white; }
+  .day-btn .day-type { display: none; }
+  .day-btn .indicator { display: none; }
   .day-btn .completed {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 18px;
-    height: 18px;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
     background: var(--success);
     border-radius: 50%;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 0;
+  }
+  .day-btn.active .completed {
+    background: white;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    bottom: 5px;
   }
 
   /* Session header — glass card */
@@ -1174,9 +1174,9 @@
     .container { padding: 12px; }
     .header { margin-bottom: 8px; }
     .header h1 { font-size: 28px; }
-    .day-btn { padding: 6px 2px 8px; }
-    .day-btn .day-label { font-size: 10px; margin-bottom: 3px; }
-    .day-btn .day-type { font-size: 8px; }
+    .day-btn { min-width: 52px; width: 52px; height: 68px; padding: 6px 2px; }
+    .day-btn .day-label { font-size: 11px; }
+    .day-btn .day-date { font-size: 12px; margin-top: 1px; }
     .session-title { font-size: 20px; }
     .session-header { padding: 14px; margin-bottom: 10px; }
     .exercise-card { margin-bottom: 6px; }
@@ -1761,7 +1761,6 @@ function renderWeekNav() {
   const dates = getWeekDates();
   const today = new Date();
   const todayKey = getDateKey(today);
-  const todayDay = getDayOfWeek(today);
 
   const nav = document.getElementById('weekNav');
   nav.innerHTML = '';
@@ -1771,21 +1770,18 @@ function renderWeekNav() {
     const date = dates[i];
     const dateKey = getDateKey(date);
     const plan = WEEK_PLAN[dayKey];
-    const isToday = dateKey === todayKey;
     const isSelected = dayKey === state.selectedDay;
     const wo = loadWorkout(dateKey);
     const isDone = wo && wo.completed;
-    
+
     const btn = document.createElement('button');
     btn.className = `day-btn ${isSelected ? 'active' : ''}`;
     btn.dataset.day = dayKey;
     btn.dataset.type = plan.type;
     btn.dataset.date = dateKey;
     btn.innerHTML = `
-      <div class="indicator"></div>
-      <div class="day-label">${DAY_LABELS[dayKey]}${isToday ? ' ·' : ''}</div>
-      <div class="day-date" style="font-size:10px;color:var(--text-mute);margin-top:1px;">${date.getDate()}.</div>
-      <div class="day-type">${DAY_TYPE_LABELS[plan.type]}</div>
+      <div class="day-label">${DAY_LABELS[dayKey]}</div>
+      <div class="day-date">${date.getDate()}.</div>
       ${isDone ? '<div class="completed">✓</div>' : ''}
     `;
     btn.addEventListener('click', () => selectDay(dayKey));
