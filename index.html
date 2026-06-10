@@ -135,10 +135,26 @@
   }
 
   /* Week navigator — individual pills */
+  .week-nav-section {
+    margin-bottom: 16px;
+  }
+  .week-nav-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .week-nav-header svg {
+    width: 16px;
+    height: 16px;
+  }
   .week-nav {
     display: flex;
     gap: 6px;
-    margin-bottom: 16px;
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
@@ -150,7 +166,7 @@
   }
   .day-btn {
     flex: 1;
-    max-width: 70px;
+    max-width: 56px;
     background: white;
     border: 1px solid #D0D0D0;
     border-radius: 14px;
@@ -186,8 +202,8 @@
   }
   .day-btn.active .day-label { color: white; }
   .day-btn .day-date {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     color: var(--text);
     line-height: 1;
   }
@@ -1179,9 +1195,9 @@
     .header { margin-bottom: 8px; }
     .header h1 { font-size: 28px; }
     .week-nav { gap: 4px; padding: 5px; }
-    .day-btn { padding: 6px 3px; max-width: 64px; border-radius: 12px; }
+    .day-btn { padding: 6px 2px; max-width: 52px; border-radius: 12px; }
     .day-btn .day-label { font-size: 9px; }
-    .day-btn .day-date { font-size: 13px; }
+    .day-btn .day-date { font-size: 9px; }
     .day-btn .day-type { font-size: 7px; }
     .session-title { font-size: 20px; }
     .session-header { padding: 14px; margin-bottom: 10px; }
@@ -1274,7 +1290,23 @@
     </div>
   </header>
 
-  <nav class="week-nav" id="weekNav"></nav>
+  <div class="week-nav-section">
+    <div class="week-nav-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      Täglicher Fortschritt
+    </div>
+    <nav class="week-nav" id="weekNav"></nav>
+  </div>
 
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
     <button class="secondary" onclick="toggleDashboard()">📊 Dashboard</button>
@@ -1800,7 +1832,8 @@ function renderWeekNav() {
       statusIcon = '×';
     }
 
-    const typeLabel = plan.type === 'gym' ? 'gym' : plan.type === 'run' || plan.type === 'long' ? 'run' : plan.type;
+    let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Run' : plan.type;
+    if (typeLabel === 'rest') typeLabel = 'Rest';
 
     btn.innerHTML = `
       <div class="day-label">${DAY_LABELS[dayKey]}</div>
