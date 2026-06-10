@@ -1194,6 +1194,38 @@
     .calendar-day { padding: 4px 0; font-size: 13px; }
     .save-bar { padding: 10px 14px; margin-top: 16px; border-radius: 12px; }
   }
+
+  /* Read-only mode */
+  .read-only input,
+  .read-only textarea {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .read-only .save-bar,
+  .read-only .body-metrics,
+  .read-only button[onclick*="deleteCurrentWorkout"],
+  .read-only button[onclick*="deleteWorkoutDate"] {
+    display: none !important;
+  }
+  .read-only .pain-btn {
+    pointer-events: none;
+  }
+  .read-only::after {
+    content: 'Lesezugriff';
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mute);
+    z-index: 9000;
+  }
 </style>
 </head>
 <body>
@@ -1476,7 +1508,8 @@ let state = {
   weekOffset: 0,
   todayData: null,
   saveTimer: null,
-  syncStatus: 'idle'
+  syncStatus: 'idle',
+  readOnly: false
 };
 
 function getDateKey(date) {
@@ -2104,7 +2137,7 @@ function updatePace() {
 }
 
 function collectAndSave() {
-  if (!state.todayData) return;
+  if (!state.todayData || state.readOnly) return;
   const plan = WEEK_PLAN[state.selectedDay];
   if (!plan) return;
 
@@ -2173,6 +2206,7 @@ function collectAndSave() {
 }
 
 function markComplete() {
+  if (state.readOnly) return;
   collectAndSave();
   if (state.todayData) {
     state.todayData.completed = true;
@@ -2193,6 +2227,7 @@ function markComplete() {
 }
 
 function markIncomplete() {
+  if (state.readOnly) return;
   if (!confirm('Einheit zurücksetzen – Eingaben behalten, nur Häkchen entfernen?')) return;
   if (state.todayData) {
     state.todayData.completed = false;
@@ -3095,6 +3130,7 @@ function loadBodyTargets() {
 }
 
 function saveBodyTargets() {
+  if (state.readOnly) return;
   const targets = {
     weight: document.getElementById('targetWeight').value,
     fat: document.getElementById('targetFat').value
@@ -3112,6 +3148,7 @@ function loadBodyMetrics(dateKey) {
 }
 
 function saveBodyMetrics() {
+  if (state.readOnly) return;
   const dateKey = getDateKey(new Date());
   const bw = document.getElementById('bodyWeight');
   const bf = document.getElementById('bodyFat');
@@ -3245,21 +3282,24 @@ async function syncBodyTargetsToSupabase(targets) {
 // ============================================================
 
 const CORRECT_PASSWORD = '6845d4n13l';
+const VIEWER_PASSWORD = 'viewer2025';
 
 function checkPassword() {
   const input = document.getElementById('passwordInput');
   const password = input.value.trim();
   const errorEl = document.getElementById('passwordError');
 
-  console.log('Password check:', { entered: password, expected: CORRECT_PASSWORD, match: password === CORRECT_PASSWORD });
-
   if (password === CORRECT_PASSWORD) {
-    console.log('Password correct, unlocking app');
     errorEl.classList.remove('show');
-    localStorage.setItem('gymLogAuth', 'true');
+    localStorage.setItem('gymLogAuth', 'full');
+    state.readOnly = false;
+    unlockApp();
+  } else if (password === VIEWER_PASSWORD) {
+    errorEl.classList.remove('show');
+    localStorage.setItem('gymLogAuth', 'viewer');
+    state.readOnly = true;
     unlockApp();
   } else {
-    console.log('Password incorrect');
     errorEl.classList.add('show');
     input.value = '';
     input.focus();
@@ -3269,13 +3309,22 @@ function checkPassword() {
 function unlockApp() {
   document.getElementById('passwordScreen').classList.add('hidden');
   document.getElementById('mainContent').style.display = 'block';
+  if (state.readOnly) applyReadOnly();
   window.dispatchEvent(new Event('gymLogUnlocked'));
 }
 
-function initializeAuthScreen() {
-  const isAuthed = localStorage.getItem('gymLogAuth') === 'true';
+function applyReadOnly() {
+  document.body.classList.add('read-only');
+}
 
-  if (isAuthed) {
+function initializeAuthScreen() {
+  const authLevel = localStorage.getItem('gymLogAuth');
+
+  if (authLevel === 'full' || authLevel === 'true') {
+    state.readOnly = false;
+    unlockApp();
+  } else if (authLevel === 'viewer') {
+    state.readOnly = true;
     unlockApp();
   } else {
     document.getElementById('passwordInput').focus();
