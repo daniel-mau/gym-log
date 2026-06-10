@@ -1014,6 +1014,122 @@
     background: rgba(255, 255, 255, 0.55);
   }
 
+  .week-picker-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .week-picker-overlay.open {
+    display: flex;
+    opacity: 1;
+  }
+  .week-picker-sheet {
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 500px;
+    max-height: 70vh;
+    padding: 0 0 env(safe-area-inset-bottom, 16px) 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .week-picker-overlay.open .week-picker-sheet {
+    transform: translateY(0);
+  }
+  .week-picker-handle {
+    width: 36px;
+    height: 5px;
+    background: rgba(120,120,128,0.3);
+    border-radius: 3px;
+    margin: 8px auto 0;
+  }
+  .week-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 8px;
+  }
+  .week-picker-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .week-picker-done {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .week-picker-list {
+    overflow-y: auto;
+    max-height: 50vh;
+    padding: 0 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .week-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px;
+    margin: 2px 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .week-picker-item:active {
+    background: rgba(0,0,0,0.05);
+  }
+  .week-picker-item.selected {
+    background: var(--accent);
+    color: white;
+  }
+  .week-picker-item.this-week:not(.selected) {
+    border: 1.5px solid var(--accent);
+  }
+  .week-picker-item .week-kw {
+    font-weight: 600;
+    min-width: 48px;
+  }
+  .week-picker-item .week-range {
+    flex: 1;
+    text-align: right;
+    font-size: 13px;
+    opacity: 0.7;
+  }
+  .week-picker-item.selected .week-range {
+    opacity: 0.9;
+  }
+  .week-picker-today {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 8px 12px 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(0, 122, 255, 0.08);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+  }
+
   @media (max-width: 768px) {
     .container { padding: 12px; }
     .header { margin-bottom: 8px; }
@@ -1070,11 +1186,10 @@
       </div>
       <div class="header-meta">
         <span id="syncIndicator" style="margin-right:16px;">☁ Online</span>
-        <span id="weekSelector" style="cursor:pointer;position:relative;">
+        <span id="weekSelector" style="cursor:pointer;">
           <span id="weekNav-prev" onclick="changeWeek(-1)" style="padding:4px 6px;font-size:16px;">‹</span>
           <span id="weekLabel" onclick="toggleWeekPicker()" style="padding:4px 8px;">KW <span id="weekNumber">—</span></span>
           <span id="weekNav-next" onclick="changeWeek(1)" style="padding:4px 6px;font-size:16px;">›</span>
-          <div id="weekPicker" style="display:none;position:absolute;top:100%;right:0;z-index:100;margin-top:8px;min-width:200px;background:var(--bg-card-solid);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:8px;"></div>
         </span>
       </div>
     </div>
@@ -1161,6 +1276,18 @@
     <div class="calendar-modal-content" style="position:relative;">
       <button class="calendar-modal-close" onclick="closeCalendarModal()">✕</button>
       <div id="calendarModalContent"></div>
+    </div>
+  </div>
+
+  <div class="week-picker-overlay" id="weekPickerOverlay" onclick="if(event.target===this)closeWeekPicker()">
+    <div class="week-picker-sheet" id="weekPickerSheet">
+      <div class="week-picker-handle"></div>
+      <div class="week-picker-header">
+        <span class="week-picker-title">Woche auswählen</span>
+        <button class="week-picker-done" onclick="closeWeekPicker()">Fertig</button>
+      </div>
+      <div class="week-picker-list" id="weekPickerList"></div>
+      <button class="week-picker-today" onclick="goToWeekOffset(0)">Zurück zur aktuellen Woche</button>
     </div>
   </div>
 
@@ -1517,42 +1644,42 @@ function goToWeekOffset(offset) {
 }
 
 function toggleWeekPicker() {
-  const picker = document.getElementById('weekPicker');
-  if (picker.style.display !== 'none') {
+  const overlay = document.getElementById('weekPickerOverlay');
+  if (overlay.classList.contains('open')) {
     closeWeekPicker();
     return;
   }
   const months = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const list = document.getElementById('weekPickerList');
   let html = '';
-  for (let i = -8; i <= 2; i++) {
+  for (let i = -8; i <= 4; i++) {
     const dates = getWeekDates(i);
     const mon = dates[0];
     const sun = dates[6];
     const wn = getISOWeekNumber(mon);
     const isCurrent = i === state.weekOffset;
     const isThisWeek = i === 0;
-    const label = `KW ${wn}: ${mon.getDate()}. ${months[mon.getMonth()]} – ${sun.getDate()}. ${months[sun.getMonth()]}`;
-    html += `<div onclick="goToWeekOffset(${i})" style="padding:8px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:${isCurrent ? '600' : '400'};background:${isCurrent ? 'var(--accent)' : 'transparent'};color:${isCurrent ? 'white' : 'var(--text)'};${isThisWeek && !isCurrent ? 'border:1px solid var(--accent);' : ''}" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">${label}</div>`;
+    const classes = `week-picker-item${isCurrent ? ' selected' : ''}${isThisWeek && !isCurrent ? ' this-week' : ''}`;
+    const range = `${mon.getDate()}. ${months[mon.getMonth()]} – ${sun.getDate()}. ${months[sun.getMonth()]}`;
+    html += `<div class="${classes}" onclick="goToWeekOffset(${i})">
+      <span class="week-kw">KW ${wn}</span>
+      <span class="week-range">${range}</span>
+    </div>`;
   }
-  html += `<div onclick="goToWeekOffset(0)" style="padding:8px 12px;margin-top:4px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;">Aktuelle Woche</div>`;
-  picker.innerHTML = html;
-  picker.style.display = 'block';
+  list.innerHTML = html;
 
-  setTimeout(() => {
-    document.addEventListener('click', closeWeekPickerOutside);
-  }, 0);
+  overlay.classList.add('open');
+
+  const selected = list.querySelector('.selected');
+  if (selected) {
+    setTimeout(() => selected.scrollIntoView({ block: 'center', behavior: 'instant' }), 50);
+  }
 }
 
 function closeWeekPicker() {
-  document.getElementById('weekPicker').style.display = 'none';
-  document.removeEventListener('click', closeWeekPickerOutside);
+  document.getElementById('weekPickerOverlay').classList.remove('open');
 }
 
-function closeWeekPickerOutside(e) {
-  if (!document.getElementById('weekSelector').contains(e.target)) {
-    closeWeekPicker();
-  }
-}
 
 function renderWeekNav() {
   const dates = getWeekDates();
@@ -3135,6 +3262,7 @@ window.jumpToDate = jumpToDate;
 window.changeWeek = changeWeek;
 window.goToWeekOffset = goToWeekOffset;
 window.toggleWeekPicker = toggleWeekPicker;
+window.closeWeekPicker = closeWeekPicker;
 window.toggleDashboard = toggleDashboard;
 window.toggleStats = toggleStats;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
