@@ -1193,10 +1193,10 @@ const WEEK_PLAN = {
   },
   wed: {
     type: 'gym',
-    name: 'Rücken & Deadlift',
-    subtitle: '5/3/1-Welle Deadlift · Rückseite Muskelkette · Bizeps-Fokus',
+    name: 'Rücken & Trap Bar Deadlift',
+    subtitle: '5/3/1-Welle Trap Bar Deadlift · Rückseite Muskelkette · Bizeps-Fokus',
     exercises: [
-      { id: 'deadlift', name: 'Deadlift', target: '5/3/1-Welle · Hauptlift', sets: 3, detail: 'Hauptlift. 5/3/1-Wendler-Schema. Das Trainingsmaximum muss noch ermittelt werden: Teste wie viel Gewicht du genau 5 Mal heben kannst (5er-Wiederholungsmaximum), dieses Gewicht ist dein Trainingsmaximum. Bewegung: Hüfte nach hinten schieben, Schultern über der Hantel, Rücken neutral halten. Mit guter Form ist die Übung knieschonend.' },
+      { id: 'trap_bar_deadlift', name: 'Trap Bar Deadlift', target: '5/3/1-Welle · Hauptlift', sets: 3, detail: 'Hauptlift. 5/3/1-Wendler-Schema. Das Trainingsmaximum muss noch ermittelt werden: Teste wie viel Gewicht du genau 5 Mal heben kannst (5er-Wiederholungsmaximum), dieses Gewicht ist dein Trainingsmaximum. Trap Bar (Hex Bar) erlaubt einen aufrechteren Oberkörper als konventionelles Kreuzheben – weniger Belastung auf den unteren Rücken und kniefreundlicher. In die Mitte der Bar stellen, neutraler Griff an den seitlichen Griffen, Hüfte nach hinten, Brust raus, Rücken neutral halten und mit den Beinen hochdrücken.' },
       { id: 'db_rows', name: 'Kurzhantel-Ruderungen einarmig', target: '4 × 10–12 pro Seite · 90s', sets: 4, detail: 'Eine Hand auf einer Bank abstützen, anderes Bein nach vorne. Kurzhantel zum Hüftbereich hochziehen, dabei das Schulterblatt zusammenziehen. Dies ist die Hauptzugsübung des Trainings.' },
       { id: 'back_extension', name: 'Rückenstrecker-Maschine 45°', target: '3 × 12–15 · 60s Pause', sets: 3, detail: 'Mit der Hüfte auf dem Polster, kontrolliert nach vorne hängen, dann durch Rückenstrecker-Kontraction wieder hochkommen. Die Wirbelsäule bleibt dabei neutral. Optional eine Hantelscheibe vor der Brust halten für mehr Gewicht.' },
       { id: 'hip_abduction', name: 'Kabel-Hüftabduktion stehend', target: '3 × 12 pro Seite · 60s', sets: 3, detail: 'Manschette am Knöchel, Bein kontrolliert seitlich weg gegen den Kabelwiderstand. Das Stützbein bleibt leicht gebeugt. Diese Übung aktiviert den äußeren Gesäßmuskel, der für Hüftstabilität wichtig ist.' },
@@ -1259,7 +1259,7 @@ const EXERCISE_IMG = {
   dips:               'Dips_-_Triceps_Version/0.jpg',
   face_pulls:         'Face_Pull/0.jpg',
   wall_sit:           'Box_Squat_with_Bands/0.jpg',
-  deadlift:           'Barbell_Deadlift/0.jpg',
+  trap_bar_deadlift:  'Trap_Bar_Deadlift/0.jpg',
   db_rows:            'One-Arm_Dumbbell_Row/0.jpg',
   back_extension:     'Hyperextensions_With_No_Hyperextension_Bench/0.jpg',
   hip_abduction:      'Cable_Hip_Adduction/0.jpg',
@@ -1751,19 +1751,23 @@ function renderSession() {
   bindInputs();
   if (plan.type === 'run' || plan.type === 'long') updatePace();
   if (plan.type === 'gym' && plan.exercises.length > 0) {
-    // Keep all incomplete exercises expanded
-    const cards = container.querySelectorAll('.exercise-card');
-    for (const card of cards) {
-      const status = card.querySelector('.exercise-status');
-      if (!status.classList.contains('done')) {
-        card.classList.add('expanded');
-      }
-    }
+    // All exercises start collapsed
   }
 }
 
 function toggleExercise(headerEl) {
-  headerEl.parentElement.classList.toggle('expanded');
+  const card = headerEl.parentElement;
+  card.classList.toggle('expanded');
+}
+
+function checkAutoCollapseExercise(card) {
+  if (!card.classList.contains('expanded')) return;
+  const inputs = card.querySelectorAll('.exercise-body input[type="number"], .exercise-body input[type="text"]');
+  if (inputs.length === 0) return;
+  const allFilled = Array.from(inputs).every(inp => inp.value.trim() !== '');
+  if (allFilled) {
+    card.classList.remove('expanded');
+  }
 }
 
 function bindInputs() {
@@ -1887,6 +1891,10 @@ function collectAndSave() {
   renderWeekNav();
   renderStats();
   renderHistory();
+
+  if (plan.type === 'gym') {
+    document.querySelectorAll('.exercise-card.expanded').forEach(checkAutoCollapseExercise);
+  }
 }
 
 function markComplete() {
