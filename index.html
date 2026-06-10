@@ -1948,8 +1948,10 @@ function renderSession() {
 
   // Save bar
   if (plan.type === 'gym') {
+    const isCompleted = state.todayData.completed;
     html += `
       <div class="save-bar gym-bar" style="flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;">
+        ${!isCompleted ? `
         <div class="stopwatch">
           <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
           <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
@@ -1960,6 +1962,7 @@ function renderSession() {
             <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
           </div>
         </div>
+        ` : ''}
         <div style="display:flex;gap:8px;">
           <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
           <button class="primary" onclick="markComplete()">Einheit abschließen</button>
