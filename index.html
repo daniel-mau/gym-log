@@ -152,7 +152,7 @@
     flex: 1;
     max-width: 70px;
     background: white;
-    border: 1.5px solid #D0D0D0;
+    border: 1px solid #D0D0D0;
     border-radius: 14px;
     padding: 8px 4px;
     cursor: pointer;
@@ -166,9 +166,10 @@
     position: relative;
   }
   .day-btn:hover { background: rgba(0,0,0,0.02); }
+  .day-btn.future { border: none; }
   .day-btn.done {
     border-color: var(--success);
-    box-shadow: inset 0 0 0 1px var(--success);
+    border-width: 1px;
   }
   .day-btn.active {
     background: var(--accent);
@@ -1780,12 +1781,14 @@ function renderWeekNav() {
     const wo = loadWorkout(dateKey);
     const isDone = wo && wo.completed;
     const isPast = dateKey < todayKey;
+    const isFuture = dateKey > todayKey;
     const isToday = dateKey === todayKey;
 
     const btn = document.createElement('button');
     const classes = ['day-btn'];
     if (isSelected) classes.push('active');
     if (isDone) classes.push('done');
+    if (isFuture) classes.push('future');
     btn.className = classes.join(' ');
     btn.dataset.day = dayKey;
     btn.dataset.date = dateKey;
@@ -1797,10 +1800,12 @@ function renderWeekNav() {
       statusIcon = '×';
     }
 
+    const typeLabel = plan.type === 'gym' ? 'gym' : plan.type === 'run' || plan.type === 'long' ? 'run' : plan.type;
+
     btn.innerHTML = `
       <div class="day-label">${DAY_LABELS[dayKey]}</div>
       <div class="day-date">${String(date.getDate()).padStart(2, '0')}</div>
-      <div class="day-type">${plan.name}</div>
+      <div class="day-type">${typeLabel}</div>
       <div class="day-status">${statusIcon}</div>
     `;
     btn.addEventListener('click', () => selectDay(dayKey));
