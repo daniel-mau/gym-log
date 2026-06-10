@@ -96,6 +96,20 @@
   }
   .header-meta span { color: var(--text-dim); }
 
+  #weekSelector {
+    font-weight: 500;
+  }
+  #weekSelector:active {
+    background: rgba(0, 122, 255, 0.1);
+    transform: scale(0.98);
+  }
+  #weekSelector svg {
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  #weekSelector:active svg {
+    transform: scaleY(1.1);
+  }
+
   /* Week navigator — glossy pill */
   .week-nav {
     display: grid;
@@ -1186,11 +1200,12 @@
       </div>
       <div class="header-meta">
         <span id="syncIndicator" style="margin-right:16px;">☁ Online</span>
-        <span id="weekSelector" style="cursor:pointer;">
-          <span id="weekNav-prev" onclick="changeWeek(-1)" style="padding:4px 6px;font-size:16px;">‹</span>
-          <span id="weekLabel" onclick="toggleWeekPicker()" style="padding:4px 8px;">KW <span id="weekNumber">—</span></span>
-          <span id="weekNav-next" onclick="changeWeek(1)" style="padding:4px 6px;font-size:16px;">›</span>
-        </span>
+        <button id="weekSelector" onclick="toggleWeekPicker()" style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:15px;font-weight:500;color:var(--accent);display:flex;align-items:center;gap:4px;border-radius:var(--radius-sm);transition:background 0.15s;">
+          <span>KW <span id="weekNumber">—</span></span>
+          <svg style="width:16px;height:16px;opacity:0.6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
