@@ -134,82 +134,69 @@
     transform: scaleY(1.1);
   }
 
-  /* Week navigator — glossy pill */
+  /* Week navigator — individual pills */
   .week-nav {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    display: flex;
+    gap: 6px;
     margin-bottom: 16px;
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: 4px;
+    padding: 6px;
     box-shadow: var(--glass-shadow);
+    justify-content: center;
   }
   .day-btn {
+    flex: 1;
+    max-width: 56px;
     background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 8px 3px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 2px 8px;
     cursor: pointer;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     transition: all 0.2s ease;
     color: var(--text);
     font-family: inherit;
     position: relative;
   }
   .day-btn:hover { background: var(--surface-hover); }
+  .day-btn.done { border-color: var(--text-dim); }
   .day-btn.active {
-    background: var(--surface-active);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
   }
   .day-btn .day-label {
     font-size: 11px;
     letter-spacing: -0.01em;
     text-transform: uppercase;
     color: var(--text-mute);
-    margin-bottom: 4px;
     font-weight: 600;
-  }
-  .day-btn.active .day-label { color: var(--text); }
-  .day-btn .day-type {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-weight: 600;
-    color: var(--text-mute);
-  }
-  .day-btn.active .day-type { color: var(--text-dim); }
-  .day-btn .indicator {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .day-btn[data-type="gym"] .indicator { background: var(--gym); }
-  .day-btn[data-type="run"] .indicator { background: var(--run); }
-  .day-btn[data-type="long"] .indicator { background: var(--long); }
-  .day-btn[data-type="rest"] .indicator { background: var(--rest); opacity: 0.4; }
-  .day-btn .completed {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 18px;
-    height: 18px;
-    background: var(--success);
-    border-radius: 50%;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     line-height: 1;
   }
+  .day-btn.active .day-label { color: white; }
+  .day-btn .day-date {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .day-btn.active .day-date { color: white; }
+  .day-btn .day-status {
+    font-size: 10px;
+    color: var(--text-mute);
+    line-height: 1;
+    margin-top: 1px;
+  }
+  .day-btn.done .day-status { color: var(--success); }
+  .day-btn.active .day-status { color: rgba(255,255,255,0.8); }
+  .day-btn.active.done .day-status { color: white; }
 
   /* Session header — glass card */
   .session-header {
@@ -1174,9 +1161,10 @@
     .container { padding: 12px; }
     .header { margin-bottom: 8px; }
     .header h1 { font-size: 28px; }
-    .day-btn { padding: 6px 2px 8px; }
-    .day-btn .day-label { font-size: 10px; margin-bottom: 3px; }
-    .day-btn .day-type { font-size: 8px; }
+    .week-nav { gap: 4px; padding: 5px; }
+    .day-btn { padding: 8px 2px 6px; max-width: 50px; border-radius: 14px; }
+    .day-btn .day-label { font-size: 10px; }
+    .day-btn .day-date { font-size: 14px; }
     .session-title { font-size: 20px; }
     .session-header { padding: 14px; margin-bottom: 10px; }
     .exercise-card { margin-bottom: 6px; }
@@ -1509,7 +1497,8 @@ let state = {
   todayData: null,
   saveTimer: null,
   syncStatus: 'idle',
-  readOnly: false
+  readOnly: false,
+  dirty: false
 };
 
 function getDateKey(date) {
@@ -1761,7 +1750,6 @@ function renderWeekNav() {
   const dates = getWeekDates();
   const today = new Date();
   const todayKey = getDateKey(today);
-  const todayDay = getDayOfWeek(today);
 
   const nav = document.getElementById('weekNav');
   nav.innerHTML = '';
@@ -1770,23 +1758,31 @@ function renderWeekNav() {
     const dayKey = DAYS[i];
     const date = dates[i];
     const dateKey = getDateKey(date);
-    const plan = WEEK_PLAN[dayKey];
-    const isToday = dateKey === todayKey;
     const isSelected = dayKey === state.selectedDay;
     const wo = loadWorkout(dateKey);
     const isDone = wo && wo.completed;
-    
+    const isPast = dateKey < todayKey;
+    const isToday = dateKey === todayKey;
+
     const btn = document.createElement('button');
-    btn.className = `day-btn ${isSelected ? 'active' : ''}`;
+    const classes = ['day-btn'];
+    if (isSelected) classes.push('active');
+    if (isDone) classes.push('done');
+    btn.className = classes.join(' ');
     btn.dataset.day = dayKey;
-    btn.dataset.type = plan.type;
     btn.dataset.date = dateKey;
+
+    let statusIcon = '';
+    if (isDone) {
+      statusIcon = '✓';
+    } else if (isPast || isToday) {
+      statusIcon = '×';
+    }
+
     btn.innerHTML = `
-      <div class="indicator"></div>
-      <div class="day-label">${DAY_LABELS[dayKey]}${isToday ? ' ·' : ''}</div>
-      <div class="day-date" style="font-size:10px;color:var(--text-mute);margin-top:1px;">${date.getDate()}.</div>
-      <div class="day-type">${DAY_TYPE_LABELS[plan.type]}</div>
-      ${isDone ? '<div class="completed">✓</div>' : ''}
+      <div class="day-label">${DAY_LABELS[dayKey]}</div>
+      <div class="day-date">${String(date.getDate()).padStart(2, '0')}</div>
+      <div class="day-status">${statusIcon}</div>
     `;
     btn.addEventListener('click', () => selectDay(dayKey));
     nav.appendChild(btn);
@@ -1795,7 +1791,7 @@ function renderWeekNav() {
 
 function selectDay(dayKey) {
   collectAndSave();
-
+  state.dirty = false;
   state.selectedDay = dayKey;
   renderWeekNav();
   renderSession();
@@ -2095,9 +2091,9 @@ function updateExerciseCounters() {
 }
 
 function onInputChange() {
+  state.dirty = true;
   updatePace();
   updateExerciseCounters();
-  // Debounced save
   if (state.saveTimer) clearTimeout(state.saveTimer);
   const status = document.getElementById('saveStatus');
   if (status) {
@@ -2139,7 +2135,7 @@ function updatePace() {
 }
 
 function collectAndSave() {
-  if (!state.todayData || state.readOnly) return;
+  if (!state.todayData || state.readOnly || !state.dirty) return;
   const plan = WEEK_PLAN[state.selectedDay];
   if (!plan) return;
 
@@ -2179,6 +2175,7 @@ function collectAndSave() {
   if (notes) state.todayData.notes = notes.value;
 
   const ok = saveWorkout(state.todayData.date, state.todayData);
+  if (ok) state.dirty = false;
   const status = document.getElementById('saveStatus');
   if (status) {
     if (ok) {
@@ -2209,6 +2206,7 @@ function collectAndSave() {
 
 function markComplete() {
   if (state.readOnly) return;
+  state.dirty = true;
   collectAndSave();
   if (state.todayData) {
     state.todayData.completed = true;
