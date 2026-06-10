@@ -1563,6 +1563,7 @@ function loadPreviousWeekWorkout(dayKey) {
 }
 
 function saveWorkout(dateKey, data) {
+  if (state.readOnly) return false;
   try {
     localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data));
 
@@ -1577,6 +1578,7 @@ function saveWorkout(dateKey, data) {
 }
 
 async function syncToSupabase(dateKey, data) {
+  if (state.readOnly) return;
   try {
     state.syncStatus = 'syncing';
     console.log('Syncing workout:', dateKey, data);
@@ -2554,11 +2556,13 @@ function toggleStats() {
 }
 
 function deleteCurrentWorkout() {
+  if (state.readOnly) return;
   if (!state.todayData || !confirm('Diesen Eintrag wirklich löschen?')) return;
   deleteWorkoutDate(state.todayData.date);
 }
 
 function deleteWorkoutDate(dateKey) {
+  if (state.readOnly) return;
   if (!confirm('Eintrag vom ' + dateKey + ' löschen? Das kann nicht rückgängig gemacht werden.')) return;
   try {
     localStorage.removeItem(`workout:${dateKey}`);
@@ -2573,6 +2577,7 @@ function deleteWorkoutDate(dateKey) {
 }
 
 async function syncDeleteToSupabase(dateKey) {
+  if (state.readOnly) return;
   try {
     const { error } = await supabaseClient
       .from('workouts')
@@ -3244,6 +3249,7 @@ function initBodyMetrics() {
 }
 
 async function syncBodyMetricsToSupabase(dateKey, metrics) {
+  if (state.readOnly) return;
   try {
     console.log('Syncing body metrics:', dateKey, metrics);
     const result = await supabaseClient
@@ -3261,6 +3267,7 @@ async function syncBodyMetricsToSupabase(dateKey, metrics) {
 }
 
 async function syncBodyTargetsToSupabase(targets) {
+  if (state.readOnly) return;
   try {
     console.log('Syncing body targets:', targets);
     const result = await supabaseClient
