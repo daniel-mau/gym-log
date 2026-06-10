@@ -17,6 +17,13 @@
     --glass-border: 1px solid rgba(255, 255, 255, 0.5);
     --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
     --border: rgba(255, 255, 255, 0.4);
+    --surface-hover: rgba(255, 255, 255, 0.25);
+    --surface-active: rgba(255, 255, 255, 0.6);
+    --surface-input: rgba(255, 255, 255, 0.4);
+    --surface-input-border: rgba(255, 255, 255, 0.5);
+    --surface-subtle: rgba(255, 255, 255, 0.15);
+    --surface-overlay: rgba(255, 255, 255, 0.3);
+    --surface-divider: rgba(255, 255, 255, 0.3);
     --text: #1A1A1A;
     --text-dim: #3C3C43;
     --text-mute: #8E8E93;
@@ -24,6 +31,7 @@
     --accent-dim: #0066DD;
     --warn: #FF9500;
     --success: #34C759;
+    --danger: #FF3B30;
     --rest: #8E8E93;
     --gym: #34C759;
     --run: #007AFF;
@@ -39,16 +47,24 @@
     --bg-elevated: rgba(44, 40, 48, 0.7);
     --bg-card: rgba(44, 40, 48, 0.55);
     --bg-card-solid: rgba(44, 40, 48, 0.75);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-    --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
-    --border: rgba(255, 255, 255, 0.08);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+    --border: rgba(255, 255, 255, 0.1);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --surface-active: rgba(255, 255, 255, 0.15);
+    --surface-input: rgba(255, 255, 255, 0.06);
+    --surface-input-border: rgba(255, 255, 255, 0.12);
+    --surface-subtle: rgba(255, 255, 255, 0.04);
+    --surface-overlay: rgba(255, 255, 255, 0.08);
+    --surface-divider: rgba(255, 255, 255, 0.08);
     --text: #FFFFFF;
-    --text-dim: #EBEBF5;
-    --text-mute: #7C7C80;
+    --text-dim: rgba(235, 235, 245, 0.6);
+    --text-mute: rgba(235, 235, 245, 0.3);
     --accent: #0A84FF;
     --accent-dim: #0070E0;
     --warn: #FF9F0A;
     --success: #30D158;
+    --danger: #FF453A;
     --rest: #636366;
     --gym: #30D158;
     --run: #0A84FF;
@@ -136,9 +152,9 @@
     font-family: inherit;
     position: relative;
   }
-  .day-btn:hover { background: rgba(255, 255, 255, 0.25); }
+  .day-btn:hover { background: var(--surface-hover); }
   .day-btn.active {
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--surface-active);
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
   .day-btn .day-label {
@@ -259,7 +275,7 @@
   .exercise-icon {
     width: 56px;
     height: 56px;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--surface-overlay);
     border-radius: var(--radius-sm);
     flex-shrink: 0;
     display: flex;
@@ -307,10 +323,10 @@
 
   /* Exercise body (expanded) */
   .exercise-body {
-    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid var(--surface-divider);
     padding: 16px;
     display: none;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--surface-subtle);
   }
   .exercise-card.expanded .exercise-body { display: block; }
   .exercise-detail {
@@ -344,10 +360,10 @@
   }
 
   input[type="number"], input[type="text"], textarea {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--surface-input);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--surface-input-border);
     border-radius: var(--radius-sm);
     padding: 11px 14px;
     color: var(--text);
@@ -381,8 +397,8 @@
     font-weight: 500;
   }
   .run-field .computed {
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: var(--surface-input);
+    border: 1px solid var(--surface-input-border);
     padding: 11px 14px;
     border-radius: var(--radius-sm);
     font-size: 17px;
@@ -400,8 +416,8 @@
     margin-top: 6px;
   }
   .pain-btn {
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--surface-input);
+    border: 1px solid var(--surface-input-border);
     border-radius: 10px;
     padding: 10px 0;
     cursor: pointer;
@@ -468,10 +484,10 @@
   button.primary:hover { opacity: 0.85; }
   button.primary:active { transform: scale(0.97); }
   button.secondary {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--surface-input);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--surface-input-border);
     color: var(--accent);
     padding: 10px 18px;
     border-radius: var(--radius-sm);
@@ -621,10 +637,10 @@
   .password-input-group input {
     flex: 1;
     padding: 14px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--surface-input-border);
     border-radius: var(--radius-sm);
     font-size: 17px;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--surface-overlay);
     color: var(--text);
     font-family: inherit;
   }
@@ -751,9 +767,9 @@
   .body-metric-field input {
     width: 100%;
     padding: 11px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--surface-input-border);
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--surface-input);
     color: var(--text);
     font-family: inherit;
     font-size: 17px;
@@ -804,8 +820,8 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--surface-input-border);
+    background: var(--surface-overlay);
     color: var(--text-mute);
     font-size: 14px;
     cursor: pointer;
@@ -833,8 +849,8 @@
   }
 
   .preset-btn {
-    background: rgba(255, 255, 255, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--surface-overlay);
+    border: 1px solid var(--surface-input-border);
     border-radius: 8px;
     padding: 4px 8px;
     font-size: 12px;
@@ -857,8 +873,8 @@
     margin-bottom: 8px;
   }
   .calendar-nav button {
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--surface-overlay);
+    border: 1px solid var(--surface-input-border);
     border-radius: 10px;
     padding: 6px 12px;
     cursor: pointer;
@@ -917,7 +933,7 @@
     cursor: pointer;
   }
   .calendar-day.has-workout:hover, .calendar-day.planned:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--surface-overlay);
   }
   .calendar-day.today.has-workout:hover, .calendar-day.today.planned:hover {
     background: var(--accent);
@@ -1011,8 +1027,8 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--surface-input);
+    border: 1px solid var(--surface-input-border);
     font-size: 15px;
     cursor: pointer;
     color: var(--text-mute);
@@ -1025,7 +1041,7 @@
     justify-content: center;
   }
   .calendar-modal-close:hover {
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--surface-active);
   }
 
   .week-picker-overlay {
@@ -1993,8 +2009,46 @@ function bindInputs() {
   });
 }
 
+function updateExerciseCounters() {
+  const plan = WEEK_PLAN[state.selectedDay];
+  if (!plan || plan.type !== 'gym') return;
+
+  document.querySelectorAll('.exercise-card').forEach(card => {
+    const exId = card.dataset.ex;
+    const ex = plan.exercises.find(e => e.id === exId);
+    if (!ex) return;
+    const isTimeBased = ex.target.includes('sec');
+    const inputs = card.querySelectorAll('.exercise-body input[type="number"]');
+    let done = 0;
+
+    if (isTimeBased) {
+      for (let i = 0; i < ex.sets; i++) {
+        const inp = card.querySelector(`[data-set="${i}"][data-field="duration"]`);
+        if (inp && inp.value.trim()) done++;
+      }
+    } else {
+      for (let i = 0; i < ex.sets; i++) {
+        const w = card.querySelector(`[data-set="${i}"][data-field="weight"]`);
+        const r = card.querySelector(`[data-set="${i}"][data-field="reps"]`);
+        if ((w && w.value.trim()) || (r && r.value.trim())) done++;
+      }
+    }
+
+    const statusEl = card.querySelector('.exercise-status');
+    if (statusEl) {
+      statusEl.textContent = `${done}/${ex.sets}`;
+      if (done === ex.sets) {
+        statusEl.classList.add('done');
+      } else {
+        statusEl.classList.remove('done');
+      }
+    }
+  });
+}
+
 function onInputChange() {
   updatePace();
+  updateExerciseCounters();
   // Debounced save
   if (state.saveTimer) clearTimeout(state.saveTimer);
   const status = document.getElementById('saveStatus');
