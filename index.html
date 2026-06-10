@@ -150,30 +150,33 @@
   }
   .day-btn {
     flex: 1;
-    max-width: 56px;
-    background: transparent;
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 10px 2px 8px;
+    max-width: 70px;
+    background: white;
+    border: 1.5px solid #D0D0D0;
+    border-radius: 14px;
+    padding: 8px 4px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     transition: all 0.2s ease;
     color: var(--text);
     font-family: inherit;
     position: relative;
   }
-  .day-btn:hover { background: var(--surface-hover); }
-  .day-btn.done { border-color: var(--text-dim); }
+  .day-btn:hover { background: rgba(0,0,0,0.02); }
+  .day-btn.done {
+    border-color: var(--success);
+    box-shadow: inset 0 0 0 1px var(--success);
+  }
   .day-btn.active {
     background: var(--accent);
     border-color: var(--accent);
     color: white;
   }
   .day-btn .day-label {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: -0.01em;
     text-transform: uppercase;
     color: var(--text-mute);
@@ -182,20 +185,33 @@
   }
   .day-btn.active .day-label { color: white; }
   .day-btn .day-date {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
-    line-height: 1.2;
+    line-height: 1;
   }
   .day-btn.active .day-date { color: white; }
+  .day-btn .day-type {
+    font-size: 8px;
+    color: var(--text-mute);
+    text-align: center;
+    line-height: 1.2;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .day-btn.active .day-type { color: rgba(255,255,255,0.9); }
   .day-btn .day-status {
     font-size: 10px;
     color: var(--text-mute);
     line-height: 1;
     margin-top: 1px;
   }
-  .day-btn.done .day-status { color: var(--success); }
-  .day-btn.active .day-status { color: rgba(255,255,255,0.8); }
+  .day-btn.done .day-status { color: var(--success); font-weight: 600; }
+  .day-btn.active .day-status { color: rgba(255,255,255,0.9); font-weight: 600; }
   .day-btn.active.done .day-status { color: white; }
 
   /* Session header — glass card */
@@ -1162,9 +1178,10 @@
     .header { margin-bottom: 8px; }
     .header h1 { font-size: 28px; }
     .week-nav { gap: 4px; padding: 5px; }
-    .day-btn { padding: 8px 2px 6px; max-width: 50px; border-radius: 14px; }
-    .day-btn .day-label { font-size: 10px; }
-    .day-btn .day-date { font-size: 14px; }
+    .day-btn { padding: 6px 3px; max-width: 64px; border-radius: 12px; }
+    .day-btn .day-label { font-size: 9px; }
+    .day-btn .day-date { font-size: 13px; }
+    .day-btn .day-type { font-size: 7px; }
     .session-title { font-size: 20px; }
     .session-header { padding: 14px; margin-bottom: 10px; }
     .exercise-card { margin-bottom: 6px; }
@@ -1758,6 +1775,7 @@ function renderWeekNav() {
     const dayKey = DAYS[i];
     const date = dates[i];
     const dateKey = getDateKey(date);
+    const plan = WEEK_PLAN[dayKey];
     const isSelected = dayKey === state.selectedDay;
     const wo = loadWorkout(dateKey);
     const isDone = wo && wo.completed;
@@ -1782,6 +1800,7 @@ function renderWeekNav() {
     btn.innerHTML = `
       <div class="day-label">${DAY_LABELS[dayKey]}</div>
       <div class="day-date">${String(date.getDate()).padStart(2, '0')}</div>
+      <div class="day-type">${plan.name}</div>
       <div class="day-status">${statusIcon}</div>
     `;
     btn.addEventListener('click', () => selectDay(dayKey));
