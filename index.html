@@ -614,20 +614,20 @@
     padding: 16px;
   }
   .chart-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-radius: 18px;
   }
-  .chart-card {
-    background: var(--surface-subtle);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-  }
-  .chart-title {
-    font-size: 11px;
-    color: var(--text-mute);
-    margin-bottom: 6px;
-    font-weight: 500;
+  .chart-grid::-webkit-scrollbar { display: none; }
+  .chart-grid > div {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    min-width: 0;
   }
   .stat-card {
     background: var(--surface-subtle);
