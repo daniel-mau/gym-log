@@ -810,8 +810,9 @@
   .body-metric-inputs {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
+    align-items: end;
   }
   .body-metric-inputs > div {
     display: flex;
@@ -825,21 +826,8 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
-  .body-metric-inputs input {
-    padding: 8px 10px;
-    border: 1px solid var(--surface-input-border);
-    border-radius: var(--radius-sm);
-    background: var(--surface-input);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 16px;
-  }
-  .body-metric-inputs input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.15);
-  }
   .body-metric-inputs .target-input {
+    width: 56px;
     text-align: center;
     color: var(--text-mute);
   }
@@ -3160,12 +3148,10 @@ function renderExerciseSparkline(exerciseId) {
 function renderBodyMetricSparkline(metric) {
   const allMetrics = loadAllBodyMetrics();
   const unit = metric === 'weight' ? 'kg' : '%';
-  const bgGradient = metric === 'weight'
-    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.45) 0%, rgba(52, 199, 89, 0.65) 100%)'
-    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.42) 0%, rgba(0, 122, 255, 0.62) 100%)';
+  const baseRgb = metric === 'weight' ? '52, 199, 89' : '0, 122, 255';
+  const bgGradient = `linear-gradient(160deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 40%), linear-gradient(135deg, rgba(${baseRgb}, 0.82) 0%, rgba(${baseRgb}, 0.62) 100%)`;
   const accentColor = metric === 'weight' ? '#34C759' : '#007AFF';
-  const avgBg = metric === 'weight' ? '#34C759' : '#007AFF';
-  const fillColor = metric === 'weight' ? 'rgba(52, 199, 89, 0.4)' : 'rgba(0, 122, 255, 0.35)';
+  const avgBg = metric === 'weight' ? 'rgba(52,199,89,0.5)' : 'rgba(0,122,255,0.45)';
 
   if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
@@ -3194,9 +3180,9 @@ function renderBodyMetricSparkline(metric) {
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  // Fading gradient fill
+  // Fading gradient fill (white, top visible, bottom transparent)
   const gradId = `grad_${metric}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:${fillColor};stop-opacity:0.6" /><stop offset="100%" style="stop-color:${fillColor};stop-opacity:0" /></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white" stop-opacity="0.35" /><stop offset="100%" stop-color="white" stop-opacity="0" /></linearGradient></defs>`;
   const fillPath = pathD + ` L${W - r},${H - b} L${l},${H - b} Z`;
 
   // Grid lines for each data point
