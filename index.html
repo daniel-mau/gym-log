@@ -604,6 +604,26 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 8px;
   }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .chart-card {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
+    padding: 16px;
+  }
+  .chart-title {
+    font-size: 13px;
+    color: var(--text-mute);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
   .stat-card {
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
@@ -1461,44 +1481,30 @@
 
   <main id="sessionContent"></main>
 
-  <div style="display:flex;gap:8px;margin-bottom:20px;margin-top:20px;flex-wrap:wrap;">
-    <button class="secondary" onclick="toggleDashboard()">📊 Dashboard</button>
-    <button class="secondary" onclick="toggleStats()">📈 Statistik</button>
-  </div>
-
-  <div id="dashboardSection" style="display:none;margin-bottom:40px;">
-    <div class="section-title">Dashboard</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:12px;">
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Lauf-Volumen · pro Woche (km)</h3>
-        <canvas id="runVolumeChart" style="max-height:250px;"></canvas>
+  <section class="stats-section" id="statsSection">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:5px;opacity:0.7;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Statistik · letzte 4 Wochen
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="chart-grid" style="margin-top:12px;">
+      <div class="chart-card">
+        <h3 class="chart-title">Lauf-Volumen · pro Woche (km)</h3>
+        <canvas id="runVolumeChart" style="max-height:220px;"></canvas>
       </div>
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Durchschnittspace · pro Woche</h3>
-        <canvas id="paceChart" style="max-height:250px;"></canvas>
+      <div class="chart-card">
+        <h3 class="chart-title">Durchschnittspace · pro Woche</h3>
+        <canvas id="paceChart" style="max-height:220px;"></canvas>
       </div>
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Schmerz Trend · letzte 4 Wochen</h3>
-        <canvas id="dailyPainChart" style="max-height:250px;"></canvas>
+      <div class="chart-card">
+        <h3 class="chart-title">Schmerz Trend · letzte 4 Wochen</h3>
+        <canvas id="dailyPainChart" style="max-height:220px;"></canvas>
       </div>
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Gym-Completion · letzte 4 Wochen</h3>
-        <canvas id="completionChart" style="max-height:250px;"></canvas>
-      </div>
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Gewicht · Verlauf</h3>
-        <canvas id="weightChart" style="max-height:250px;"></canvas>
-      </div>
-      <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
-        <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Körperfettanteil · Verlauf</h3>
-        <canvas id="bodyFatChart" style="max-height:250px;"></canvas>
+      <div class="chart-card">
+        <h3 class="chart-title">Gewicht · Verlauf</h3>
+        <canvas id="weightChart" style="max-height:220px;"></canvas>
       </div>
     </div>
-  </div>
-
-  <section class="stats-section" id="statsSection">
-    <div class="section-title">Statistik · letzte 4 Wochen</div>
-    <div class="stats-grid" id="statsGrid"></div>
   </section>
 
   <section class="stats-section">
@@ -2737,37 +2743,8 @@ function updateSyncIndicator() {
   }
 }
 
-function toggleDashboard() {
-  const dashboard = document.getElementById('dashboardSection');
-  const stats = document.getElementById('statsSection');
-  if (dashboard.style.display === 'none') {
-    dashboard.style.display = 'block';
-    stats.style.display = 'none';
-    localStorage.setItem('preferredView', 'dashboard');
-    renderDashboard();
-  } else {
-    dashboard.style.display = 'none';
-    stats.style.display = 'block';
-    localStorage.setItem('preferredView', 'stats');
-    renderStats();
-  }
-}
-
-function toggleStats() {
-  const dashboard = document.getElementById('dashboardSection');
-  const stats = document.getElementById('statsSection');
-  if (stats.style.display === 'none') {
-    stats.style.display = 'block';
-    dashboard.style.display = 'none';
-    localStorage.setItem('preferredView', 'stats');
-    renderStats();
-  } else {
-    stats.style.display = 'none';
-    dashboard.style.display = 'block';
-    localStorage.setItem('preferredView', 'dashboard');
-    renderDashboard();
-  }
-}
+function toggleDashboard() {}
+function toggleStats() {}
 
 function deleteCurrentWorkout() {
   if (state.readOnly) return;
@@ -2863,20 +2840,6 @@ function renderDashboard() {
     const emptyLabel = noRunData ? ['Noch keine Daten'] : weekLabels;
     const emptyData = noRunData ? [0] : null;
 
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
-    weekStart.setHours(0,0,0,0);
-
-    const thisWeekWorkouts = workouts.filter(w => {
-      if (!w.data) return false;
-      const date = new Date(w.date);
-      return date >= weekStart;
-    });
-
-    const totalSessionsThisWeek = thisWeekWorkouts.length;
-    const completedThisWeek = thisWeekWorkouts.filter(w => w.data && w.data.completed).length;
-    const plannedSessions = 6;
-
     renderChart('runVolumeChart', 'bar', {
       labels: noRunData ? emptyLabel : weekLabels,
       datasets: [{
@@ -2940,28 +2903,6 @@ function renderDashboard() {
       }]
     }, { scales: { y: { min: 0, max: 10 } } });
 
-    renderChart('completionChart', 'doughnut', {
-      labels: ['Abgeschlossen', 'Offen', 'Geplant'],
-      datasets: [{
-        data: [
-          completedThisWeek,
-          Math.max(0, totalSessionsThisWeek - completedThisWeek),
-          Math.max(0, plannedSessions - totalSessionsThisWeek)
-        ],
-        backgroundColor: [
-          'rgba(52, 199, 89, 0.7)',
-          'rgba(52, 199, 89, 0.3)',
-          'rgba(107, 114, 128, 0.15)'
-        ],
-        borderColor: [
-          'rgba(52, 199, 89, 1)',
-          'rgba(52, 199, 89, 0.6)',
-          'rgba(107, 114, 128, 0.3)'
-        ],
-        borderWidth: 2
-      }]
-    }, { plugins: { legend: { position: 'bottom' } } });
-
     // Body metrics charts
     const bodyMetrics = loadAllBodyMetrics();
     const targets = loadBodyTargets();
@@ -2973,9 +2914,7 @@ function renderDashboard() {
       });
 
       const weightData = bodyMetrics.map(m => parseFloat(m.data.weight) || null);
-      const fatData = bodyMetrics.map(m => parseFloat(m.data.fat) || null);
       const targetWeight = parseFloat(targets.weight);
-      const targetFat = parseFloat(targets.fat);
 
       const weightDatasets = [{
         label: 'Gewicht (kg)',
@@ -3005,43 +2944,10 @@ function renderDashboard() {
         datasets: weightDatasets
       }, { scales: { y: { beginAtZero: false } } });
 
-      const fatDatasets = [{
-        label: 'KFA (%)',
-        data: fatData,
-        borderColor: 'rgba(0, 122, 255, 1)',
-        backgroundColor: 'rgba(0, 122, 255, 0.1)',
-        borderWidth: 2,
-        tension: 0.3,
-        fill: false,
-        spanGaps: true
-      }];
-
-      if (!isNaN(targetFat)) {
-        fatDatasets.push({
-          label: 'Ziel',
-          data: bmLabels.map(() => targetFat),
-          borderColor: 'rgba(52, 199, 89, 0.5)',
-          borderWidth: 1,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          fill: false
-        });
-      }
-
-      renderChart('bodyFatChart', 'line', {
-        labels: bmLabels,
-        datasets: fatDatasets
-      }, { scales: { y: { beginAtZero: false } } });
-
     } else {
       renderChart('weightChart', 'line', {
         labels: ['Noch keine Daten'],
         datasets: [{ label: 'Gewicht (kg)', data: [0], borderColor: 'rgba(52,199,89,0.3)', borderWidth: 1 }]
-      }, { scales: { y: { beginAtZero: true } } });
-
-      renderChart('bodyFatChart', 'line', {
-        labels: ['Noch keine Daten'],
-        datasets: [{ label: 'KFA (%)', data: [0], borderColor: 'rgba(0,122,255,0.3)', borderWidth: 1 }]
       }, { scales: { y: { beginAtZero: true } } });
     }
 
@@ -3594,28 +3500,16 @@ function init() {
   renderHistory();
   initBodyMetrics();
 
-  const preferredView = localStorage.getItem('preferredView') || 'dashboard';
-  const dashboardSection = document.getElementById('dashboardSection');
-  const statsSection = document.getElementById('statsSection');
-
-  if (preferredView === 'stats') {
-    dashboardSection.style.display = 'none';
-    statsSection.style.display = 'block';
-    renderStats();
-  } else {
-    dashboardSection.style.display = 'block';
-    statsSection.style.display = 'none';
-    setTimeout(renderDashboard, 100);
-  }
+  renderStats();
+  setTimeout(renderDashboard, 100);
 
   syncAllFromSupabase().then(() => {
     renderWeekNav();
     renderSession();
     renderHistory();
     initBodyMetrics();
-    if (document.getElementById('dashboardSection').style.display !== 'none') {
-      renderDashboard();
-    }
+    renderStats();
+    renderDashboard();
   });
   setInterval(updateSyncIndicator, 500);
 
@@ -3644,8 +3538,6 @@ window.changeWeek = changeWeek;
 window.goToWeekOffset = goToWeekOffset;
 window.toggleWeekPicker = toggleWeekPicker;
 window.closeWeekPicker = closeWeekPicker;
-window.toggleDashboard = toggleDashboard;
-window.toggleStats = toggleStats;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
 window.checkPassword = checkPassword;
