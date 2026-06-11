@@ -3238,8 +3238,9 @@ function renderBodyMetricSparkline(metric) {
     <text x="${l - 3}" y="${H - b - 1}" font-size="7.5" fill="white" opacity="0.7" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${minLabel}</text>
   `;
 
-  // Avg label centered below chart line
-  const avgBadge = `<text x="${W / 2}" y="${H - 5}" text-anchor="middle" font-size="11" fill="white" font-weight="700" font-family="system-ui,-apple-system,sans-serif" opacity="0.9">Ø ${avg} ${unit}</text>`;
+  // Separator line + avg label centered below chart
+  const separatorLine = `<line x1="${l}" y1="${H - b}" x2="${W - r}" y2="${H - b}" stroke="rgba(255,255,255,0.20)" stroke-width="0.5" vector-effect="non-scaling-stroke" />`;
+  const avgBadge = `${separatorLine}<text x="${W / 2}" y="${H - 5}" text-anchor="middle" font-size="13" fill="white" font-weight="700" font-family="system-ui,-apple-system,sans-serif" opacity="0.9">Ø ${avg} ${unit}</text>`;
 
   const tooltips = points.map(p =>
     `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="transparent" style="cursor:pointer;"><title>${new Date(p.date).toLocaleDateString('de-DE')}: ${p.value.toFixed(1)} ${unit}</title></circle>`
