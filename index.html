@@ -135,34 +135,46 @@
   }
 
   /* Week navigator — individual pills */
-  .week-nav-section {
+  .week-nav-card {
     margin-bottom: 16px;
-  }
-  .week-nav-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
-    padding: 0 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .week-nav-header svg {
-    width: 16px;
-    height: 16px;
-  }
-  .week-nav {
-    display: flex;
-    gap: 8px;
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: 8px;
+    padding: 12px 8px 8px;
     box-shadow: var(--glass-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .week-nav-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    color: var(--text-mute);
+  }
+  .week-nav-title svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-mute);
+  }
+  .week-nav {
+    display: flex;
+    gap: 8px;
     justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   .day-btn {
     flex: 1;
@@ -1195,7 +1207,9 @@
     .container { padding: 12px; }
     .header { margin-bottom: 8px; }
     .header h1 { font-size: 28px; }
-    .week-nav { gap: 5px; padding: 6px; }
+    .week-nav-card { padding: 10px 6px 6px; gap: 6px; }
+    .week-nav-title { padding: 0 6px; font-size: 12px; }
+    .week-nav { gap: 5px; }
     .day-btn { padding: 7px 3px 5px; max-width: 42px; border-radius: 16px; }
     .day-btn .day-label { font-size: 9px; }
     .day-btn .day-date { font-size: 13px; }
@@ -1291,8 +1305,8 @@
     </div>
   </header>
 
-  <div class="week-nav-section">
-    <div class="week-nav-header">
+  <div class="week-nav-card">
+    <div class="week-nav-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"></circle>
         <line x1="12" y1="1" x2="12" y2="3"></line>
