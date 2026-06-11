@@ -808,32 +808,40 @@
   .body-metrics-grid:last-child { margin-bottom: 0; }
 
   .body-metric-inputs {
-    flex: 0 0 auto;
-    width: 150px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    width: 100%;
+  }
+  .body-metric-inputs > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
   .body-metric-inputs label {
-    display: block;
     font-size: 11px;
     color: var(--text-mute);
     font-weight: 500;
-    margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
-  .body-metric-inputs .input-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+  .body-metric-inputs input {
+    padding: 8px 10px;
+    border: 1px solid var(--surface-input-border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-input);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;
   }
-  .body-metric-inputs .input-row input {
-    flex: 1;
-    min-width: 0;
+  .body-metric-inputs input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.15);
   }
   .body-metric-inputs .target-input {
-    width: 52px !important;
-    color: var(--text-mute);
     text-align: center;
-    flex: 0 0 52px !important;
+    color: var(--text-mute);
   }
 
   .body-metric-chart {
@@ -1367,16 +1375,22 @@
 
     <div class="body-metrics-grid">
       <div class="body-metric-inputs">
-        <label>Gewicht (kg) <span style="opacity:0.5;font-weight:400;">· Ziel</span></label>
-        <div class="input-row">
+        <div>
+          <label>Gewicht (kg)</label>
           <input type="number" step="0.1" id="bodyWeight" placeholder="—" inputmode="decimal" oninput="saveBodyMetrics()">
+        </div>
+        <div>
+          <label>Ziel</label>
           <input type="number" step="0.1" id="targetWeight" placeholder="—" inputmode="decimal" oninput="saveBodyTargets()" class="target-input">
         </div>
       </div>
       <div class="body-metric-inputs">
-        <label>KFA (%) <span style="opacity:0.5;font-weight:400;">· Ziel</span></label>
-        <div class="input-row">
+        <div>
+          <label>KFA (%)</label>
           <input type="number" step="0.1" id="bodyFat" placeholder="—" inputmode="decimal" oninput="saveBodyMetrics()">
+        </div>
+        <div>
+          <label>Ziel</label>
           <input type="number" step="0.1" id="targetFat" placeholder="—" inputmode="decimal" oninput="saveBodyTargets()" class="target-input">
         </div>
       </div>
@@ -3147,12 +3161,13 @@ function renderBodyMetricSparkline(metric) {
   const allMetrics = loadAllBodyMetrics();
   const unit = metric === 'weight' ? 'kg' : '%';
   const bgGradient = metric === 'weight'
-    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.35) 0%, rgba(52, 199, 89, 0.55) 100%)'
-    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.3) 0%, rgba(0, 122, 255, 0.5) 100%)';
+    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.45) 0%, rgba(52, 199, 89, 0.65) 100%)'
+    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.42) 0%, rgba(0, 122, 255, 0.62) 100%)';
   const accentColor = metric === 'weight' ? '#34C759' : '#007AFF';
   const avgBg = metric === 'weight' ? '#34C759' : '#007AFF';
+  const fillColor = metric === 'weight' ? 'rgba(52, 199, 89, 0.4)' : 'rgba(0, 122, 255, 0.35)';
 
-  if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.7;">Noch keine Daten</span></div>`;
+  if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
   const values = allMetrics
     .map(m => {
@@ -3161,7 +3176,7 @@ function renderBodyMetricSparkline(metric) {
     })
     .filter(m => !isNaN(m.value));
 
-  if (values.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.7;">Noch keine Daten</span></div>`;
+  if (values.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
   const maxVal = Math.max(...values.map(v => v.value));
   const minVal = Math.min(...values.map(v => v.value));
@@ -3178,7 +3193,17 @@ function renderBodyMetricSparkline(metric) {
   });
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  // Fading gradient fill
+  const gradId = `grad_${metric}_${Date.now()}`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:${fillColor};stop-opacity:0.6" /><stop offset="100%" style="stop-color:${fillColor};stop-opacity:0" /></linearGradient></defs>`;
   const fillPath = pathD + ` L${W - r},${H - b} L${l},${H - b} Z`;
+
+  // Grid lines for each data point
+  const gridLines = points.map(p =>
+    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${H - b}" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" vector-effect="non-scaling-stroke" />`
+  ).join('');
+
   const avg = (values.reduce((a, v) => a + v.value, 0) / values.length).toFixed(1);
 
   const tooltips = points.map(p =>
@@ -3188,8 +3213,10 @@ function renderBodyMetricSparkline(metric) {
   return `
     <div class="sparkline-card" style="background:${bgGradient};">
       <svg viewBox="0 0 ${W} ${H}" height="52">
-        <path d="${fillPath}" fill="rgba(255,255,255,0.12)" stroke="none"/>
-        <path d="${pathD}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+        ${fillGradient}
+        ${gridLines}
+        <path d="${fillPath}" fill="url(#${gradId})" stroke="none"/>
+        <path d="${pathD}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
         ${tooltips}
       </svg>
       <div class="sparkline-stats">
