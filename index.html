@@ -3187,10 +3187,11 @@ function renderExerciseSparkline(exerciseId) {
 function renderBodyMetricSparkline(metric) {
   const allMetrics = loadAllBodyMetrics();
   const unit = metric === 'weight' ? 'kg' : '%';
-  const baseRgb = metric === 'weight' ? '52, 199, 89' : '0, 122, 255';
-  const bgGradient = `linear-gradient(160deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 40%), linear-gradient(135deg, rgba(${baseRgb}, 0.82) 0%, rgba(${baseRgb}, 0.62) 100%)`;
-  const accentColor = metric === 'weight' ? '#34C759' : '#007AFF';
-  const avgBg = metric === 'weight' ? 'rgba(52,199,89,0.5)' : 'rgba(0,122,255,0.45)';
+  // iOS Indigo (#5856D6) for both — distinct from app accent blue and success green
+  const baseRgb = '88, 86, 214';
+  const bgGradient = `linear-gradient(160deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 40%), linear-gradient(135deg, rgba(${baseRgb}, 0.88) 0%, rgba(${baseRgb}, 0.68) 100%)`;
+  const accentColor = '#5856D6';
+  const avgBg = 'rgba(88, 86, 214, 0.55)';
 
   if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
