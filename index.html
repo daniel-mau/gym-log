@@ -2861,7 +2861,9 @@ function renderDashboard() {
     if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen');
     if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace');
     if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz');
-    if (wEl)  wEl.innerHTML  = renderBodyMetricSparkline('weight');
+    const allMetrics = loadAllBodyMetrics();
+    const weightValues = allMetrics.map(m => { const v = parseFloat(m.data.weight); return isNaN(v) ? null : v; });
+    if (wEl) wEl.innerHTML = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht');
 
     initChartCarousel();
 
@@ -3240,7 +3242,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
 
   return `
     <div class="sparkline-card" style="background:${bgGradient};">
-      <svg viewBox="0 0 ${W} ${H}" height="${H}" style="display:block;width:100%;">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block;width:100%;height:${H}px;">
         ${fillGradient}
         ${titleEl}
         ${gridLines}
