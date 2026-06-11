@@ -1422,11 +1422,6 @@
     <nav class="week-nav" id="weekNav"></nav>
   </div>
 
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    <button class="secondary" onclick="toggleDashboard()">📊 Dashboard</button>
-    <button class="secondary" onclick="toggleStats()">📈 Statistik</button>
-  </div>
-
   <div class="body-metrics" id="bodyMetricsSection">
     <div class="body-metrics-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1464,8 +1459,15 @@
     </div>
   </div>
 
+  <main id="sessionContent"></main>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;margin-top:20px;flex-wrap:wrap;">
+    <button class="secondary" onclick="toggleDashboard()">📊 Dashboard</button>
+    <button class="secondary" onclick="toggleStats()">📈 Statistik</button>
+  </div>
+
   <div id="dashboardSection" style="display:none;margin-bottom:40px;">
-    <h2 style="font-size:22px;font-weight:700;margin-bottom:16px;color:var(--text);letter-spacing:-0.02em;">Dashboard</h2>
+    <div class="section-title">Dashboard</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:12px;">
       <div style="background:var(--bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border);border-radius:var(--radius-md);box-shadow:var(--glass-shadow);padding:16px;">
         <h3 style="font-size:15px;color:var(--text-mute);margin-bottom:12px;font-weight:500;">Lauf-Volumen · pro Woche (km)</h3>
@@ -1493,8 +1495,6 @@
       </div>
     </div>
   </div>
-
-  <main id="sessionContent"></main>
 
   <section class="stats-section" id="statsSection">
     <div class="section-title">Statistik · letzte 4 Wochen</div>
