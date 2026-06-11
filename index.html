@@ -300,6 +300,23 @@
     box-shadow: var(--glass-shadow);
     margin-bottom: 20px;
   }
+  .session-title-gym {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+  }
+  .session-title-gym svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+
   .gym-session-card .session-header {
     background: transparent;
     backdrop-filter: none;
@@ -1981,15 +1998,36 @@ function renderSession() {
   
   // Session header — standalone for non-gym types, embedded in card for gym
   const badge = `<span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type]}</span>`;
-  const sessionHeaderHtml = `
-    <div class="session-header">
-      <div>
-        <div class="session-title">${plan.name}</div>
-        <div class="session-subtitle">${plan.subtitle}</div>
+
+  let sessionHeaderHtml;
+  if (plan.type === 'gym') {
+    sessionHeaderHtml = `
+      <div class="session-header">
+        <div>
+          <div class="session-title-gym">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="2" y="9" width="4" height="6" rx="1"/>
+              <rect x="18" y="9" width="4" height="6" rx="1"/>
+              <line x1="6" y1="12" x2="18" y2="12"/>
+            </svg>
+            ${plan.name}
+          </div>
+          <div class="session-subtitle">${plan.subtitle}</div>
+        </div>
+        ${badge}
       </div>
-      ${badge}
-    </div>
-  `;
+    `;
+  } else {
+    sessionHeaderHtml = `
+      <div class="session-header">
+        <div>
+          <div class="session-title">${plan.name}</div>
+          <div class="session-subtitle">${plan.subtitle}</div>
+        </div>
+        ${badge}
+      </div>
+    `;
+  }
   let html = plan.type === 'gym' ? '' : sessionHeaderHtml;
 
   if (plan.type === 'rest') {
