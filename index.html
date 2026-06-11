@@ -629,6 +629,25 @@
     scroll-snap-align: start;
     min-width: 0;
   }
+  .chart-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .chart-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-mute);
+    opacity: 0.3;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .chart-dot.active {
+    opacity: 1;
+    transform: scale(1.25);
+    background: var(--text-dim);
+  }
   .stat-card {
     background: var(--surface-subtle);
     border-radius: var(--radius-sm);
@@ -1490,11 +1509,17 @@
     </div>
     <div class="stats-outer-card">
       <div class="stats-grid" id="statsGrid"></div>
-      <div class="chart-grid" style="margin-top:12px;">
+      <div class="chart-grid" id="chartCarousel" style="margin-top:12px;">
         <div id="runVolumeSparkline"></div>
         <div id="paceSparkline"></div>
         <div id="painSparkline"></div>
         <div id="weightStatSparkline"></div>
+      </div>
+      <div class="chart-dots" id="chartDots">
+        <span class="chart-dot active"></span>
+        <span class="chart-dot"></span>
+        <span class="chart-dot"></span>
+        <span class="chart-dot"></span>
       </div>
     </div>
   </section>
@@ -2838,9 +2863,25 @@ function renderDashboard() {
     if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz');
     if (wEl)  wEl.innerHTML  = renderBodyMetricSparkline('weight');
 
+    initChartCarousel();
+
   } catch (e) {
     console.error('Dashboard render error:', e);
   }
+}
+
+function initChartCarousel() {
+  const carousel = document.getElementById('chartCarousel');
+  const dotsEl = document.getElementById('chartDots');
+  if (!carousel || !dotsEl) return;
+  const dots = dotsEl.querySelectorAll('.chart-dot');
+  carousel.removeEventListener('scroll', carousel._dotHandler);
+  carousel._dotHandler = () => {
+    const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  };
+  carousel.addEventListener('scroll', carousel._dotHandler, { passive: true });
+  carousel._dotHandler();
 }
 
 function renderChart(canvasId, type, data, options) {
@@ -3146,8 +3187,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
   const range = Math.max(maxVal - minVal, 0.5);
   const pad = range * 0.2;
 
-  const W = 200, H = 84;
-  const l = 32, r = 14, t = 6, b = 20;
+  const W = 200, H = 168;
+  const l = 36, r = 14, t = 28, b = 28;
 
   const allPts = numericValues.map((v, i) => {
     if (v === null || isNaN(v)) return null;
@@ -3185,7 +3226,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
     <text x="${l-3}" y="${H-b-1}" font-size="7.5" fill="white" opacity="0.7" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${minLabel}</text>
   `;
 
-  const titleEl = title ? `<text x="${W-r}" y="${t+7}" font-size="8" fill="white" opacity="0.55" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${title}</text>` : '';
+  const titleEl = title ? `<text x="${W/2}" y="${t-10}" font-size="12" fill="white" opacity="0.75" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${title}</text>` : '';
 
   const badgeText = `Ø ${avgStr}`;
   const badgeW = badgeText.length * 6 + 10;
@@ -3199,11 +3240,11 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
 
   return `
     <div class="sparkline-card" style="background:${bgGradient};">
-      <svg viewBox="0 0 ${W} ${H}" height="${H}">
+      <svg viewBox="0 0 ${W} ${H}" height="${H}" style="display:block;width:100%;">
         ${fillGradient}
+        ${titleEl}
         ${gridLines}
         ${minMaxLabels}
-        ${titleEl}
         <path d="${fillPath}" fill="url(#${gradId})" stroke="none"/>
         ${avgBadge}
         <path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
