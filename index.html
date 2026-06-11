@@ -604,33 +604,35 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 8px;
   }
-  .chart-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
-  }
-  .chart-card {
+  .stats-outer-card {
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     padding: 16px;
   }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .chart-card {
+    background: var(--surface-subtle);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
   .chart-title {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-mute);
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     font-weight: 500;
   }
   .stat-card {
-    background: var(--bg-card);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 14px 16px;
+    background: var(--surface-subtle);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
     box-shadow: var(--glass-shadow);
   }
   .stat-label {
@@ -1486,23 +1488,25 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:5px;opacity:0.7;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Statistik · letzte 4 Wochen
     </div>
-    <div class="stats-grid" id="statsGrid"></div>
-    <div class="chart-grid" style="margin-top:12px;">
-      <div class="chart-card">
-        <h3 class="chart-title">Lauf-Volumen · pro Woche (km)</h3>
-        <canvas id="runVolumeChart" style="max-height:220px;"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3 class="chart-title">Durchschnittspace · pro Woche</h3>
-        <canvas id="paceChart" style="max-height:220px;"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3 class="chart-title">Schmerz Trend · letzte 4 Wochen</h3>
-        <canvas id="dailyPainChart" style="max-height:220px;"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3 class="chart-title">Gewicht · Verlauf</h3>
-        <canvas id="weightChart" style="max-height:220px;"></canvas>
+    <div class="stats-outer-card">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="chart-grid" style="margin-top:12px;">
+        <div class="chart-card">
+          <h3 class="chart-title">Laufvolumen · km/Woche</h3>
+          <canvas id="runVolumeChart" style="max-height:55px;"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Ø Pace · min/km</h3>
+          <canvas id="paceChart" style="max-height:55px;"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Schmerztrend</h3>
+          <canvas id="dailyPainChart" style="max-height:55px;"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Gewicht · Verlauf</h3>
+          <canvas id="weightChart" style="max-height:55px;"></canvas>
+        </div>
       </div>
     </div>
   </section>
