@@ -799,13 +799,13 @@
     flex-shrink: 0;
   }
 
-  .body-metric-row {
-    display: flex;
+  .body-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
-    align-items: center;
     margin-bottom: 10px;
   }
-  .body-metric-row:last-child { margin-bottom: 0; }
+  .body-metrics-grid:last-child { margin-bottom: 0; }
 
   .body-metric-inputs {
     flex: 0 0 auto;
@@ -841,7 +841,7 @@
     min-width: 0;
   }
   .sparkline-card {
-    border-radius: 12px;
+    border-radius: 18px;
     padding: 8px 8px 4px;
     overflow: hidden;
   }
@@ -1364,7 +1364,8 @@
       </svg>
       Körperdaten · heute
     </div>
-    <div class="body-metric-row">
+
+    <div class="body-metrics-grid">
       <div class="body-metric-inputs">
         <label>Gewicht (kg) <span style="opacity:0.5;font-weight:400;">· Ziel</span></label>
         <div class="input-row">
@@ -1372,9 +1373,6 @@
           <input type="number" step="0.1" id="targetWeight" placeholder="—" inputmode="decimal" oninput="saveBodyTargets()" class="target-input">
         </div>
       </div>
-      <div class="body-metric-chart" id="weightSparkline"></div>
-    </div>
-    <div class="body-metric-row">
       <div class="body-metric-inputs">
         <label>KFA (%) <span style="opacity:0.5;font-weight:400;">· Ziel</span></label>
         <div class="input-row">
@@ -1382,6 +1380,10 @@
           <input type="number" step="0.1" id="targetFat" placeholder="—" inputmode="decimal" oninput="saveBodyTargets()" class="target-input">
         </div>
       </div>
+    </div>
+
+    <div class="body-metrics-grid">
+      <div class="body-metric-chart" id="weightSparkline"></div>
       <div class="body-metric-chart" id="fatSparkline"></div>
     </div>
   </div>
@@ -3144,11 +3146,13 @@ function renderExerciseSparkline(exerciseId) {
 function renderBodyMetricSparkline(metric) {
   const allMetrics = loadAllBodyMetrics();
   const unit = metric === 'weight' ? 'kg' : '%';
-  const bgColor = metric === 'weight' ? 'rgba(52, 199, 89, 0.18)' : 'rgba(0, 122, 255, 0.15)';
+  const bgGradient = metric === 'weight'
+    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.35) 0%, rgba(52, 199, 89, 0.55) 100%)'
+    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.3) 0%, rgba(0, 122, 255, 0.5) 100%)';
   const accentColor = metric === 'weight' ? '#34C759' : '#007AFF';
-  const avgBg = metric === 'weight' ? 'rgba(52, 199, 89, 0.75)' : 'rgba(0, 122, 255, 0.75)';
+  const avgBg = metric === 'weight' ? '#34C759' : '#007AFF';
 
-  if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgColor};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.6;">Noch keine Daten</span></div>`;
+  if (allMetrics.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.7;">Noch keine Daten</span></div>`;
 
   const values = allMetrics
     .map(m => {
@@ -3157,7 +3161,7 @@ function renderBodyMetricSparkline(metric) {
     })
     .filter(m => !isNaN(m.value));
 
-  if (values.length === 0) return `<div class="sparkline-card" style="background:${bgColor};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.6;">Noch keine Daten</span></div>`;
+  if (values.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.7;">Noch keine Daten</span></div>`;
 
   const maxVal = Math.max(...values.map(v => v.value));
   const minVal = Math.min(...values.map(v => v.value));
@@ -3182,7 +3186,7 @@ function renderBodyMetricSparkline(metric) {
   ).join('');
 
   return `
-    <div class="sparkline-card" style="background:${bgColor};">
+    <div class="sparkline-card" style="background:${bgGradient};">
       <svg viewBox="0 0 ${W} ${H}" height="52">
         <path d="${fillPath}" fill="rgba(255,255,255,0.12)" stroke="none"/>
         <path d="${pathD}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
