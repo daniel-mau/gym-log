@@ -2112,18 +2112,18 @@ function renderSession() {
         </div>
       `;
     });
-    html += '</div></div>'; // close .exercises + .gym-session-card
 
-    // Notes
+    // Notes and delete button (inside the gym-session-card)
     html += `
-      <div style="margin-top:20px;">
+      <div style="padding: 16px; border-top: 1px solid var(--surface-divider);">
         <label style="font-size:13px;color:var(--text-mute);font-weight:500;display:block;margin-bottom:8px;">Notizen zur Einheit</label>
         <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist...">${state.todayData.notes || ''}</textarea>
-      </div>
-      <div style="margin-top:16px;">
-        <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Eintrag löschen</button>
+        <div style="margin-top:12px;">
+          <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Eintrag löschen</button>
+        </div>
       </div>
     `;
+    html += '</div></div>'; // close .exercises + .gym-session-card
   } else if (plan.type === 'run' || plan.type === 'long') {
     const r = state.todayData.run || {};
     const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
