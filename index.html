@@ -40,6 +40,7 @@
     --radius-md: 20px;
     --radius-lg: 24px;
     --sparkline-bg: linear-gradient(135deg, rgba(160, 130, 150, 0.78) 0%, rgba(135, 110, 130, 0.75) 100%);
+    --sparkline-border: #F0F0F0;
   }
 
   [data-theme="dark"] {
@@ -71,6 +72,7 @@
     --run: #0A84FF;
     --long: #FF9F0A;
     --sparkline-bg: linear-gradient(135deg, rgba(70, 55, 70, 0.85) 0%, rgba(60, 45, 62, 0.82) 100%);
+    --sparkline-border: #3A3A3E;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -842,7 +844,7 @@
     border-radius: 18px;
     padding: 0;
     overflow: hidden;
-    border: 1px solid var(--surface-input-border);
+    border: 1px solid var(--sparkline-border);
   }
   .sparkline-card svg { display: block; width: 100%; }
   .sparkline-stats {
