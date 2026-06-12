@@ -1371,7 +1371,7 @@
     .stat-card { padding: 12px; }
     .stat-value { font-size: 24px; }
     .calendar-day { padding: 4px 0; font-size: 13px; }
-    .save-bar { padding: 10px 14px; margin-top: 16px; border-radius: 12px; }
+    .save-bar { padding: 10px 14px; margin-top: 16px; border-radius: 9999px; }
   }
 
   /* Read-only mode */
@@ -2059,7 +2059,7 @@ function renderSession() {
       </div>
     `;
   }
-  let html = plan.type === 'gym' ? '' : sessionHeaderHtml;
+  let html = (plan.type === 'gym' || plan.type === 'run' || plan.type === 'long') ? '' : sessionHeaderHtml;
 
   if (plan.type === 'rest') {
     html += `
@@ -2172,7 +2172,7 @@ function renderSession() {
     html += `
       <div class="gym-session-card">
         ${sessionHeaderHtml}
-      <div class="run-form">
+      <div class="run-form" style="padding: 0 16px 16px;">
         <div class="run-field">
           <label>Distanz</label>
           <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" />
