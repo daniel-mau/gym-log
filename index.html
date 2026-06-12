@@ -545,7 +545,7 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15);
   }
   .save-status {
     font-size: 12px;
@@ -2267,8 +2267,7 @@ function renderSession() {
     html += `
       <div class="save-bar gym-bar" style="justify-content:center;align-items:center;gap:10px;">
         ${!isCompleted ? `
-        <button class="secondary icon-only" onclick="markIncomplete()" title="Zurücksetzen">↺</button>
-        <div class="stopwatch">
+        <div class="stopwatch" style="flex:1;min-width:0;">
           <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
           <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
           <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
@@ -2278,7 +2277,10 @@ function renderSession() {
             <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
           </div>
         </div>
-        <button class="primary icon-only" onclick="markComplete()" title="Einheit abschließen">✓</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="secondary icon-only" onclick="markIncomplete()" title="Zurücksetzen">↺</button>
+          <button class="primary icon-only" onclick="markComplete()" title="Einheit abschließen">✓</button>
+        </div>
         ` : `
         <div style="display:flex;gap:8px;">
           <button class="secondary" onclick="markIncomplete()">Zurücksetzen</button>
