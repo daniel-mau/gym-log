@@ -3294,15 +3294,6 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     }
   }
 
-  // For line charts, add daily grid lines from first date to today
-  if (!isBar && lineDates && lineTotalDays > 1) {
-    const dataPointDays = new Set(lineDates.map(d => Math.round((d - lineFirstDate) / (24*60*60*1000))));
-    for (let d = 0; d <= lineTotalDays; d++) {
-      if (dataPointDays.has(d)) continue;
-      const x = l + (d / lineTotalDays) * (W - l - r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>`;
-    }
-  }
 
   // Tooltip bubble helper with purple/lilac background
   const tipFill = 'rgba(160, 130, 150, 0.85)';
@@ -3368,11 +3359,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   // X-axis labels
   let labelEls = '';
   if (hasLabels) {
+    const baseStep = isBar ? 1 : 2;
     const maxShow = 8;
-    const step = labels.length > maxShow ? Math.ceil(labels.length / maxShow) : 1;
+    const step = Math.max(baseStep, labels.length > maxShow ? Math.ceil(labels.length / maxShow) : baseStep);
     labelEls = allPts.map((p, i) => {
       if (!p || !labels[i]) return '';
-      if (step > 1 && i % step !== 0 && i !== n - 1) return '';
+      if (i % step !== 0 && i !== n - 1) return '';
       return `<text x="${p.x.toFixed(1)}" y="${chartBottom + 14}" font-size="8" fill="white" opacity="0.5" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${labels[i]}</text>`;
     }).join('');
 
