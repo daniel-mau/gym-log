@@ -3226,7 +3226,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const n = numericValues.length;
   const allPts = numericValues.map((v, i) => {
     if (v === null || isNaN(v)) return null;
-    const x = l + (n === 1 ? (W - l - r) / 2 : (i / (n - 1)) * (W - l - r));
+    let x;
+    if (isBar) {
+      x = l + (n === 1 ? (W - l - r) / 2 : (i + 0.5) / n * (W - l - r));
+    } else {
+      x = l + (n === 1 ? (W - l - r) / 2 : (i / (n - 1)) * (W - l - r));
+    }
     const y = chartBottom - ((v - (minVal - pad)) / (range + pad * 2)) * (chartBottom - t);
     return { x, y, value: v, idx: i };
   });
@@ -3236,19 +3241,20 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white" stop-opacity="0.35"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient></defs>`;
 
-  // Grid lines (line charts only)
-  const gridLines = isBar ? '' : nonNull.map(p =>
-    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.18)" stroke-width="0.5"/>`
+  // Grid lines (vertical at each data point)
+  const gridLines = nonNull.map(p =>
+    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`
   ).join('');
 
   // Bars
   let barsEl = '';
   if (isBar) {
     const gap = (W - l - r) / Math.max(n, 1);
-    const barW = Math.min(gap * 0.6, 40);
+    const barW = Math.min(gap * 0.85, 56);
     barsEl = nonNull.map(p => {
       const bh = chartBottom - p.y;
-      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.5"/>`;
+      const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" font-size="8" fill="white" opacity="0.8" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
     }).join('');
   }
 
@@ -3267,10 +3273,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>`;
   }
 
-  // Dots
-  const dotsEl = nonNull.map(p =>
-    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="white" opacity="0.9"/>`
-  ).join('');
+  // Dots + value labels
+  const dotsEl = nonNull.map(p => {
+    const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
+    const label = `<text x="${p.x.toFixed(1)}" y="${(p.y - 8).toFixed(1)}" font-size="8" fill="white" opacity="0.75" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="white" opacity="0.9"/>${label}`;
+  }).join('');
 
   // X-axis labels
   let labelEls = '';
