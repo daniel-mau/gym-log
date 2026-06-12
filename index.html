@@ -2808,14 +2808,13 @@ function renderDashboard() {
       workouts.push({ date: todayKey, data: todayData });
     }
 
-    // Weekly run volume + pace (last 8 weeks)
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 56);
     const cutoffKey = getDateKey(cutoff);
     const recent = workouts.filter(w => w.date >= cutoffKey && w.data);
 
+    // Weekly run volume with KW labels
     const weeklyRuns = {};
-    const weeklyPaceSecs = {};
     recent.forEach(w => {
       if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return;
       const date = new Date(w.date);
@@ -2823,29 +2822,57 @@ function renderDashboard() {
       ws.setDate(date.getDate() - ((date.getDay() + 6) % 7));
       const wk = getDateKey(ws);
       if (!weeklyRuns[wk]) weeklyRuns[wk] = 0;
-      if (!weeklyPaceSecs[wk]) weeklyPaceSecs[wk] = [];
       const dist = parseFloat(w.data.run && w.data.run.distance);
       if (!isNaN(dist) && dist > 0) weeklyRuns[wk] += dist;
-      const time = parseTime(w.data.run && w.data.run.time);
-      if (dist > 0 && time > 0) weeklyPaceSecs[wk].push(time / dist);
     });
-
     const weeks = Object.keys(weeklyRuns).sort().slice(-8);
     const volumeValues = weeks.map(w => weeklyRuns[w] || 0);
-    const paceValues = weeks.map(w => {
-      const arr = weeklyPaceSecs[w];
-      return arr && arr.length > 0 ? (arr.reduce((a,b)=>a+b,0) / arr.length) / 60 : null;
+    const volumeLabels = weeks.map(w => {
+      const d = new Date(w);
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const w1 = new Date(d.getFullYear(), 0, 4);
+      const wn = 1 + Math.round(((d - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+      return `KW${wn}`;
     });
 
-    // Daily pain (last 28 days)
+    // Per-run pace with date labels
+    const paceRuns = [];
+    recent.sort((a, b) => a.date.localeCompare(b.date)).forEach(w => {
+      if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return;
+      const dist = parseFloat(w.data.run && w.data.run.distance);
+      const time = parseTime(w.data.run && w.data.run.time);
+      if (dist > 0 && time > 0) {
+        const d = new Date(w.date);
+        paceRuns.push({ value: (time / dist) / 60, label: `${d.getDate()}.${d.getMonth()+1}.` });
+      }
+    });
+    const paceValues = paceRuns.map(r => r.value);
+    const paceLabels = paceRuns.map(r => r.label);
+
+    // Pain with date labels
     const workoutMap = {};
     workouts.forEach(w => { if (w.data) workoutMap[w.date] = w.data; });
-    const painValues = [];
+    const painValues = [], painLabels = [];
     for (let i = 27; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i);
       const wo = workoutMap[getDateKey(d)];
-      if (wo && wo.run && typeof wo.run.pain === 'number') painValues.push(wo.run.pain);
+      if (wo && wo.run && typeof wo.run.pain === 'number') {
+        painValues.push(wo.run.pain);
+        painLabels.push(`${d.getDate()}.${d.getMonth()+1}.`);
+      }
     }
+
+    // Weight with date labels
+    const allMetrics = loadAllBodyMetrics();
+    const weightValues = [], weightLabels = [];
+    allMetrics.forEach(m => {
+      const v = parseFloat(m.data.weight);
+      if (!isNaN(v)) {
+        weightValues.push(v);
+        const d = new Date(m.date);
+        weightLabels.push(`${d.getDate()}.${d.getMonth()+1}.`);
+      }
+    });
 
     const formatPace = v => {
       const mins = Math.floor(v);
@@ -2858,12 +2885,10 @@ function renderDashboard() {
     const piEl = document.getElementById('painSparkline');
     const wEl  = document.getElementById('weightStatSparkline');
 
-    if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen');
-    if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace');
-    if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz');
-    const allMetrics = loadAllBodyMetrics();
-    const weightValues = allMetrics.map(m => { const v = parseFloat(m.data.weight); return isNaN(v) ? null : v; });
-    if (wEl) wEl.innerHTML = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht');
+    if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { type: 'bar', labels: volumeLabels });
+    if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace', { labels: paceLabels });
+    if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: painLabels });
+    if (wEl)  wEl.innerHTML  = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: weightLabels });
 
     initChartCarousel();
 
@@ -3175,11 +3200,14 @@ function renderBodyMetricSparkline(metric) {
   `;
 }
 
-function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
+function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
+  opts = opts || {};
+  const isBar = opts.type === 'bar';
+  const labels = opts.labels || [];
+  const hasLabels = labels.length > 0;
   const bgGradient = `linear-gradient(160deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 40%), var(--sparkline-bg)`;
   const accentColor = 'rgba(255,255,255,0.85)';
   const avgBg = 'rgba(255,255,255,0.22)';
-  const emptyH = 160;
   const empty = `<div class="sparkline-card" style="background:${bgGradient};aspect-ratio:2/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;"><span style="font-size:14px;color:white;opacity:0.6;font-weight:600;">${title || ''}</span><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
   const valid = (numericValues || []).filter(v => v !== null && !isNaN(v));
@@ -3190,53 +3218,91 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
   const range = Math.max(maxVal - minVal, 0.5);
   const pad = range * 0.2;
 
-  const W = 400, H = 200;
-  const l = 44, r = 44, t = 36, b = 32;
+  const W = 400, H = 220;
+  const l = 44, r = 44, t = 36;
+  const b = hasLabels ? 56 : 36;
+  const chartBottom = H - b;
 
+  const n = numericValues.length;
   const allPts = numericValues.map((v, i) => {
     if (v === null || isNaN(v)) return null;
-    const x = l + (i / Math.max(numericValues.length - 1, 1)) * (W - l - r);
-    const y = H - b - ((v - (minVal - pad)) / (range + pad * 2)) * (H - t - b);
-    return { x, y, value: v };
+    const x = l + (n === 1 ? (W - l - r) / 2 : (i / (n - 1)) * (W - l - r));
+    const y = chartBottom - ((v - (minVal - pad)) / (range + pad * 2)) * (chartBottom - t);
+    return { x, y, value: v, idx: i };
   });
-
-  let pathD = '';
-  let drawing = false;
-  allPts.forEach(p => {
-    if (!p) { drawing = false; return; }
-    pathD += `${drawing ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)} `;
-    drawing = true;
-  });
-
   const nonNull = allPts.filter(Boolean);
-  const fillPath = nonNull.length > 1
-    ? pathD + `L${nonNull[nonNull.length-1].x.toFixed(1)},${H-b} L${nonNull[0].x.toFixed(1)},${H-b} Z`
-    : '';
 
+  // Fill gradient
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white" stop-opacity="0.35"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient></defs>`;
 
-  const gridLines = nonNull.map(p =>
-    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${H-b}" stroke="rgba(255,255,255,0.18)" stroke-width="0.5"/>`
+  // Grid lines (line charts only)
+  const gridLines = isBar ? '' : nonNull.map(p =>
+    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.18)" stroke-width="0.5"/>`
   ).join('');
 
-  const avg = valid.reduce((a, v) => a + v, 0) / valid.length;
-  const avgStr = avgFormatter ? avgFormatter(avg) : `${avg.toFixed(1)} ${unit}`;
+  // Bars
+  let barsEl = '';
+  if (isBar) {
+    const gap = (W - l - r) / Math.max(n, 1);
+    const barW = Math.min(gap * 0.6, 40);
+    barsEl = nonNull.map(p => {
+      const bh = chartBottom - p.y;
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.5"/>`;
+    }).join('');
+  }
 
+  // Line path + fill
+  let lineEl = '', fillEl = '';
+  if (!isBar) {
+    let pathD = '', drawing = false;
+    allPts.forEach(p => {
+      if (!p) { drawing = false; return; }
+      pathD += `${drawing ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)} `;
+      drawing = true;
+    });
+    if (nonNull.length > 1) {
+      fillEl = `<path d="${pathD} L${nonNull[nonNull.length-1].x.toFixed(1)},${chartBottom} L${nonNull[0].x.toFixed(1)},${chartBottom} Z" fill="url(#${gradId})" stroke="none"/>`;
+    }
+    lineEl = `<path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>`;
+  }
+
+  // Dots
+  const dotsEl = nonNull.map(p =>
+    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="white" opacity="0.9"/>`
+  ).join('');
+
+  // X-axis labels
+  let labelEls = '';
+  if (hasLabels) {
+    const maxShow = 8;
+    const step = labels.length > maxShow ? Math.ceil(labels.length / maxShow) : 1;
+    labelEls = allPts.map((p, i) => {
+      if (!p || !labels[i]) return '';
+      if (step > 1 && i % step !== 0 && i !== n - 1) return '';
+      return `<text x="${p.x.toFixed(1)}" y="${chartBottom + 14}" font-size="8" fill="white" opacity="0.5" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${labels[i]}</text>`;
+    }).join('');
+  }
+
+  // Min/max
   const maxLabel = Number.isInteger(maxVal) ? String(maxVal) : maxVal.toFixed(1);
   const minLabel = Number.isInteger(minVal) ? String(minVal) : minVal.toFixed(1);
   const minMaxLabels = `
     <text x="${l-5}" y="${t+8}" font-size="10" fill="white" opacity="0.65" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${maxLabel}</text>
-    <text x="${l-5}" y="${H-b-2}" font-size="10" fill="white" opacity="0.65" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${minLabel}</text>
+    <text x="${l-5}" y="${chartBottom-2}" font-size="10" fill="white" opacity="0.65" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${minLabel}</text>
   `;
 
-  const titleEl = title ? `<text x="14" y="22" font-size="16" fill="white" opacity="0.8" text-anchor="start" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${title}</text>` : '';
+  // Title
+  const titleEl = title ? `<text x="14" y="24" font-size="16" fill="white" opacity="0.8" text-anchor="start" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${title}</text>` : '';
 
+  // Badge
+  const avg = valid.reduce((a, v) => a + v, 0) / valid.length;
+  const avgStr = avgFormatter ? avgFormatter(avg) : `${avg.toFixed(1)} ${unit}`;
   const badgeText = `Ø ${avgStr}`;
   const badgeW = badgeText.length * 8 + 14;
   const badgeH = 22;
   const badgeX = (W/2 - badgeW/2).toFixed(1);
-  const badgeY = (H - b/2 - badgeH/2).toFixed(1);
+  const badgeY = (H - badgeH - 4).toFixed(1);
   const avgBadge = `
     <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="7" fill="${avgBg}"/>
     <text x="${W/2}" y="${(parseFloat(badgeY)+16).toFixed(1)}" text-anchor="middle" font-size="15" fill="white" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
@@ -3249,9 +3315,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
         ${titleEl}
         ${gridLines}
         ${minMaxLabels}
-        <path d="${fillPath}" fill="url(#${gradId})" stroke="none"/>
+        ${fillEl}
+        ${barsEl}
+        ${lineEl}
+        ${dotsEl}
+        ${labelEls}
         ${avgBadge}
-        <path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
       </svg>
     </div>
   `;
