@@ -3180,8 +3180,8 @@ function renderBodyMetricSparkline(metric) {
   const range = Math.max(maxVal - minVal, 0.5);
   const pad = range * 0.2;
 
-  const W = 200, H = 84;
-  const l = 32, r = 14, t = 6, b = 20;
+  const W = 200, H = 96;
+  const l = 32, r = 14, t = 6, b = 32;
 
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
@@ -3215,7 +3215,7 @@ function renderBodyMetricSparkline(metric) {
   const badgeW = badgeText.length * 6 + 10;
   const badgeH = 18;
   const badgeX = (W / 2 - badgeW / 2).toFixed(1);
-  const badgeY = (H - b / 2 - badgeH / 2).toFixed(1);
+  const badgeY = ((H - b) + (b - badgeH) / 2).toFixed(1);
   const avgBadge = `
     <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="6" fill="${avgBg}" />
     <text x="${W / 2}" y="${(parseFloat(badgeY) + 13).toFixed(1)}" text-anchor="middle" font-size="13" fill="white" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
@@ -3421,7 +3421,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const badgeW = badgeText.length * 8 + 14;
   const badgeH = 22;
   const badgeX = (W/2 - badgeW/2).toFixed(1);
-  const badgeY = (H - badgeH - 14).toFixed(1);
+  const badgeY = (chartBottom + (b - badgeH) / 2).toFixed(1);
   const avgBadge = `
     <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="7" fill="${avgBg}"/>
     <text x="${W/2}" y="${(parseFloat(badgeY)+16).toFixed(1)}" text-anchor="middle" font-size="15" fill="white" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
