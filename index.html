@@ -3246,7 +3246,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`
   ).join('');
 
-  // Bars
+  // Bars with value badges
   let barsEl = '';
   if (isBar) {
     const gap = (W - l - r) / Math.max(n, 1);
@@ -3254,7 +3254,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     barsEl = nonNull.map(p => {
       const bh = chartBottom - p.y;
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" font-size="8" fill="white" opacity="0.8" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
+      const badgeW = formatted.length * 7 + 10;
+      const badgeH = 20;
+      const badgeX = (p.x - badgeW / 2).toFixed(1);
+      const badgeY = (p.y - badgeH - 8).toFixed(1);
+      const badge = `<rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(parseFloat(badgeY) + 14).toFixed(1)}" font-size="11" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/>${badge}`;
     }).join('');
   }
 
@@ -3273,12 +3278,33 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>`;
   }
 
-  // Dots + value labels
-  const dotsEl = nonNull.map(p => {
-    const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-    const label = `<text x="${p.x.toFixed(1)}" y="${(p.y - 8).toFixed(1)}" font-size="8" fill="white" opacity="0.75" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
-    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="white" opacity="0.9"/>${label}`;
-  }).join('');
+  // Dots + value labels (only for line charts)
+  let dotsEl = '';
+  if (!isBar && nonNull.length > 0) {
+    // For line charts, render dots with badges, with collision detection
+    const badgeHeight = 18;
+    const minGap = 50;
+    let lastBadgeX = -Infinity;
+
+    dotsEl = nonNull.map((p, idx) => {
+      const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
+      const badgeW = Math.max(formatted.length * 6.5 + 8, 28);
+
+      // Collision detection: skip badge if too close to last one
+      let showBadge = true;
+      if (Math.abs(p.x - lastBadgeX) < minGap) {
+        showBadge = false;
+      } else {
+        lastBadgeX = p.x;
+      }
+
+      const badgeEl = showBadge ?
+        `<rect x="${(p.x - badgeW/2).toFixed(1)}" y="${(p.y - badgeHeight - 8).toFixed(1)}" width="${badgeW.toFixed(1)}" height="${badgeHeight}" rx="4" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(p.y - badgeHeight - 8 + 13).toFixed(1)}" font-size="10" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`
+        : '';
+
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.8" fill="white" opacity="0.85"/>${badgeEl}`;
+    }).join('');
+  }
 
   // X-axis labels
   let labelEls = '';
