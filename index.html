@@ -2458,6 +2458,7 @@ function markComplete() {
     renderWeekNav();
     renderStats();
     renderHistory();
+    renderDashboard();
     const status = document.getElementById('saveStatus');
     if (status) {
       status.textContent = '✓ Einheit abgeschlossen';
@@ -2479,6 +2480,7 @@ function markIncomplete() {
     renderWeekNav();
     renderStats();
     renderHistory();
+    renderDashboard();
   }
 }
 
@@ -3234,8 +3236,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const pad = range * 0.2;
 
   const W = 400, H = 220;
-  // Consistent padding for all chart types
-  const l = 44;
+  // Consistent padding for all chart types, extra left for legend space
+  const l = 56;
   const r = 44;
   const t = 36;
   const b = hasLabels ? 56 : 36;
@@ -3321,19 +3323,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
       const tooltipHeight = 18;
       const tooltipWidth = formatted.length * 6 + 10;
-      let tooltipY = p.y - 12;
-
-      if (tooltipY < t + 10) {
-        tooltipY = t + 10;
-      }
-      if (tooltipY + tooltipHeight > chartBottom - 2) {
-        tooltipY = Math.max(t + 10, p.y + 8);
-      }
+      let tooltipY = Math.max(t + 10, p.y - 16);
 
       const tooltipX = p.x - tooltipWidth / 2;
       const textY = tooltipY + 12;
 
-      return `<rect x="${tooltipX.toFixed(1)}" y="${tooltipY.toFixed(1)}" width="${tooltipWidth.toFixed(1)}" height="${tooltipHeight.toFixed(1)}" rx="4" fill="rgba(0,0,0,0.6)" opacity="0.85"/><text x="${p.x.toFixed(1)}" y="${textY.toFixed(1)}" font-size="9" fill="white" opacity="0.95" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
+      return `<polygon points="${(p.x - 3).toFixed(1)},${(tooltipY + tooltipHeight).toFixed(1)} ${(p.x + 3).toFixed(1)},${(tooltipY + tooltipHeight).toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)}" fill="rgba(0,0,0,0.6)" opacity="0.85"/><rect x="${tooltipX.toFixed(1)}" y="${tooltipY.toFixed(1)}" width="${tooltipWidth.toFixed(1)}" height="${tooltipHeight.toFixed(1)}" rx="4" fill="rgba(0,0,0,0.6)" opacity="0.85"/><text x="${p.x.toFixed(1)}" y="${textY.toFixed(1)}" font-size="9" fill="white" opacity="0.95" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
     }).join('');
   }
 
