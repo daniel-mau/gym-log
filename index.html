@@ -538,18 +538,20 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
-    border-radius: var(--radius-lg);
+    border-radius: 9999px;
     padding: 12px 16px;
     margin-top: 20px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 8px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.1);
   }
   .save-status {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-mute);
-    font-weight: 500;
+    font-weight: 400;
+    display: none;
   }
   .save-status.saved { color: var(--success); }
   button.primary {
