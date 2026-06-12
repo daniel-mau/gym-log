@@ -2170,6 +2170,8 @@ function renderSession() {
     const isRunPrefilled = (field) => !getRunValue(field) && prevRun[field];
 
     html += `
+      <div class="gym-session-card">
+        ${sessionHeaderHtml}
       <div class="run-form">
         <div class="run-field">
           <label>Distanz</label>
@@ -2218,6 +2220,7 @@ function renderSession() {
         <div class="run-field run-field-full" style="margin-top:16px;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;width:100%;">🗑 Diesen Lauf löschen</button>
         </div>
+      </div>
       </div>
     `;
   }
