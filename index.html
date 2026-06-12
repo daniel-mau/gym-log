@@ -3241,12 +3241,11 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const yRange = Math.max(maxVal - yMin, 0.5);
   const pad = yRange * 0.15;
 
-  const W = 400, H = 250;
-  // Extra top padding for tooltip bubbles above highest points
+  const W = 400, H = 260;
   const l = 56;
   const r = 44;
   const t = 66;
-  const b = hasLabels ? 56 : 36;
+  const b = hasLabels ? 66 : 42;
   const chartBottom = H - b;
 
   const n = numericValues.length;
@@ -3286,16 +3285,21 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white" stop-opacity="0.35"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient></defs>`;
 
-  // Grid lines (vertical at each data point)
-  let gridLines = nonNull.map(p =>
-    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`
-  ).join('');
-
-  // Future grid lines for bar charts
-  if (isBar && n > 0) {
+  // Grid lines
+  let gridLines = '';
+  if (isBar) {
+    gridLines = nonNull.map(p =>
+      `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`
+    ).join('');
     for (let i = n; i < n + 2; i++) {
       const x = l + (i + 0.5) / totalSlots * (W - l - r);
       gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>`;
+    }
+  } else if (lineDates && lineTotalDays > 0) {
+    const step = Math.max(1, Math.round(lineTotalDays / 14));
+    for (let d = 0; d <= lineTotalDays; d += step) {
+      const x = l + (d / lineTotalDays) * (W - l - r);
+      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>`;
     }
   }
 
