@@ -3275,6 +3275,16 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     }
   }
 
+  // Tooltip bubble helper
+  const tipFill = 'rgba(50, 35, 30, 0.92)';
+  function tipBubble(cx, cy, text) {
+    const th = 22, tw = text.length * 7 + 14;
+    const ty = Math.max(t + 2, cy - 32);
+    const tx = cx - tw / 2;
+    const textBaseline = ty + 15;
+    return `<polygon points="${(cx-4).toFixed(1)},${(ty+th).toFixed(1)} ${(cx+4).toFixed(1)},${(ty+th).toFixed(1)} ${cx.toFixed(1)},${(cy-2).toFixed(1)}" fill="${tipFill}"/><rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="8" fill="${tipFill}"/><text x="${cx.toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="11" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${text}</text>`;
+  }
+
   // Bars
   let barsEl = '';
   if (isBar) {
@@ -3283,8 +3293,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     barsEl = nonNull.map(p => {
       const bh = chartBottom - p.y;
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      const ly = Math.max(t + 9, p.y - 8);
-      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><text x="${p.x.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/>${tipBubble(p.x, p.y, formatted)}`;
     }).join('');
   }
 
@@ -3321,14 +3330,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       return true;
     }).map(p => {
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      const tooltipHeight = 18;
-      const tooltipWidth = formatted.length * 6 + 10;
-      let tooltipY = Math.max(t + 10, p.y - 16);
-
-      const tooltipX = p.x - tooltipWidth / 2;
-      const textY = tooltipY + 12;
-
-      return `<polygon points="${(p.x - 3).toFixed(1)},${(tooltipY + tooltipHeight).toFixed(1)} ${(p.x + 3).toFixed(1)},${(tooltipY + tooltipHeight).toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)}" fill="rgba(0,0,0,0.6)" opacity="0.85"/><rect x="${tooltipX.toFixed(1)}" y="${tooltipY.toFixed(1)}" width="${tooltipWidth.toFixed(1)}" height="${tooltipHeight.toFixed(1)}" rx="4" fill="rgba(0,0,0,0.6)" opacity="0.85"/><text x="${p.x.toFixed(1)}" y="${textY.toFixed(1)}" font-size="9" fill="white" opacity="0.95" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
+      return tipBubble(p.x, p.y, formatted);
     }).join('');
   }
 
