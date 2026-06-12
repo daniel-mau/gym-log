@@ -3187,7 +3187,7 @@ function renderBodyMetricSparkline(metric) {
 
   return `
     <div class="sparkline-card" style="background:${bgGradient};">
-      <svg viewBox="0 0 ${W} ${H}" height="${H}">
+      <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;">
         ${fillGradient}
         ${gridLines}
         ${minMaxLabels}
