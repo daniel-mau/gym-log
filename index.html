@@ -1504,7 +1504,14 @@
 
   <section class="stats-section" id="statsSection">
     <div class="stats-outer-card">
-      <div style="font-size:16px;font-weight:700;color:white;opacity:0.9;margin:12px 12px 8px 12px;text-align:left;">Statistik · letzte 4 Wochen</div>
+      <div class="body-metrics-title" style="margin-bottom:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        Statistik · letzte 4 Wochen
+      </div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="chart-grid" id="chartCarousel" style="margin-top:12px;">
         <div id="runVolumeSparkline"></div>
@@ -3274,7 +3281,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     barsEl = nonNull.map(p => {
       const bh = chartBottom - p.y;
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8" fill="white" opacity="0.8" style="cursor:pointer;" data-value="${formatted}"><title>${formatted}</title></circle>`;
+      const ly = Math.max(t + 9, p.y - 8);
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><text x="${p.x.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
     }).join('');
   }
 
@@ -3293,12 +3301,26 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>`;
   }
 
-  // Dots with tooltips (only for line charts)
+  // Dots (only for line charts)
   let dotsEl = '';
+  let specialLabelsEl = '';
   if (!isBar && nonNull.length > 0) {
-    dotsEl = nonNull.map((p, idx) => {
+    dotsEl = nonNull.map(p =>
+      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="white" opacity="0.9"/>`
+    ).join('');
+
+    const maxPt = nonNull.reduce((a, b) => a.value > b.value ? a : b);
+    const minPt = nonNull.reduce((a, b) => a.value < b.value ? a : b);
+    const curPt = nonNull[nonNull.length - 1];
+    const seen = new Set();
+    specialLabelsEl = [maxPt, curPt, minPt].filter(p => {
+      if (seen.has(p.idx)) return false;
+      seen.add(p.idx);
+      return true;
+    }).map(p => {
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8" fill="white" opacity="0.85" style="cursor:pointer;" data-value="${formatted}"><title>${formatted}</title></circle>`;
+      const ly = Math.max(t + 9, p.y - 10);
+      return `<text x="${p.x.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${formatted}</text>`;
     }).join('');
   }
 
@@ -3349,6 +3371,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         ${barsEl}
         ${lineEl}
         ${dotsEl}
+        ${specialLabelsEl}
         ${labelEls}
         ${avgBadge}
       </svg>
