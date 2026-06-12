@@ -2844,7 +2844,7 @@ function renderDashboard() {
     for (let i = 27; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i);
       const wo = workoutMap[getDateKey(d)];
-      painValues.push((wo && wo.run && typeof wo.run.pain === 'number') ? wo.run.pain : null);
+      if (wo && wo.run && typeof wo.run.pain === 'number') painValues.push(wo.run.pain);
     }
 
     const formatPace = v => {
@@ -3191,7 +3191,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title) {
   const pad = range * 0.2;
 
   const W = 400, H = 200;
-  const l = 50, r = 16, t = 36, b = 32;
+  const l = 44, r = 44, t = 36, b = 32;
 
   const allPts = numericValues.map((v, i) => {
     if (v === null || isNaN(v)) return null;
