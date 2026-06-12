@@ -1508,6 +1508,7 @@
       Statistik · letzte 4 Wochen
     </div>
     <div class="stats-outer-card">
+      <div style="font-size:16px;font-weight:700;color:white;opacity:0.9;margin:12px 12px 12px 12px;text-align:left;">Statistik</div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="chart-grid" id="chartCarousel" style="margin-top:12px;">
         <div id="runVolumeSparkline"></div>
@@ -2484,10 +2485,10 @@ function renderStats() {
   cutoff.setDate(cutoff.getDate() - 28);
   const cutoffKey = getDateKey(cutoff);
   const recent = workouts.filter(w => w.date >= cutoffKey);
-  
+
   let totalRuns = 0, totalKm = 0, totalGym = 0, totalRest = 0, longRuns = 0;
   let totalPainSum = 0, painCount = 0;
-  
+
   recent.forEach(w => {
     const d = w.data;
     if (!d.completed) return;
@@ -2506,25 +2507,36 @@ function renderStats() {
       totalRest++;
     }
   });
-  
+
   const avgPain = painCount > 0 ? (totalPainSum / painCount).toFixed(1) : '—';
-  
+
+  // Calculate weight loss
+  const allMetrics = loadAllBodyMetrics();
+  let weightLoss = '—';
+  if (allMetrics.length >= 2) {
+    const firstWeight = parseFloat(allMetrics[0].data.weight);
+    const currentWeight = parseFloat(allMetrics[allMetrics.length - 1].data.weight);
+    if (!isNaN(firstWeight) && !isNaN(currentWeight)) {
+      weightLoss = (firstWeight - currentWeight).toFixed(1);
+    }
+  }
+
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Gesamt-km</div>
       <div class="stat-value">${totalKm.toFixed(1)}<span class="stat-unit">km</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Läufe</div>
-      <div class="stat-value">${totalRuns}<span class="stat-unit">davon ${longRuns} long</span></div>
+      <div class="stat-label">Ø Schmerz</div>
+      <div class="stat-value">${avgPain}<span class="stat-unit">/10</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Gym-Einheiten</div>
       <div class="stat-value">${totalGym}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Ø Schmerz</div>
-      <div class="stat-value">${avgPain}<span class="stat-unit">/10</span></div>
+      <div class="stat-label">Gewichtsverlust</div>
+      <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
     </div>
   `;
 }
@@ -3246,7 +3258,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>`
   ).join('');
 
-  // Bars with value badges
+  // Bars
   let barsEl = '';
   if (isBar) {
     const gap = (W - l - r) / Math.max(n, 1);
@@ -3254,12 +3266,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     barsEl = nonNull.map(p => {
       const bh = chartBottom - p.y;
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      const badgeW = formatted.length * 7 + 10;
-      const badgeH = 20;
-      const badgeX = (p.x - badgeW / 2).toFixed(1);
-      const badgeY = (p.y - badgeH - 8).toFixed(1);
-      const badge = `<rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(parseFloat(badgeY) + 14).toFixed(1)}" font-size="11" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`;
-      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/>${badge}`;
+      return `<rect x="${(p.x - barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="white" opacity="0.55"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="white" opacity="0.7" style="cursor:pointer;"><title>${formatted}</title></circle>`;
     }).join('');
   }
 
@@ -3278,31 +3285,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD.trim()}" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>`;
   }
 
-  // Dots + value labels (only for line charts)
+  // Dots with tooltips (only for line charts)
   let dotsEl = '';
   if (!isBar && nonNull.length > 0) {
-    // For line charts, render dots with badges, with collision detection
-    const badgeHeight = 18;
-    const minGap = 50;
-    let lastBadgeX = -Infinity;
-
     dotsEl = nonNull.map((p, idx) => {
       const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      const badgeW = Math.max(formatted.length * 6.5 + 8, 28);
-
-      // Collision detection: skip badge if too close to last one
-      let showBadge = true;
-      if (Math.abs(p.x - lastBadgeX) < minGap) {
-        showBadge = false;
-      } else {
-        lastBadgeX = p.x;
-      }
-
-      const badgeEl = showBadge ?
-        `<rect x="${(p.x - badgeW/2).toFixed(1)}" y="${(p.y - badgeHeight - 8).toFixed(1)}" width="${badgeW.toFixed(1)}" height="${badgeHeight}" rx="4" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(p.y - badgeHeight - 8 + 13).toFixed(1)}" font-size="10" fill="white" opacity="0.9" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${formatted}</text>`
-        : '';
-
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.8" fill="white" opacity="0.85"/>${badgeEl}`;
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="white" opacity="0.8" style="cursor:pointer;"><title>${formatted}</title></circle>`;
     }).join('');
   }
 
