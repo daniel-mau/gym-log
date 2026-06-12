@@ -39,7 +39,7 @@
     --radius-sm: 14px;
     --radius-md: 20px;
     --radius-lg: 24px;
-    --sparkline-bg: linear-gradient(135deg, rgba(160, 130, 150, 0.78) 0%, rgba(135, 110, 130, 0.75) 100%);
+    --sparkline-bg: linear-gradient(135deg, rgba(200, 130, 60, 0.55) 0%, rgba(180, 110, 50, 0.50) 100%);
     --sparkline-border: #F0F0F0;
     --day-completed-border: rgba(160, 130, 150, 1);
   }
@@ -72,7 +72,7 @@
     --gym: #30D158;
     --run: #0A84FF;
     --long: #FF9F0A;
-    --sparkline-bg: linear-gradient(135deg, rgba(70, 55, 70, 0.85) 0%, rgba(60, 45, 62, 0.82) 100%);
+    --sparkline-bg: linear-gradient(135deg, rgba(140, 80, 30, 0.65) 0%, rgba(120, 65, 25, 0.60) 100%);
     --sparkline-border: #3A3A3E;
     --day-completed-border: rgba(120, 100, 120, 1);
   }
@@ -2040,6 +2040,24 @@ function renderSession() {
               <rect x="2" y="9" width="4" height="6" rx="1"/>
               <rect x="18" y="9" width="4" height="6" rx="1"/>
               <line x1="6" y1="12" x2="18" y2="12"/>
+            </svg>
+            ${plan.name}
+          </div>
+          <div class="session-subtitle">${plan.subtitle}</div>
+        </div>
+        ${badge}
+      </div>
+    `;
+  } else if (plan.type === 'run' || plan.type === 'long') {
+    sessionHeaderHtml = `
+      <div class="session-header">
+        <div>
+          <div class="session-title-gym">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 4v3l-4 1-2 4 4 2 1 4h3"/>
+              <circle cx="15" cy="3" r="1.5"/>
+              <path d="M7 21l3-7"/>
+              <path d="M17 14l2 7"/>
             </svg>
             ${plan.name}
           </div>
