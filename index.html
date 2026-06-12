@@ -540,7 +540,7 @@
     border: var(--glass-border);
     border-radius: 9999px;
     padding: 12px 16px;
-    margin-top: 20px;
+    margin: 20px 16px 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1017,16 +1017,15 @@
   }
 
   .stopwatch-presets {
-    display: flex;
-    gap: 4px;
+    position: relative;
     margin-left: 4px;
   }
 
   .preset-btn {
     background: var(--surface-overlay);
     border: 1px solid var(--surface-input-border);
-    border-radius: 8px;
-    padding: 4px 8px;
+    border-radius: 9999px;
+    padding: 4px 10px;
     font-size: 12px;
     color: var(--accent);
     cursor: pointer;
@@ -1037,6 +1036,41 @@
 
   .preset-btn:hover {
     opacity: 0.8;
+  }
+
+  .countdown-picker {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 16px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 100;
+  }
+  .countdown-picker.open { display: flex; }
+  .countdown-picker button {
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .countdown-picker button:hover {
+    background: var(--surface-hover);
   }
 
   /* History card */
@@ -2272,9 +2306,13 @@ function renderSession() {
           <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
           <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
           <div class="stopwatch-presets">
-            <button class="preset-btn" onclick="setCountdown(60)">1:00</button>
-            <button class="preset-btn" onclick="setCountdown(90)">1:30</button>
-            <button class="preset-btn" onclick="setCountdown(120)">2:00</button>
+            <button class="preset-btn" onclick="toggleCountdownPicker(event)">1:00</button>
+            <div class="countdown-picker" id="countdownPicker">
+              <button onclick="pickCountdown(30)">0:30</button>
+              <button onclick="pickCountdown(60)">1:00</button>
+              <button onclick="pickCountdown(90)">1:30</button>
+              <button onclick="pickCountdown(120)">2:00</button>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -3064,6 +3102,26 @@ function setCountdown(seconds) {
   stopwatch.countdown = true;
   updateStopwatchDisplay();
   startStopwatch();
+}
+
+function toggleCountdownPicker(e) {
+  e.stopPropagation();
+  const picker = document.getElementById('countdownPicker');
+  if (!picker) return;
+  picker.classList.toggle('open');
+  if (picker.classList.contains('open')) {
+    setTimeout(() => document.addEventListener('click', closeCountdownPicker, { once: true }), 0);
+  }
+}
+
+function closeCountdownPicker() {
+  const picker = document.getElementById('countdownPicker');
+  if (picker) picker.classList.remove('open');
+}
+
+function pickCountdown(seconds) {
+  closeCountdownPicker();
+  setCountdown(seconds);
 }
 
 function updateStopwatchDisplay() {
