@@ -3354,8 +3354,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const pad = yRange * 0.15;
 
   const W = 400, H = 260;
-  const l = 22;
-  const r = 22;
+  const l = 36;
+  const r = 28;
   const t = 66;
   const b = hasLabels ? 66 : 42;
   const chartBottom = H - b;
@@ -3421,7 +3421,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   function tipBubble(cx, cy, text) {
     const th = 22, tw = text.length * 7 + 14;
     const ty = Math.max(t - 30, cy - 32);
-    const tx = cx - tw / 2;
+    const tx = Math.max(4, Math.min(W - tw - 4, cx - tw / 2));
     const textBaseline = ty + 15;
     const shadowId = `tip-shadow-${Math.random().toString(36).substr(2, 9)}`;
     const shadow = `<filter id="${shadowId}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"/></filter>`;
