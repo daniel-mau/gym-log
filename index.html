@@ -1580,9 +1580,11 @@
         <div id="paceSparkline"></div>
         <div id="painSparkline"></div>
         <div id="weightStatSparkline"></div>
+        <div id="fatStatSparkline"></div>
       </div>
       <div class="chart-dots" id="chartDots">
         <span class="chart-dot active"></span>
+        <span class="chart-dot"></span>
         <span class="chart-dot"></span>
         <span class="chart-dot"></span>
         <span class="chart-dot"></span>
@@ -2971,16 +2973,17 @@ function renderDashboard() {
       }
     }
 
-    // Weight with date labels
+    // Weight + KFA with date labels
     const allMetrics = loadAllBodyMetrics();
     const weightValues = [], weightLabels = [];
+    const fatValues = [], fatLabels = [];
     allMetrics.forEach(m => {
-      const v = parseFloat(m.data.weight);
-      if (!isNaN(v)) {
-        weightValues.push(v);
-        const d = new Date(m.date);
-        weightLabels.push(`${d.getDate()}.${d.getMonth()+1}.`);
-      }
+      const d = new Date(m.date);
+      const label = `${d.getDate()}.${d.getMonth()+1}.`;
+      const w = parseFloat(m.data.weight);
+      if (!isNaN(w) && w > 0) { weightValues.push(w); weightLabels.push(label); }
+      const f = parseFloat(m.data.fat);
+      if (!isNaN(f) && f > 0) { fatValues.push(f); fatLabels.push(label); }
     });
 
     const formatPace = v => {
@@ -2993,11 +2996,13 @@ function renderDashboard() {
     const paEl = document.getElementById('paceSparkline');
     const piEl = document.getElementById('painSparkline');
     const wEl  = document.getElementById('weightStatSparkline');
+    const fEl  = document.getElementById('fatStatSparkline');
 
     if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { type: 'bar', labels: volumeLabels });
     if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace', { labels: paceLabels });
     if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: painLabels });
     if (wEl)  wEl.innerHTML  = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: weightLabels });
+    if (fEl)  fEl.innerHTML  = buildSparklineSVG(fatValues, '%', v => `${v.toFixed(1)} %`, 'KFA', { labels: fatLabels });
 
     initChartCarousel();
 
