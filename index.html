@@ -539,7 +539,7 @@
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: 9999px;
-    padding: 12px 16px;
+    padding: 8px 12px;
     margin: 20px 16px 0;
     display: flex;
     justify-content: center;
@@ -558,16 +558,18 @@
     background: var(--accent);
     color: white;
     border: none;
-    padding: 12px 24px;
+    padding: 8px 20px;
     border-radius: 9999px;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 15px;
     letter-spacing: -0.02em;
     text-transform: none;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s;
-    min-height: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
   }
   button.primary:hover { opacity: 0.85; }
   button.primary:active { transform: scale(0.97); }
@@ -586,15 +588,17 @@
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--surface-input-border);
     color: var(--accent);
-    padding: 10px 18px;
+    padding: 8px 16px;
     border-radius: 9999px;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
     font-family: inherit;
     letter-spacing: -0.01em;
     text-transform: none;
     font-weight: 500;
-    min-height: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
   }
   button.secondary.icon-only {
     width: 44px;
