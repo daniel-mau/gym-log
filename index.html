@@ -8,8 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   :root {
-    --bg: linear-gradient(180deg, #C2CFC2 0%, #8AAF90 100%);
-    --bg-flat: #DCC8C2;
+    --bg: linear-gradient(180deg, #F5A0C0 0%, #FEA47E 50%, #FF7E5F 100%);
+    --bg-flat: #F5C0B0;
     --bg-elevated: rgba(255, 255, 255, 0.55);
     --bg-card: rgba(255, 255, 255, 0.45);
     --bg-card-solid: rgba(255, 255, 255, 0.6);
@@ -39,13 +39,13 @@
     --radius-sm: 14px;
     --radius-md: 20px;
     --radius-lg: 24px;
-    --sparkline-bg: linear-gradient(135deg, rgba(130, 160, 130, 0.65) 0%, rgba(100, 145, 110, 0.60) 100%);
+    --sparkline-bg: linear-gradient(135deg, rgba(220, 90, 120, 0.70) 0%, rgba(240, 140, 80, 0.65) 100%);
     --sparkline-border: #F0F0F0;
     --day-completed-border: rgba(160, 130, 150, 1);
   }
 
   [data-theme="dark"] {
-    --bg: linear-gradient(180deg, #C2CFC2 0%, #8AAF90 100%);
+    --bg: linear-gradient(180deg, #F5A0C0 0%, #FEA47E 50%, #FF7E5F 100%);
     --bg-flat: #1A1518;
     --bg-elevated: rgba(44, 40, 48, 0.7);
     --bg-card: rgba(44, 40, 48, 0.55);
@@ -72,7 +72,7 @@
     --gym: #30D158;
     --run: #0A84FF;
     --long: #FF9F0A;
-    --sparkline-bg: linear-gradient(135deg, rgba(90, 120, 95, 0.75) 0%, rgba(70, 105, 80, 0.70) 100%);
+    --sparkline-bg: linear-gradient(135deg, rgba(200, 70, 100, 0.80) 0%, rgba(220, 120, 60, 0.75) 100%);
     --sparkline-border: #3A3A3E;
     --day-completed-border: rgba(120, 100, 120, 1);
   }
@@ -3418,23 +3418,23 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Tooltip bubble — semi-transparent dark mocha with subtle gloss
   function tipBubble(cx, cy, text) {
-    const th = 30, tw = text.length * 7.8 + 24;
-    const ty = Math.max(t - 42, cy - 44);
+    const th = 24, tw = text.length * 7.2 + 14;
+    const ty = Math.max(t - 34, cy - 34);
     const tx = Math.max(4, Math.min(W - tw - 4, cx - tw / 2));
-    const arrowCx = Math.min(tx + tw - 14, Math.max(tx + 14, cx));
-    const textBaseline = ty + 20;
+    const arrowCx = Math.min(tx + tw - 10, Math.max(tx + 10, cx));
+    const textBaseline = ty + 16;
     const uid = Math.random().toString(36).substr(2, 6);
     const bgId = `tb-bg-${uid}`;
     const defs = `<defs>
       <linearGradient id="${bgId}" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="rgba(40,32,26,0.52)"/>
-        <stop offset="100%" stop-color="rgba(25,20,16,0.48)"/>
+        <stop offset="0%" stop-color="rgba(40,32,26,0.62)"/>
+        <stop offset="100%" stop-color="rgba(25,20,16,0.58)"/>
       </linearGradient>
     </defs>`;
     return `${defs}
       <g>
-        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="14" fill="url(#${bgId})"/>
-        <polygon points="${(arrowCx-7).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+7).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${(cy+2).toFixed(1)}" fill="rgba(30,24,19,0.50)"/>
+        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="url(#${bgId})"/>
+        <polygon points="${(arrowCx-5).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+5).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${(cy+2).toFixed(1)}" fill="rgba(30,24,19,0.60)"/>
       </g>
       <text x="${(tx + tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="rgba(255,255,255,0.95)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${text}</text>`;
   }
