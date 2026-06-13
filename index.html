@@ -534,10 +534,10 @@
   .save-bar {
     position: sticky;
     bottom: 16px;
-    background: var(--bg-card-solid);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 9999px;
     padding: 8px 12px;
     margin: 20px 16px 0;
@@ -545,7 +545,7 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
   }
   .save-status {
     font-size: 12px;
@@ -555,8 +555,8 @@
   }
   .save-status.saved { color: var(--success); }
   button.primary {
-    background: var(--accent);
-    color: white;
+    background: rgba(255, 255, 255, 0.95);
+    color: rgba(0, 0, 0, 0.9);
     border: none;
     padding: 8px 20px;
     border-radius: 9999px;
@@ -584,11 +584,11 @@
     font-size: 20px;
   }
   button.secondary {
-    background: var(--surface-input);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--surface-input-border);
-    color: var(--accent);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.9);
     padding: 8px 16px;
     border-radius: 9999px;
     font-size: 14px;
@@ -971,11 +971,11 @@
 
   /* Stopwatch */
   .save-bar.gym-bar {
-    box-shadow: 0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(52, 199, 89, 0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
   }
 
   [data-theme="dark"] .save-bar.gym-bar {
-    box-shadow: 0 2px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(48, 209, 88, 0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.25);
   }
 
   .stopwatch {
@@ -988,23 +988,23 @@
     font-variant-numeric: tabular-nums;
     font-size: 22px;
     font-weight: 700;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.95);
     min-width: 70px;
     text-align: center;
     letter-spacing: -0.02em;
   }
 
   .stopwatch-display.running {
-    color: var(--accent);
+    color: rgba(255, 255, 255, 1);
   }
 
   .stopwatch-btn {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid var(--surface-input-border);
-    background: var(--surface-overlay);
-    color: var(--text-mute);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
     cursor: pointer;
     display: flex;
@@ -1016,12 +1016,12 @@
 
   .stopwatch-btn:hover {
     opacity: 0.8;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.95);
   }
 
   .stopwatch-btn.active {
-    background: var(--accent);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: rgba(0, 0, 0, 0.9);
   }
 
   .stopwatch-presets {
@@ -1030,12 +1030,12 @@
   }
 
   .preset-btn {
-    background: var(--surface-overlay);
-    border: 1px solid var(--surface-input-border);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 9999px;
     padding: 4px 10px;
     font-size: 12px;
-    color: var(--accent);
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     transition: all 0.15s;
     font-family: inherit;
@@ -1051,16 +1051,16 @@
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-card-solid);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     padding: 6px;
     display: none;
     flex-direction: column;
     gap: 2px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
     z-index: 100;
   }
   .countdown-picker.open { display: flex; }
@@ -1071,14 +1071,14 @@
     padding: 8px 20px;
     font-size: 15px;
     font-weight: 600;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
     font-family: inherit;
     transition: background 0.15s;
     white-space: nowrap;
   }
   .countdown-picker button:hover {
-    background: var(--surface-hover);
+    background: rgba(255, 255, 255, 0.12);
   }
 
   /* History card */
