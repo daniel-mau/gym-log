@@ -3416,20 +3416,37 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   }
 
 
-  // Tooltip bubble — dark iOS-style with gloss
-  const tipFill = 'rgba(30, 25, 20, 0.90)';
+  // Tooltip bubble — iOS 18 glossy material style
   function tipBubble(cx, cy, text) {
-    const th = 26, tw = text.length * 7.5 + 20;
-    const ty = Math.max(t - 36, cy - 38);
+    const th = 28, tw = text.length * 7.5 + 22;
+    const ty = Math.max(t - 38, cy - 40);
     const tx = Math.max(4, Math.min(W - tw - 4, cx - tw / 2));
-    const arrowCx = Math.min(tx + tw - 10, Math.max(tx + 10, cx));
-    const textBaseline = ty + 17;
-    const gradId = `tip-grad-${Math.random().toString(36).substr(2, 9)}`;
-    const glossId = `tip-gloss-${Math.random().toString(36).substr(2, 9)}`;
-    const shadowId = `tip-shadow-${Math.random().toString(36).substr(2, 9)}`;
-    const gradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="rgba(60, 50, 40, 0.95)"/><stop offset="100%" stop-color="rgba(20, 18, 15, 0.95)"/></linearGradient><linearGradient id="${glossId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="rgba(255, 255, 255, 0.15)"/><stop offset="100%" stop-color="rgba(255, 255, 255, 0)"/></linearGradient></defs>`;
-    const shadow = `<filter id="${shadowId}" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.35"/></filter>`;
-    return `${gradient}${shadow}<g filter="url(#${shadowId})"><rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="12" fill="url(#${gradId})"/><rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${(th/2.5).toFixed(1)}" rx="12" fill="url(#${glossId})"/><polygon points="${(arrowCx-6).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+6).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${(cy+2).toFixed(1)}" fill="${tipFill}"/></g><text x="${(tx + tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${text}</text>`;
+    const arrowCx = Math.min(tx + tw - 12, Math.max(tx + 12, cx));
+    const textBaseline = ty + 18;
+    const uid = Math.random().toString(36).substr(2, 6);
+    const bgId = `tb-bg-${uid}`, glossId = `tb-gl-${uid}`, shadowId = `tb-sh-${uid}`;
+    // Dark charcoal base + subtle top highlight gradient
+    const defs = `<defs>
+      <linearGradient id="${bgId}" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="rgba(72, 70, 76, 0.97)"/>
+        <stop offset="100%" stop-color="rgba(38, 36, 42, 0.97)"/>
+      </linearGradient>
+      <linearGradient id="${glossId}" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0.0)"/>
+      </linearGradient>
+      <filter id="${shadowId}" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.5)"/>
+      </filter>
+    </defs>`;
+    const glossH = (th * 0.45).toFixed(1);
+    return `${defs}
+      <g filter="url(#${shadowId})">
+        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="13" fill="url(#${bgId})" stroke="rgba(255,255,255,0.14)" stroke-width="0.75"/>
+        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${glossH}" rx="13" fill="url(#${glossId})"/>
+        <polygon points="${(arrowCx-6).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+6).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${(cy+2).toFixed(1)}" fill="rgba(42, 40, 46, 0.97)"/>
+      </g>
+      <text x="${(tx + tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="rgba(255,255,255,0.95)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${text}</text>`;
   }
 
   // Bars
