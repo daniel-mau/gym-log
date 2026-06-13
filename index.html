@@ -45,7 +45,7 @@
   }
 
   [data-theme="dark"] {
-    --bg: linear-gradient(160deg, #B8C4B4 0%, #C8B0CC 25%, #C4B4D8 45%, #A8C8D2 70%, #D8A870 100%);
+    --bg: linear-gradient(160deg, #2A2E2A 0%, #302838 25%, #2E2838 45%, #1E2E30 70%, #302818 100%);
     --bg-flat: #1A1A20;
     --bg-elevated: rgba(44, 40, 48, 0.7);
     --bg-card: rgba(44, 40, 48, 0.55);
@@ -72,9 +72,9 @@
     --gym: #30D158;
     --run: #0A84FF;
     --long: #FF9F0A;
-    --sparkline-bg: linear-gradient(135deg, rgba(150, 125, 170, 0.78) 0%, rgba(125, 160, 170, 0.74) 100%);
+    --sparkline-bg: linear-gradient(135deg, rgba(60, 50, 75, 0.80) 0%, rgba(40, 65, 70, 0.76) 100%);
     --sparkline-border: #3A3A3E;
-    --day-completed-border: rgba(120, 100, 120, 1);
+    --day-completed-border: rgba(140, 120, 160, 0.6);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -249,6 +249,20 @@
   .day-btn.done .day-status { color: var(--success); font-weight: 600; }
   .day-btn.active .day-status { color: rgba(255,255,255,0.9); font-weight: 600; }
   .day-btn.active.done .day-status { color: white; }
+
+  [data-theme="dark"] .day-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  [data-theme="dark"] .day-btn:hover { background: rgba(255, 255, 255, 0.12); }
+  [data-theme="dark"] .day-btn.future { border: none; }
+  [data-theme="dark"] .day-btn.done {
+    border-color: var(--day-completed-border);
+  }
+  [data-theme="dark"] .day-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
 
   /* Session header — glass card */
   .session-header {
