@@ -3260,7 +3260,7 @@ function renderBodyMetricSparkline(metric) {
       const val = metric === 'weight' ? parseFloat(m.data.weight) : parseFloat(m.data.fat);
       return { date: m.date, value: val };
     })
-    .filter(m => !isNaN(m.value));
+    .filter(m => !isNaN(m.value) && m.value > 0);
 
   if (values.length === 0) return `<div class="sparkline-card" style="background:${bgGradient};display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:${accentColor};opacity:0.8;">Noch keine Daten</span></div>`;
 
