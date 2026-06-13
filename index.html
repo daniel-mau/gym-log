@@ -570,6 +570,7 @@
     height: 44px;
     display: flex;
     align-items: center;
+    gap: 4px;
   }
   button.primary:hover { opacity: 0.85; }
   button.primary:active { transform: scale(0.97); }
@@ -599,6 +600,7 @@
     height: 44px;
     display: flex;
     align-items: center;
+    gap: 4px;
   }
   button.secondary.icon-only {
     width: 44px;
@@ -2327,8 +2329,8 @@ function renderSession() {
         </div>
         ` : `
         <div style="display:flex;gap:8px;">
-          <button class="secondary" onclick="markIncomplete()">↺ Zurücksetzen</button>
-          <button class="primary" onclick="markComplete()">✓ Einheit abschließen</button>
+          <button class="secondary" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
+          <button class="primary" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
         </div>
         `}
         <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
@@ -2339,8 +2341,8 @@ function renderSession() {
       <div class="save-bar">
         <div class="save-status" id="saveStatus">Auto-Save aktiv</div>
         <div style="display:flex;gap:8px;">
-          <button class="secondary" onclick="markIncomplete()">↺ Zurücksetzen</button>
-          <button class="primary" onclick="markComplete()">✓ Einheit abschließen</button>
+          <button class="secondary" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
+          <button class="primary" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
         </div>
       </div>
     `;
