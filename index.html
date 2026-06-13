@@ -567,6 +567,7 @@
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s;
+    min-height: 44px;
   }
   button.primary:hover { opacity: 0.85; }
   button.primary:active { transform: scale(0.97); }
@@ -593,6 +594,7 @@
     letter-spacing: -0.01em;
     text-transform: none;
     font-weight: 500;
+    min-height: 44px;
   }
   button.secondary.icon-only {
     width: 44px;
@@ -2216,7 +2218,7 @@ function renderSession() {
 
     // Notes and delete button (inside the gym-session-card)
     html += `
-      <div style="padding: 16px; border-top: 1px solid var(--surface-divider);">
+      <div style="padding: 16px;">
         <label style="font-size:13px;color:var(--text-mute);font-weight:500;display:block;margin-bottom:8px;">Notizen zur Einheit</label>
         <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist...">${state.todayData.notes || ''}</textarea>
         <div style="margin-top:12px;">
