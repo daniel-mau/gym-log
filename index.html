@@ -3354,8 +3354,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const pad = yRange * 0.15;
 
   const W = 400, H = 260;
-  const l = 56;
-  const r = 44;
+  const l = 14;
+  const r = 14;
   const t = 66;
   const b = hasLabels ? 66 : 42;
   const chartBottom = H - b;
@@ -3506,7 +3506,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const minMaxLabels = '';
 
   // Title
-  const titleEl = title ? `<text x="14" y="28" font-size="16" fill="white" opacity="0.8" text-anchor="start" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${title}</text>` : '';
+  const titleEl = title ? `<text x="14" y="32" font-size="22" fill="white" opacity="0.85" text-anchor="start" font-family="system-ui,-apple-system,sans-serif" font-weight="700">${title}</text>` : '';
 
   // Badge
   const avg = valid.reduce((a, v) => a + v, 0) / valid.length;
