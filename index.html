@@ -3431,11 +3431,11 @@ function renderBodyMetricSparkline(metric) {
   const badgeText = `Ø ${avg} ${unit}`;
   const badgeW = badgeText.length * 6 + 10;
   const badgeH = 18;
-  const badgeX = (W/2 - badgeW/2).toFixed(1);
-  const badgeY = ((H-b) + (b-badgeH)/2).toFixed(1);
+  const badgeX = (W - r - badgeW - 2).toFixed(1);
+  const badgeY = (t + 2).toFixed(1);
   const avgBadge = `
     <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="6" fill="${hexToRgba(chartColor, 0.12)}"/>
-    <text x="${W/2}" y="${(parseFloat(badgeY)+13).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
+    <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+13).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
   `;
 
   const tooltips = points.map(p =>
