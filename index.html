@@ -3589,11 +3589,15 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     const tx = Math.max(4, Math.min(W - tw - 4, cx - tw/2));
     const arrowCx = Math.min(tx + tw - 10, Math.max(tx + 10, cx));
     const textBaseline = ty + 16;
-    // If targetY is provided, point arrow to that position instead
-    const arrowTargetY = targetY !== undefined ? targetY + 2 : cy + 2;
+    // Fixed arrow length and rounded corners
+    const arrowLength = 6;
+    const arrowTargetY = (ty + th + arrowLength).toFixed(1);
+    const arrowWidth = 8;
+    // Create path with rounded arrow instead of sharp polygon
+    const arrowPath = `M${(arrowCx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(arrowCx-2).toFixed(1)},${(ty+th+arrowLength-2).toFixed(1)} Q${arrowCx.toFixed(1)},${arrowTargetY} ${(arrowCx+2).toFixed(1)},${(ty+th+arrowLength-2).toFixed(1)} L${(arrowCx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
     return `<g>
         <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="rgba(30,30,30,0.75)"/>
-        <polygon points="${(arrowCx-4).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+4).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${arrowTargetY.toFixed(1)}" fill="rgba(30,30,30,0.75)"/>
+        <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
       </g>
       <text x="${(tx+tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${text}</text>`;
   }
