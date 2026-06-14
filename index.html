@@ -704,7 +704,6 @@
     flex: 0 0 100%;
     scroll-snap-align: start;
     min-width: 0;
-    padding: 4px;
   }
   .chart-dots {
     display: flex;
@@ -1002,7 +1001,7 @@
     border-radius: var(--radius-sm);
     overflow: hidden;
     background: var(--surface-subtle);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--glass-shadow), inset 0 0 0 1px rgba(255,255,255,0.15);
   }
   .sparkline-header {
     display: flex;
@@ -1659,7 +1658,7 @@
         Statistik · letzte 4 Wochen
       </div>
       <div class="stats-grid" id="statsGrid"></div>
-      <div class="chart-grid" id="chartCarousel" style="margin-top:12px;">
+      <div class="chart-grid" id="chartCarousel" style="margin-top:8px;">
         <div id="runVolumeSparkline"></div>
         <div id="paceSparkline"></div>
         <div id="painSparkline"></div>
