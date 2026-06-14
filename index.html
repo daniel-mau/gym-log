@@ -122,34 +122,16 @@
   }
   .header-meta span { color: var(--text-dim); }
 
-  #weekSelector {
-    font-weight: 500;
-    line-height: 1;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-  }
-  #weekSelector:active {
-    background: rgba(0, 122, 255, 0.1);
-    transform: scale(0.98);
-  }
-  #weekSelector svg {
-    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  #weekSelector:active svg {
-    transform: scaleY(1.1);
-  }
-
   /* Week navigator — individual pills */
   .week-nav-card {
     margin-bottom: 16px;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    border-radius: 0;
-    padding: 8px 0 0;
-    box-shadow: none;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 10px 8px 8px;
+    box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -158,16 +140,14 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 0 4px;
-    font-size: 13px;
+    padding: 2px 4px 2px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
+    letter-spacing: 0.6px;
+    font-weight: 600;
     color: var(--text-mute);
   }
   .week-nav-title svg {
-    width: 14px;
-    height: 14px;
     color: var(--text-mute);
   }
   .week-nav {
@@ -1509,16 +1489,23 @@
         <div class="theme-switch"></div>
         <span id="themeLabel">Light</span>
       </div>
-      <button id="weekSelector" onclick="toggleWeekPicker()" style="background:rgba(0,0,0,0.06);border:none;cursor:pointer;padding:4px 10px;font-size:13px;font-weight:600;color:var(--text);display:inline-flex;align-items:center;gap:4px;border-radius:10px;transition:background 0.15s;">
-        <span>KW <span id="weekNumber">—</span></span>
-        <svg style="width:10px;height:10px;opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </button>
     </div>
   </header>
 
   <div class="week-nav-card">
+    <div class="week-nav-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;">
+        <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <span id="weekNavTitle">—</span>
+      <div style="display:flex;gap:2px;margin-left:auto;">
+        <button onclick="changeWeek(-1)" style="background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:8px;color:var(--text-mute);font-size:15px;line-height:1;transition:background 0.15s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='none'">‹</button>
+        <button onclick="changeWeek(1)" style="background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:8px;color:var(--text-mute);font-size:15px;line-height:1;transition:background 0.15s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='none'">›</button>
+      </div>
+    </div>
     <nav class="week-nav" id="weekNav"></nav>
   </div>
 
@@ -1957,8 +1944,18 @@ function renderHeader() {
     document.getElementById('todayMeta').innerHTML = meta;
   }
 
-  const wn = getISOWeekNumber(monday);
-  document.getElementById('weekNumber').textContent = wn;
+  const sunday = dates[6];
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const titleEl = document.getElementById('weekNavTitle');
+  if (titleEl) {
+    if (monday.getMonth() === sunday.getMonth()) {
+      titleEl.textContent = `${monthNames[monday.getMonth()]} ${monday.getFullYear()}`;
+    } else {
+      titleEl.textContent = `${monthNames[monday.getMonth()]} / ${monthNames[sunday.getMonth()]} ${sunday.getFullYear()}`;
+    }
+  }
+  const wnEl = document.getElementById('weekNumber');
+  if (wnEl) wnEl.textContent = getISOWeekNumber(monday);
 }
 
 function changeWeek(delta) {
