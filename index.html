@@ -3582,15 +3582,17 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   }
 
   // Tooltip bubble
-  function tipBubble(cx, cy, text) {
+  function tipBubble(cx, cy, text, targetY) {
     const th = 24, tw = text.length * 7.2 + 14;
     const ty = Math.max(t - 10, cy - 34);
     const tx = Math.max(4, Math.min(W - tw - 4, cx - tw/2));
     const arrowCx = Math.min(tx + tw - 10, Math.max(tx + 10, cx));
     const textBaseline = ty + 16;
+    // If targetY is provided, point arrow to that position instead
+    const arrowTargetY = targetY !== undefined ? targetY + 2 : cy + 2;
     return `<g>
         <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="rgba(30,30,30,0.75)"/>
-        <polygon points="${(arrowCx-4).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+4).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${(cy+2).toFixed(1)}" fill="rgba(30,30,30,0.75)"/>
+        <polygon points="${(arrowCx-4).toFixed(1)},${(ty+th).toFixed(1)} ${(arrowCx+4).toFixed(1)},${(ty+th).toFixed(1)} ${arrowCx.toFixed(1)},${arrowTargetY.toFixed(1)}" fill="rgba(30,30,30,0.75)"/>
       </g>
       <text x="${(tx+tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${text}</text>`;
   }
@@ -3605,7 +3607,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       // Pill design with gray background showing remaining to max
       const pillRadius = barW / 2;
       const pillGradId = `pillGrad_${Date.now()}`;
-      const pillGradient = `<defs><linearGradient id="${pillGradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="1"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0.7"/></linearGradient></defs>`;
+      // Stronger gradient to lighter blue
+      const pillGradient = `<defs><linearGradient id="${pillGradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5AB3FF"/><stop offset="100%" stop-color="${chartColor}"/></linearGradient></defs>`;
 
       // Add placeholder pills for missing weeks (last 2 positions)
       let placeholderPills = '';
@@ -3626,9 +3629,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         // Colored pill with gradient (actual value)
         pillSvg += `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${pillRadius}" fill="url(#${pillGradId})"/>`;
 
-        // Tooltip slightly above the colored pill
+        // Tooltip slightly above the colored pill, arrow points to top of colored pill
         const tooltipY = p.y - 8;
-        pillSvg += tipBubble(p.x, tooltipY, formatted);
+        pillSvg += tipBubble(p.x, tooltipY, formatted, p.y);
         return pillSvg;
       }).join('');
     } else {
