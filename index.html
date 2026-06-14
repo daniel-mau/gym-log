@@ -3604,19 +3604,31 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     if (isRunVolume) {
       // Pill design with gray background showing remaining to max
       const pillRadius = barW / 2;
-      barsEl = nonNull.map(p => {
+      const pillGradId = `pillGrad_${Date.now()}`;
+      const pillGradient = `<defs><linearGradient id="${pillGradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="1"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0.7"/></linearGradient></defs>`;
+
+      // Add placeholder pills for missing weeks (last 2 positions)
+      let placeholderPills = '';
+      for (let i = n; i < n + 2; i++) {
+        const x = l + (i + 0.5) / totalSlots * (W - l - r);
+        const maxHeight = chartBottom - t;
+        placeholderPills += `<rect x="${(x - barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="rgba(150,150,150,0.1)"/>`;
+      }
+
+      barsEl = pillGradient + placeholderPills + nonNull.map(p => {
         const maxHeight = chartBottom - t;
         const bh = chartBottom - p.y;
-        const grayHeight = maxHeight - bh;
         const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
 
         // Gray background pill (full height)
         let pillSvg = `<rect x="${(p.x-barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="rgba(150,150,150,0.15)"/>`;
 
-        // Colored pill (actual value)
-        pillSvg += `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${pillRadius}" fill="${chartColor}" opacity="0.85"/>`;
+        // Colored pill with gradient (actual value)
+        pillSvg += `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${pillRadius}" fill="url(#${pillGradId})"/>`;
 
-        pillSvg += tipBubble(p.x, p.y, formatted);
+        // Tooltip slightly above the colored pill
+        const tooltipY = p.y - 8;
+        pillSvg += tipBubble(p.x, tooltipY, formatted);
         return pillSvg;
       }).join('');
     } else {
