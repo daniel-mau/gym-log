@@ -2758,24 +2758,24 @@ function renderStats() {
           const isFilled = i < filledSegments;
           const color = isFilled ? '#34C759' : 'rgba(52, 199, 89, 0.12)';
 
-          segmentsSvg += \`<path d="M \${x1} \${y1} A \${radius} \${radius} 0 0 1 \${x2} \${y2}" fill="none" stroke="\${color}" stroke-width="\${segmentWidth}" stroke-linecap="round"/>\`;
+          segmentsSvg += `<path d="M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${segmentWidth}" stroke-linecap="round"/>`;
         }
 
-        weightLossCard = \`
+        weightLossCard = `
           <div class="stat-card" style="display:flex;align-items:center;gap:16px;position:relative;">
             <svg width="120" height="70" viewBox="0 0 120 70" style="flex-shrink:0;">
-              \${segmentsSvg}
+              ${segmentsSvg}
             </svg>
             <div style="position:absolute;left:60px;top:50%;transform:translate(-50%, -50%);text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">\${remaining}</div>
+              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">${remaining}</div>
               <div style="font-size:11px;color:var(--text-mute);margin-top:2px;">Remaining</div>
             </div>
             <div style="flex:1;min-width:0;">
               <div class="stat-label">Gewichtsverlust</div>
-              <div class="stat-value">\${weightLoss}<span class="stat-unit">kg</span></div>
+              <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
             </div>
           </div>
-        \`;
+        `;
       } else {
         // No target or invalid target - show simple card
         weightLossCard = `
