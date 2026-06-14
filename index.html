@@ -92,25 +92,59 @@
 
   .container { max-width: 1024px; margin: 0 auto; padding: 16px; }
 
-  /* Header — iOS large title style */
+  /* Header — profile style */
   .header {
     padding: 12px 4px 0;
     margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  .header-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--surface-overlay);
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
   .header h1 {
-    font-size: 34px;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.02em;
     text-transform: none;
     color: var(--text);
-    line-height: 1.1;
+    line-height: 1.2;
   }
-  .header h1 span { color: var(--accent); }
+  .header-status {
+    font-size: 12px;
+    color: var(--success);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  .header-status svg {
+    width: 12px;
+    height: 12px;
+  }
   .header-meta {
     font-size: 13px;
     color: var(--text-mute);
@@ -121,6 +155,24 @@
     gap: 8px;
   }
   .header-meta span { color: var(--text-dim); }
+  .theme-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .theme-circle:active { transform: scale(0.92); }
 
   /* Week navigator — individual pills */
   .week-nav-card {
@@ -1402,7 +1454,9 @@
   @media (max-width: 768px) {
     .container { padding: 12px; }
     .header { margin-bottom: 4px; }
-    .header h1 { font-size: 28px; }
+    .header h1 { font-size: 18px; }
+    .header-avatar { width: 40px; height: 40px; }
+    .theme-circle { width: 38px; height: 38px; font-size: 16px; }
     .week-nav-card { padding: 10px 10px 8px; gap: 8px; }
     .week-nav { gap: 5px; }
     .day-btn { padding: 7px 3px 5px; border-radius: 16px; }
@@ -1478,18 +1532,25 @@
 <div class="container">
 
   <header class="header">
-    <div>
-      <h1>Trainings Log</h1>
-      <div class="header-meta" id="todayMeta"></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span id="syncIndicator" style="font-size:12px;color:var(--text-mute);opacity:0.7;">☁</span>
-      <div class="theme-toggle" onclick="toggleTheme()">
-        <span id="themeIcon">☀</span>
-        <div class="theme-switch"></div>
-        <span id="themeLabel">Light</span>
+    <div class="header-left">
+      <img class="header-avatar" id="headerAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2'/%3E%3C/svg%3E" alt="Avatar" onclick="changeAvatar()">
+      <div class="header-info">
+        <h1>Daniel Mau</h1>
+        <div class="header-status" id="syncStatus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+            <circle cx="12" cy="20" r="1" fill="currentColor"></circle>
+          </svg>
+          Synchronisiert
+        </div>
       </div>
     </div>
+    <div class="theme-circle" onclick="toggleTheme()" id="themeCircle">
+      <span id="themeIcon">☀</span>
+    </div>
+    <div class="header-meta" id="todayMeta" style="display:none;"></div>
   </header>
 
   <div class="week-nav-card">
@@ -2844,24 +2905,29 @@ function jumpToDate(dateStr) {
 // ============================================================
 
 function updateSyncIndicator() {
-  const indicator = document.getElementById('syncIndicator');
-  if (!indicator) return;
-
-  indicator.classList.remove('syncing');
-
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const wifiSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>`;
   if (state.syncStatus === 'synced') {
-    indicator.textContent = '🟢 Synchronisiert';
-    indicator.style.color = 'var(--success)';
+    el.innerHTML = wifiSvg + ' Synchronisiert';
+    el.style.color = 'var(--success)';
   } else if (state.syncStatus === 'syncing') {
-    indicator.textContent = '🟢 Synchronisiere...';
-    indicator.style.color = 'var(--success)';
-    indicator.classList.add('syncing');
+    el.innerHTML = wifiSvg + ' Synchronisiere…';
+    el.style.color = 'var(--success)';
   } else if (state.syncStatus === 'error') {
-    indicator.textContent = '🔴 Offline';
-    indicator.style.color = 'var(--warn)';
+    el.innerHTML = wifiSvg + ' Offline';
+    el.style.color = 'var(--warn)';
   } else {
-    indicator.textContent = '🟢 Online';
-    indicator.style.color = 'var(--success)';
+    el.innerHTML = wifiSvg + ' Online';
+    el.style.color = 'var(--success)';
+  }
+}
+
+function changeAvatar() {
+  const url = prompt('Avatar-URL eingeben:');
+  if (url) {
+    document.getElementById('headerAvatar').src = url;
+    localStorage.setItem('avatarUrl', url);
   }
 }
 
@@ -3559,9 +3625,7 @@ function toggleTheme() {
 
 function updateThemeUI(theme) {
   const icon = document.getElementById('themeIcon');
-  const label = document.getElementById('themeLabel');
   if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀';
-  if (label) label.textContent = theme === 'dark' ? 'Dark' : 'Light';
 }
 
 function applyTheme() {
@@ -3793,6 +3857,8 @@ function initializeAuthScreen() {
 }
 
 function init() {
+  const savedAvatar = localStorage.getItem('avatarUrl');
+  if (savedAvatar) document.getElementById('headerAvatar').src = savedAvatar;
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
   renderWeekNav();
@@ -3842,6 +3908,7 @@ window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
 window.checkPassword = checkPassword;
 window.toggleTheme = toggleTheme;
+window.changeAvatar = changeAvatar;
 window.saveBodyMetrics = saveBodyMetrics;
 window.saveBodyTargets = saveBodyTargets;
 window.toggleStopwatch = toggleStopwatch;
