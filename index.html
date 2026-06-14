@@ -3605,10 +3605,10 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     const barW = Math.min(gap*0.7, 50);
 
     if (isRunVolume) {
-      // Pill design with gradient - top 50% more opacity than bottom
+      // Pill design with gradient - stronger at top
       const pillRadius = barW / 2;
       const baseOpacity = 0.12;
-      const topOpacity = baseOpacity * 1.5; // 50% more opacity at top
+      const topOpacity = 0.5;
       const pillGradId = `pillGrad_${Date.now()}`;
       const pillGradient = `<defs><linearGradient id="${pillGradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="${topOpacity}"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="${baseOpacity}"/></linearGradient></defs>`;
 
