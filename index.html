@@ -681,7 +681,7 @@
   }
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
   .stats-outer-card {
@@ -2764,10 +2764,18 @@ function renderStats() {
         }
 
         const gradientId = 'weightGradient_' + Date.now();
-        let segmentsSvg = '<defs><linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
-          '<stop offset="0%" stop-color="#34C759" stop-opacity="0.9"/>' +
-          '<stop offset="100%" stop-color="#34C759" stop-opacity="0.5"/>' +
-        '</linearGradient></defs>';
+        const filterId = 'roundCorners_' + Date.now();
+        let segmentsSvg = '<defs>' +
+          '<linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+            '<stop offset="0%" stop-color="#34C759" stop-opacity="0.9"/>' +
+            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.5"/>' +
+          '</linearGradient>' +
+          '<filter id="' + filterId + '">' +
+            '<feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur"/>' +
+            '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo"/>' +
+            '<feComposite in="SourceGraphic" in2="goo" operator="atop"/>' +
+          '</filter>' +
+        '</defs>';
 
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
@@ -2782,7 +2790,7 @@ function renderStats() {
           '<div class="stat-label" style="margin-bottom:4px;">Gewichtsverlust</div>' +
           '<div style="display:flex;align-items:center;justify-content:center;">' +
             '<svg width="140" height="75" viewBox="0 0 200 100" style="display:block;">' +
-              '<g>' + segmentsSvg + '</g>' +
+              '<g filter="url(#' + filterId + ')">' + segmentsSvg + '</g>' +
               '<text x="100" y="100" text-anchor="middle" font-size="36" font-weight="bold" fill="var(--text)">' +
                 weightLoss +
                 '<tspan font-size="15" font-weight="500" fill="var(--text-mute)" dx="4">kg</tspan>' +
@@ -2810,15 +2818,17 @@ function renderStats() {
     '</div>';
   }
 
+  const weightLossCardSpan = weightLossCard.replace('<div class="stat-card">', '<div class="stat-card" style="grid-row:span 2;">');
+
   document.getElementById('statsGrid').innerHTML = '<div class="stat-card">' +
     '<div class="stat-label">Gesamt-km</div>' +
     '<div class="stat-value">' + totalKm.toFixed(1) + '<span class="stat-unit">km</span></div>' +
   '</div>' +
+  weightLossCardSpan +
   '<div class="stat-card">' +
     '<div class="stat-label">Gym-Einheiten</div>' +
     '<div class="stat-value">' + totalGym + '</div>' +
-  '</div>' +
-  weightLossCard;
+  '</div>';
 }
 
 // Calendar state
