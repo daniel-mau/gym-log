@@ -2712,15 +2712,78 @@ function renderStats() {
 
   const avgPain = painCount > 0 ? (totalPainSum / painCount).toFixed(1) : '—';
 
-  // Calculate weight loss
+  // Calculate weight loss and progress
   const allMetrics = loadAllBodyMetrics();
   let weightLoss = '—';
+  let weightLossCard = '';
+
   if (allMetrics.length >= 2) {
     const firstWeight = parseFloat(allMetrics[0].data.weight);
     const currentWeight = parseFloat(allMetrics[allMetrics.length - 1].data.weight);
+    const targets = loadBodyTargets();
+    const targetWeight = targets.weight ? parseFloat(targets.weight) : null;
+
     if (!isNaN(firstWeight) && !isNaN(currentWeight)) {
       weightLoss = (firstWeight - currentWeight).toFixed(1);
+
+      // Calculate progress if target exists
+      if (targetWeight && !isNaN(targetWeight) && targetWeight < firstWeight) {
+        const totalGoal = firstWeight - targetWeight;
+        const achieved = firstWeight - currentWeight;
+        const progress = Math.min(Math.max((achieved / totalGoal) * 100, 0), 100);
+        const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
+
+        // Circular arc progress bar
+        const radius = 45;
+        const strokeWidth = 8;
+        const center = 60;
+        const circumference = Math.PI * radius; // Half circle
+        const offset = circumference - (progress / 100) * circumference;
+
+        weightLossCard = `
+          <div class="stat-card" style="display:flex;align-items:center;gap:16px;position:relative;">
+            <svg width="120" height="70" viewBox="0 0 120 70" style="flex-shrink:0;">
+              <path d="M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}"
+                fill="none" stroke="rgba(52, 199, 89, 0.15)" stroke-width="${strokeWidth}" stroke-linecap="round"/>
+              <path d="M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}"
+                fill="none" stroke="#34C759" stroke-width="${strokeWidth}" stroke-linecap="round"
+                stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+                style="transition: stroke-dashoffset 0.5s ease;"/>
+            </svg>
+            <div style="position:absolute;left:60px;top:50%;transform:translate(-50%, -50%);text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">${remaining}</div>
+              <div style="font-size:11px;color:var(--text-mute);margin-top:2px;">Remaining</div>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div class="stat-label">Gewichtsverlust</div>
+              <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
+            </div>
+          </div>
+        `;
+      } else {
+        // No target or invalid target - show simple card
+        weightLossCard = `
+          <div class="stat-card">
+            <div class="stat-label">Gewichtsverlust</div>
+            <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
+          </div>
+        `;
+      }
+    } else {
+      weightLossCard = `
+        <div class="stat-card">
+          <div class="stat-label">Gewichtsverlust</div>
+          <div class="stat-value">—<span class="stat-unit">kg</span></div>
+        </div>
+      `;
     }
+  } else {
+    weightLossCard = `
+      <div class="stat-card">
+        <div class="stat-label">Gewichtsverlust</div>
+        <div class="stat-value">—<span class="stat-unit">kg</span></div>
+      </div>
+    `;
   }
 
   document.getElementById('statsGrid').innerHTML = `
@@ -2736,10 +2799,7 @@ function renderStats() {
       <div class="stat-label">Gym-Einheiten</div>
       <div class="stat-value">${totalGym}</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Gewichtsverlust</div>
-      <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
-    </div>
+    ${weightLossCard}
   `;
 }
 
