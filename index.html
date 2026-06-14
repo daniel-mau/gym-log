@@ -2775,7 +2775,7 @@ function renderStats() {
           const color = i < activeSegments ? 'url(#' + gradientId + ')' : 'rgba(150, 150, 150, 0.15)';
           const pathD = createWedgePath(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
 
-          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
+          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '" stroke="' + color + '" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>';
         }
 
         weightLossCard = '<div class="stat-card">' +
@@ -2810,21 +2810,15 @@ function renderStats() {
     '</div>';
   }
 
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Gesamt-km</div>
-      <div class="stat-value">${totalKm.toFixed(1)}<span class="stat-unit">km</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Ø Schmerz</div>
-      <div class="stat-value">${avgPain}<span class="stat-unit">/10</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Gym-Einheiten</div>
-      <div class="stat-value">${totalGym}</div>
-    </div>
-    ${weightLossCard}
-  `;
+  document.getElementById('statsGrid').innerHTML = '<div class="stat-card">' +
+    '<div class="stat-label">Gesamt-km</div>' +
+    '<div class="stat-value">' + totalKm.toFixed(1) + '<span class="stat-unit">km</span></div>' +
+  '</div>' +
+  '<div class="stat-card">' +
+    '<div class="stat-label">Gym-Einheiten</div>' +
+    '<div class="stat-value">' + totalGym + '</div>' +
+  '</div>' +
+  weightLossCard;
 }
 
 // Calendar state
