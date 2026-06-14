@@ -3562,7 +3562,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   let gridLines = '';
   let gridLabelEls = '';
   const gridColor = 'var(--text-mute)';
-  if (isBar) {
+  const isRunVolume = title === 'Laufvolumen';
+  if (isBar && !isRunVolume) {
     gridLines = nonNull.map(p =>
       `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.4" stroke-width="0.8"/>`
     ).join('');
@@ -3599,11 +3600,32 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   if (isBar) {
     const gap = (W-l-r)/Math.max(totalSlots,1);
     const barW = Math.min(gap*0.7, 50);
-    barsEl = nonNull.map(p => {
-      const bh = chartBottom - p.y;
-      const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-      return `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="5" fill="${chartColor}" opacity="0.7"/>${tipBubble(p.x, p.y, formatted)}`;
-    }).join('');
+
+    if (isRunVolume) {
+      // Pill design with gray background showing remaining to max
+      const pillRadius = barW / 2;
+      barsEl = nonNull.map(p => {
+        const maxHeight = chartBottom - t;
+        const bh = chartBottom - p.y;
+        const grayHeight = maxHeight - bh;
+        const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
+
+        // Gray background pill (full height)
+        let pillSvg = `<rect x="${(p.x-barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="rgba(150,150,150,0.15)"/>`;
+
+        // Colored pill (actual value)
+        pillSvg += `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${pillRadius}" fill="${chartColor}" opacity="0.85"/>`;
+
+        pillSvg += tipBubble(p.x, p.y, formatted);
+        return pillSvg;
+      }).join('');
+    } else {
+      barsEl = nonNull.map(p => {
+        const bh = chartBottom - p.y;
+        const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
+        return `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="5" fill="${chartColor}" opacity="0.7"/>${tipBubble(p.x, p.y, formatted)}`;
+      }).join('');
+    }
   }
 
   // Line path + fill (smooth curves)
