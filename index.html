@@ -3340,11 +3340,17 @@ function renderExerciseSparkline(exerciseId) {
     }
   }
 
-  const tooltips = points.map(p =>
-    `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="rgba(52, 199, 89, 0)" style="cursor:pointer;">
-      <title>${p.weight.toFixed(1)} kg (${p.sets} Sätze)</title>
-    </circle>`
-  ).join('');
+  // Find min and max for tooltips
+  const minWeightValue = Math.min(...points.map(p => p.weight));
+  const maxWeightValue = Math.max(...points.map(p => p.weight));
+
+  const tooltips = points
+    .filter(p => p.weight === minWeightValue || p.weight === maxWeightValue)
+    .map(p =>
+      `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="rgba(52, 199, 89, 0)" style="cursor:pointer;">
+        <title>${p.weight.toFixed(1)} kg (${p.sets} Sätze)</title>
+      </circle>`
+    ).join('');
 
   return `
     <div style="margin-top:10px;font-size:12px;color:var(--text-mute);">
@@ -3439,9 +3445,15 @@ function renderBodyMetricSparkline(metric) {
     <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+13).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
   `;
 
-  const tooltips = points.map(p =>
-    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="transparent" style="cursor:pointer;"><title>${new Date(p.date).toLocaleDateString('de-DE')}: ${p.value.toFixed(1)} ${unit}</title></circle>`
-  ).join('');
+  // Find min and max for tooltips
+  const minMetricValue = Math.min(...points.map(p => p.value));
+  const maxMetricValue = Math.max(...points.map(p => p.value));
+
+  const tooltips = points
+    .filter(p => p.value === minMetricValue || p.value === maxMetricValue)
+    .map(p =>
+      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="transparent" style="cursor:pointer;"><title>${new Date(p.date).toLocaleDateString('de-DE')}: ${p.value.toFixed(1)} ${unit}</title></circle>`
+    ).join('');
 
   return `
     <div class="sparkline-card">
@@ -3643,10 +3655,23 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         return pillSvg;
       }).join('');
     } else {
+      // Find min and max values for tooltips
+      const minValue = Math.min(...nonNull.map(p => p.value));
+      const maxValue = Math.max(...nonNull.map(p => p.value));
+
       barsEl = nonNull.map(p => {
         const bh = chartBottom - p.y;
         const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
-        return `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="5" fill="${chartColor}" opacity="0.7"/>${tipBubble(p.x, p.y, formatted)}`;
+
+        // Bar rectangle
+        let barSvg = `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="5" fill="${chartColor}" opacity="0.7"/>`;
+
+        // Only show tooltips for min and max values
+        if (p.value === minValue || p.value === maxValue) {
+          barSvg += tipBubble(p.x, p.y - 8, formatted, p.y);
+        }
+
+        return barSvg;
       }).join('');
     }
   }
@@ -3671,9 +3696,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
     const maxPt = nonNull.reduce((a, b) => a.value > b.value ? a : b);
     const minPt = nonNull.reduce((a, b) => a.value < b.value ? a : b);
-    const curPt = nonNull[nonNull.length-1];
     const seen = new Set();
-    specialLabelsEl = [maxPt, curPt, minPt].filter(p => {
+    // Only show tooltips for min and max
+    specialLabelsEl = [maxPt, minPt].filter(p => {
       if (seen.has(p.idx)) return false;
       seen.add(p.idx);
       return true;
