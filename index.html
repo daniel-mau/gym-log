@@ -2733,33 +2733,49 @@ function renderStats() {
         const progress = Math.min(Math.max((achieved / totalGoal) * 100, 0), 100);
         const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
 
-        // Circular arc progress bar
-        const radius = 45;
-        const strokeWidth = 8;
+        // Pill-shaped arc progress bar (like MyFitnessPal)
+        const numSegments = 10;
+        const segmentAngle = 180 / numSegments;
+        const filledSegments = Math.ceil((progress / 100) * numSegments);
+        const radius = 42;
         const center = 60;
-        const circumference = Math.PI * radius; // Half circle
-        const offset = circumference - (progress / 100) * circumference;
+        const segmentWidth = 12;
+        const gap = 3;
 
-        weightLossCard = `
+        let segmentsSvg = '';
+        for (let i = 0; i < numSegments; i++) {
+          const startAngle = 180 - (i * segmentAngle) - segmentAngle;
+          const endAngle = 180 - (i * segmentAngle);
+
+          const startRad = (startAngle + gap) * Math.PI / 180;
+          const endRad = (endAngle - gap) * Math.PI / 180;
+
+          const x1 = center + radius * Math.cos(startRad);
+          const y1 = center - radius * Math.sin(startRad);
+          const x2 = center + radius * Math.cos(endRad);
+          const y2 = center - radius * Math.sin(endRad);
+
+          const isFilled = i < filledSegments;
+          const color = isFilled ? '#34C759' : 'rgba(52, 199, 89, 0.12)';
+
+          segmentsSvg += \`<path d="M \${x1} \${y1} A \${radius} \${radius} 0 0 1 \${x2} \${y2}" fill="none" stroke="\${color}" stroke-width="\${segmentWidth}" stroke-linecap="round"/>\`;
+        }
+
+        weightLossCard = \`
           <div class="stat-card" style="display:flex;align-items:center;gap:16px;position:relative;">
             <svg width="120" height="70" viewBox="0 0 120 70" style="flex-shrink:0;">
-              <path d="M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}"
-                fill="none" stroke="rgba(52, 199, 89, 0.15)" stroke-width="${strokeWidth}" stroke-linecap="round"/>
-              <path d="M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}"
-                fill="none" stroke="#34C759" stroke-width="${strokeWidth}" stroke-linecap="round"
-                stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
-                style="transition: stroke-dashoffset 0.5s ease;"/>
+              \${segmentsSvg}
             </svg>
             <div style="position:absolute;left:60px;top:50%;transform:translate(-50%, -50%);text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">${remaining}</div>
+              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">\${remaining}</div>
               <div style="font-size:11px;color:var(--text-mute);margin-top:2px;">Remaining</div>
             </div>
             <div style="flex:1;min-width:0;">
               <div class="stat-label">Gewichtsverlust</div>
-              <div class="stat-value">${weightLoss}<span class="stat-unit">kg</span></div>
+              <div class="stat-value">\${weightLoss}<span class="stat-unit">kg</span></div>
             </div>
           </div>
-        `;
+        \`;
       } else {
         // No target or invalid target - show simple card
         weightLossCard = `
