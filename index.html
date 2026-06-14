@@ -3607,7 +3607,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     if (isRunVolume) {
       // Pill design like screenshot - simple solid color
       const pillRadius = barW / 2;
-      const pillColor = hexToRgba(chartColor, 0.75); // Use badge background blue tone
+      const pillColor = hexToRgba(chartColor, 0.12); // Same transparency as badge background
 
       // Add placeholder pills for missing weeks (last 2 positions)
       let placeholderPills = '';
