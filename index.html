@@ -1000,7 +1000,7 @@
   .sparkline-card {
     border-radius: var(--radius-lg);
     overflow: hidden;
-    background: var(--surface-overlay);
+    background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
@@ -3558,11 +3558,10 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/></linearGradient></defs>`;
 
-  // Grid lines with dates at every other line
+  // Grid lines + labels: one every 2 calendar days
   let gridLines = '';
   let gridLabelEls = '';
   const gridColor = 'var(--text-mute)';
-  const numGridLines = 10;
   if (isBar) {
     gridLines = nonNull.map(p =>
       `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.15" stroke-width="0.8"/>`
@@ -3572,15 +3571,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.08" stroke-width="0.6"/>`;
     }
   } else if (lineDates && lineTotalDays > 0) {
-    for (let i = 0; i <= numGridLines; i++) {
-      const dayOffset = Math.round(i * lineTotalDays / numGridLines);
-      const x = l + (dayOffset/lineTotalDays)*(W-l-r);
+    for (let d = 0; d <= lineTotalDays; d += 2) {
+      const x = l + (d/lineTotalDays)*(W-l-r);
       gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.1" stroke-width="0.5"/>`;
-      if (i % 2 === 0) {
-        const date = new Date(lineFirstDate.getTime() + dayOffset*24*60*60*1000);
-        const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
-        gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
-      }
+      const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
+      const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
+      gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
     }
   }
 
