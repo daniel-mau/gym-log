@@ -2775,7 +2775,7 @@ function renderStats() {
           const color = i < activeSegments ? 'url(#' + gradientId + ')' : 'rgba(150, 150, 150, 0.15)';
           const pathD = createWedgePath(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
 
-          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '" stroke="' + color + '" stroke-width="4" stroke-linejoin="round"/>';
+          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
         }
 
         weightLossCard = '<div class="stat-card">' +
@@ -2783,7 +2783,7 @@ function renderStats() {
           '<div style="display:flex;align-items:center;justify-content:center;">' +
             '<svg width="140" height="75" viewBox="0 0 200 100" style="display:block;">' +
               '<g>' + segmentsSvg + '</g>' +
-              '<text x="100" y="88" text-anchor="middle" font-size="36" font-weight="bold" fill="var(--text)">' +
+              '<text x="100" y="100" text-anchor="middle" font-size="36" font-weight="bold" fill="var(--text)">' +
                 weightLoss +
                 '<tspan font-size="15" font-weight="500" fill="var(--text-mute)" dx="4">kg</tspan>' +
               '</text>' +
