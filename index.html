@@ -160,8 +160,10 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: transparent;
-    border: 1.5px solid var(--text-mute);
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -169,6 +171,7 @@
     font-size: 18px;
     flex-shrink: 0;
     transition: transform 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   .theme-circle:active { transform: scale(0.92); }
 
