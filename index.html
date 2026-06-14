@@ -2763,11 +2763,16 @@ function renderStats() {
           return 'M ' + p1.x + ' ' + p1.y + ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + p2.x + ' ' + p2.y + ' L ' + p3.x + ' ' + p3.y + ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + p4.x + ' ' + p4.y + ' Z';
         }
 
-        let segmentsSvg = '';
+        const gradientId = 'weightGradient_' + Date.now();
+        let segmentsSvg = '<defs><linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+          '<stop offset="0%" stop-color="#34C759" stop-opacity="0.9"/>' +
+          '<stop offset="100%" stop-color="#34C759" stop-opacity="0.5"/>' +
+        '</linearGradient></defs>';
+
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? '#34C759' : '#f1f5f9';
+          const color = i < activeSegments ? 'url(#' + gradientId + ')' : 'rgba(150, 150, 150, 0.15)';
           const pathD = createWedgePath(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
 
           segmentsSvg += '<path d="' + pathD + '" fill="' + color + '" stroke="' + color + '" stroke-width="4" stroke-linejoin="round"/>';
@@ -2776,10 +2781,10 @@ function renderStats() {
         weightLossCard = '<div class="stat-card">' +
           '<div class="stat-label">Gewichtsverlust</div>' +
           '<div style="display:flex;align-items:center;justify-content:center;margin-top:8px;">' +
-            '<svg width="140" height="80" viewBox="0 0 200 100" style="display:block;">' +
+            '<svg width="140" height="90" viewBox="0 0 200 110" style="display:block;">' +
               '<g>' + segmentsSvg + '</g>' +
-              '<text x="100" y="95" text-anchor="middle" font-size="42" font-weight="bold" fill="var(--text)">' + weightLoss + '</text>' +
-              '<text x="100" y="110" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-mute)">kg</text>' +
+              '<text x="100" y="92" text-anchor="middle" font-size="36" font-weight="bold" fill="var(--text)">' + weightLoss + '</text>' +
+              '<text x="100" y="108" text-anchor="middle" font-size="13" font-weight="500" fill="var(--text-mute)">kg</text>' +
             '</svg>' +
           '</div>' +
         '</div>';
