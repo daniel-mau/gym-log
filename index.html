@@ -130,18 +130,18 @@
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: 10px 8px 8px;
+    padding: 12px 12px 10px;
     box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
   .week-nav-title {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 2px 4px 2px;
-    font-size: 12px;
+    gap: 5px;
+    padding: 0 2px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
     font-weight: 600;
@@ -152,8 +152,8 @@
   }
   .week-nav {
     display: flex;
-    gap: 8px;
-    justify-content: space-evenly;
+    gap: 6px;
+    justify-content: space-between;
     padding: 0;
     background: transparent;
     border: none;
@@ -163,8 +163,8 @@
     -webkit-backdrop-filter: none;
   }
   .day-btn {
-    flex: 0 1 auto;
-    width: 48px;
+    flex: 1;
+    min-width: 0;
     background: white;
     border: 1px solid #D0D0D0;
     border-radius: 18px;
@@ -1403,9 +1403,9 @@
     .container { padding: 12px; }
     .header { margin-bottom: 4px; }
     .header h1 { font-size: 28px; }
-    .week-nav-card { padding: 4px 0 0; gap: 6px; }
-    .week-nav { gap: 5px; padding: 0; }
-    .day-btn { padding: 7px 3px 5px; width: 44px; border-radius: 16px; }
+    .week-nav-card { padding: 10px 10px 8px; gap: 8px; }
+    .week-nav { gap: 5px; }
+    .day-btn { padding: 7px 3px 5px; border-radius: 16px; }
     .day-btn .day-label { font-size: 9px; }
     .day-btn .day-date { font-size: 13px; }
     .day-btn .day-type { font-size: 7px; }
@@ -1501,9 +1501,9 @@
         <line x1="3" y1="10" x2="21" y2="10"></line>
       </svg>
       <span id="weekNavTitle">—</span>
-      <div style="display:flex;gap:2px;margin-left:auto;">
-        <button onclick="changeWeek(-1)" style="background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:8px;color:var(--text-mute);font-size:15px;line-height:1;transition:background 0.15s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='none'">‹</button>
-        <button onclick="changeWeek(1)" style="background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:8px;color:var(--text-mute);font-size:15px;line-height:1;transition:background 0.15s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='none'">›</button>
+      <div style="display:flex;gap:0;margin-left:auto;">
+        <button onclick="changeWeek(-1)" style="background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px;color:var(--text-dim);font-size:16px;font-weight:500;line-height:1;">‹</button>
+        <button onclick="changeWeek(1)" style="background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px;color:var(--text-dim);font-size:16px;font-weight:500;line-height:1;">›</button>
       </div>
     </div>
     <nav class="week-nav" id="weekNav"></nav>
