@@ -3624,6 +3624,10 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         placeholderPills += `<rect x="${(x - barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="rgba(150,150,150,0.08)"/>`;
       }
 
+      // Find min and max values for tooltips
+      const minValue = Math.min(...nonNull.map(p => p.value));
+      const maxValue = Math.max(...nonNull.map(p => p.value));
+
       barsEl = pillGradient + placeholderPills + nonNull.map(p => {
         const bh = chartBottom - p.y;
         const formatted = avgFormatter ? avgFormatter(p.value) : p.value.toFixed(1);
@@ -3631,9 +3635,11 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         // Gradient colored pill (actual value)
         let pillSvg = `<rect x="${(p.x-barW/2).toFixed(1)}" y="${p.y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${pillRadius}" fill="url(#${pillGradId})"/>`;
 
-        // Tooltip slightly above the colored pill, arrow points to top of colored pill
-        const tooltipY = p.y - 8;
-        pillSvg += tipBubble(p.x, tooltipY, formatted, p.y);
+        // Only show tooltips for min and max values
+        if (p.value === minValue || p.value === maxValue) {
+          const tooltipY = p.y - 8;
+          pillSvg += tipBubble(p.x, tooltipY, formatted, p.y);
+        }
         return pillSvg;
       }).join('');
     } else {
