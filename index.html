@@ -2733,38 +2733,51 @@ function renderStats() {
         const progress = Math.min(Math.max((achieved / totalGoal) * 100, 0), 100);
         const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
 
-        // SVG line segments progress bar
-        const totalSegments = 12;
+        // SVG wedge segments progress bar
+        const totalSegments = 10;
         const activeSegments = Math.round((progress / 100) * totalSegments);
-        const radius = 80;
+        const gapAngle = 8;
+        const innerRadius = 55;
+        const outerRadius = 85;
         const cx = 100;
         const cy = 100;
-        const startAngle = 190;
-        const endAngle = -10;
-        const angleRange = endAngle - startAngle;
+
+        const totalAngle = 180;
+        const totalGapAngle = gapAngle * (totalSegments - 1);
+        const segmentAngle = (totalAngle - totalGapAngle) / totalSegments;
+
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+          const angleInRadians = angleInDegrees * Math.PI / 180.0;
+          return {
+            x: centerX + (radius * Math.cos(angleInRadians)),
+            y: centerY + (radius * Math.sin(angleInRadians))
+          };
+        }
+
+        function createWedgePath(cx, cy, rIn, rOut, startAngle, endAngle) {
+          const p1 = polarToCartesian(cx, cy, rOut, startAngle);
+          const p2 = polarToCartesian(cx, cy, rOut, endAngle);
+          const p3 = polarToCartesian(cx, cy, rIn, endAngle);
+          const p4 = polarToCartesian(cx, cy, rIn, startAngle);
+
+          return 'M ' + p1.x + ' ' + p1.y + ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + p2.x + ' ' + p2.y + ' L ' + p3.x + ' ' + p3.y + ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + p4.x + ' ' + p4.y + ' Z';
+        }
 
         let segmentsSvg = '';
         for (let i = 0; i < totalSegments; i++) {
-          const angle = startAngle + (i / (totalSegments - 1)) * angleRange;
-          const radian = (angle * Math.PI) / 180;
-          const strokeColor = i < activeSegments ? '#34C759' : '#f1f5f9';
+          const startAngle = 180 + (i * (segmentAngle + gapAngle));
+          const endAngle = startAngle + segmentAngle;
+          const color = i < activeSegments ? '#34C759' : '#f1f5f9';
+          const pathD = createWedgePath(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
 
-          const x1 = cx + (radius - 5) * Math.cos(radian);
-          const y1 = cy - (radius - 5) * Math.sin(radian);
-          const x2 = cx + (radius + 5) * Math.cos(radian);
-          const y2 = cy - (radius + 5) * Math.sin(radian);
-
-          segmentsSvg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + strokeColor + '" stroke-width="12" stroke-linecap="round"/>';
+          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '" stroke="' + color + '" stroke-width="4" stroke-linejoin="round"/>';
         }
 
         weightLossCard = '<div class="stat-card" style="display:flex;align-items:center;gap:16px;position:relative;">' +
-          '<svg width="120" height="70" viewBox="0 0 200 120" style="flex-shrink:0;">' +
-            segmentsSvg +
+          '<svg width="120" height="70" viewBox="0 0 200 100" style="flex-shrink:0;">' +
+            '<g>' + segmentsSvg + '</g>' +
+            '<text x="100" y="100" text-anchor="middle" font-size="28" font-weight="bold" fill="var(--text)">' + remaining + '</text>' +
           '</svg>' +
-          '<div style="position:absolute;left:60px;top:50%;transform:translate(-50%, -50%);text-align:center;">' +
-            '<div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">' + remaining + '</div>' +
-            '<div style="font-size:11px;color:var(--text-mute);margin-top:2px;">Remaining</div>' +
-          '</div>' +
           '<div style="flex:1;min-width:0;">' +
             '<div class="stat-label">Gewichtsverlust</div>' +
             '<div class="stat-value">' + weightLoss + '<span class="stat-unit">kg</span></div>' +
