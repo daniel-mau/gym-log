@@ -3564,16 +3564,16 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const gridColor = 'var(--text-mute)';
   if (isBar) {
     gridLines = nonNull.map(p =>
-      `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.2" stroke-width="0.8"/>`
+      `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.4" stroke-width="0.8"/>`
     ).join('');
     for (let i = n; i < n+2; i++) {
       const x = l + (i+0.5)/totalSlots*(W-l-r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.12" stroke-width="0.6"/>`;
+      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.24" stroke-width="0.6"/>`;
     }
   } else if (lineDates && lineTotalDays > 0) {
     for (let d = 0; d <= lineTotalDays; d += 2) {
       const x = l + (d/lineTotalDays)*(W-l-r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.15" stroke-width="0.5"/>`;
+      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
       const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
       const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
       gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
