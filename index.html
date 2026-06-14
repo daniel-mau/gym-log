@@ -1603,9 +1603,9 @@
         <line x1="3" y1="10" x2="21" y2="10"></line>
       </svg>
       <span id="weekNavTitle">—</span>
-      <div style="display:flex;gap:0;margin-left:auto;">
-        <button onclick="changeWeek(-1)" style="background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px;color:var(--text-dim);font-size:16px;font-weight:500;line-height:1;">‹</button>
-        <button onclick="changeWeek(1)" style="background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px;color:var(--text-dim);font-size:16px;font-weight:500;line-height:1;">›</button>
+      <div style="display:flex;gap:6px;margin-left:auto;">
+        <button onclick="changeWeek(-1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:10px;padding:6px 12px;cursor:pointer;color:var(--accent);font-family:inherit;font-size:17px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">‹</button>
+        <button onclick="changeWeek(1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:10px;padding:6px 12px;cursor:pointer;color:var(--accent);font-family:inherit;font-size:17px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">›</button>
       </div>
     </div>
     <nav class="week-nav" id="weekNav"></nav>
@@ -2155,9 +2155,12 @@ function renderWeekNav() {
     let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Run' : plan.type;
     if (typeLabel === 'rest') typeLabel = 'Rest';
 
+    // Use consistent day numbers (1-7 for Mon-Sun) instead of actual dates
+    const dayNumber = String(i + 1).padStart(2, '0');
+
     btn.innerHTML = `
       <div class="day-label">${DAY_LABELS[dayKey]}</div>
-      <div class="day-date">${String(date.getDate()).padStart(2, '0')}</div>
+      <div class="day-date">${dayNumber}</div>
       <div class="day-type">${typeLabel}</div>
       <div class="day-status">${statusIcon}</div>
     `;
