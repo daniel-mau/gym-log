@@ -682,7 +682,7 @@
   .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
   }
   .stats-outer-card {
     background: var(--bg-card);
@@ -731,7 +731,7 @@
   .stat-card {
     background: var(--surface-subtle);
     border-radius: var(--radius-sm);
-    padding: 12px 14px;
+    padding: 8px 14px;
     box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
@@ -741,7 +741,7 @@
     color: var(--text-mute);
     text-transform: none;
     letter-spacing: -0.01em;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .stat-value {
     font-size: 28px;
@@ -2796,15 +2796,12 @@ function renderStats() {
         }
 
         weightLossCard = '<div class="stat-card">' +
-          '<div class="stat-label" style="margin-bottom:4px;">Gewichtsverlust</div>' +
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:space-around;flex:1;">' +
-            '<svg width="100%" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;height:auto;">' +
+          '<div class="stat-label">Gewichtsverlust</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:4px;">' +
+            '<svg width="100%" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;height:auto;margin-bottom:-8px;">' +
               '<g>' + segmentsSvg + '</g>' +
-              '<text x="100" y="100" text-anchor="middle" font-size="48" font-weight="bold" fill="var(--text)">' +
-                weightLoss +
-                '<tspan font-size="18" font-weight="500" fill="var(--text-mute)" dx="5">kg</tspan>' +
-              '</text>' +
             '</svg>' +
+            '<div class="stat-value">' + weightLoss + '<span class="stat-unit">kg</span></div>' +
           '</div>' +
         '</div>';
       } else {
