@@ -700,7 +700,8 @@
   .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1.68fr;
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 12px;
   }
   .stats-outer-card {
     background: var(--bg-card);
@@ -751,16 +752,12 @@
     background: var(--text-dim);
   }
   .stat-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--surface-subtle);
     border-radius: var(--radius-sm);
     padding: 8px 14px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
-  }
-  [data-theme="dark"] .stat-card {
-    background: rgba(44, 40, 48, 0.85);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
   .stat-label {
     font-size: 13px;
@@ -1799,7 +1796,7 @@
         Statistik · letzte 4 Wochen
       </div>
       <div class="stats-grid" id="statsGrid"></div>
-      <div class="chart-grid" id="chartCarousel" style="margin-top:8px;">
+      <div class="chart-grid" id="chartCarousel" style="margin-top:12px;">
         <div id="runVolumeSparkline"></div>
         <div id="paceSparkline"></div>
         <div id="painSparkline"></div>
