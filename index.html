@@ -2816,13 +2816,13 @@ function renderStats() {
         }
 
         weightLossCard = '<div class="stat-card">' +
-          '<div class="stat-label" style="margin-bottom:4px;">Gewichtsverlust</div>' +
-          '<div style="display:flex;align-items:center;justify-content:center;">' +
-            '<svg width="140" height="75" viewBox="0 0 200 100" style="display:block;">' +
+          '<div class="stat-label" style="margin-bottom:8px;">Gewichtsverlust</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;">' +
+            '<svg width="200" height="110" viewBox="0 0 200 110" style="display:block;margin-bottom:8px;">' +
               '<g filter="url(#' + filterId + ')">' + segmentsSvg + '</g>' +
-              '<text x="100" y="100" text-anchor="middle" font-size="36" font-weight="bold" fill="var(--text)">' +
+              '<text x="100" y="105" text-anchor="middle" font-size="48" font-weight="bold" fill="var(--text)">' +
                 weightLoss +
-                '<tspan font-size="15" font-weight="500" fill="var(--text-mute)" dx="4">kg</tspan>' +
+                '<tspan font-size="18" font-weight="500" fill="var(--text-mute)" dx="5">kg</tspan>' +
               '</text>' +
             '</svg>' +
           '</div>' +
