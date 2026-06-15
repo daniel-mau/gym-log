@@ -369,6 +369,9 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     margin-bottom: 20px;
   }
+  [data-theme="dark"] .gym-session-card {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  }
   .session-title-gym {
     display: flex;
     align-items: center;
@@ -707,6 +710,9 @@
     border-radius: var(--radius-lg);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     padding: 16px;
+  }
+  [data-theme="dark"] .stats-outer-card {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
   }
   .chart-grid {
     display: flex;
@@ -1777,7 +1783,7 @@
 
   <main id="sessionContent"></main>
 
-  <section class="stats-section" id="statsSection">
+  <section class="stats-section" id="statsSection" style="margin-top: 20px;">
     <div class="stats-outer-card">
       <div class="body-metrics-title" style="margin-bottom:8px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
