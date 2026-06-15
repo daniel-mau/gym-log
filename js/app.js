@@ -121,11 +121,7 @@ function exerciseImageHTML(exId, exName) {
 }
 
 // ============================================================
-// SUPABASE SETUP
-// ============================================================
-// Supabase client is initialized in supabase-client.js
-const supabaseClient = window.supabaseClient;
-
+// SUPABASE: client is declared in supabase-client.js (global scope)
 // ============================================================
 // STATE & PERSISTENCE
 // ============================================================
@@ -2617,8 +2613,9 @@ window.closeTitleEditor = closeTitleEditor;
 window.saveTitleEditor = saveTitleEditor;
 
 function handleDOMReady() {
+  // Register listener BEFORE initializeAuthScreen(), so gymLogUnlocked event is caught
   window.addEventListener('gymLogUnlocked', init);
-  // initializeAuthScreen() is now called from auth.js
+  initializeAuthScreen();
   const uploadPwInput = document.getElementById('uploadPwInput');
   if (uploadPwInput) {
     uploadPwInput.addEventListener('keypress', (e) => {

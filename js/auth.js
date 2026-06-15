@@ -63,13 +63,7 @@ function initializeAuthScreen() {
 }
 
 // Make functions globally available
+// initializeAuthScreen() is called by app.js after it registers the gymLogUnlocked listener
 window.checkPassword = checkPassword;
 window.unlockApp = unlockApp;
 window.initializeAuthScreen = initializeAuthScreen;
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeAuthScreen);
-} else {
-  initializeAuthScreen();
-}
