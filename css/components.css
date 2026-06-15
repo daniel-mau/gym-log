@@ -605,7 +605,7 @@ button.secondary:hover { opacity: 0.8; }
   display: grid;
   grid-template-columns: 1fr 1.68fr;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 .stats-outer-card {
   background: var(--bg-card);
@@ -621,18 +621,18 @@ button.secondary:hover { opacity: 0.8; }
 }
 .chart-grid {
   display: flex;
-  gap: 12px;
+  gap: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 12px 8px 20px;
-  margin: 0 -8px;
+  padding: 4px 0 8px;
+  margin: 0;
 }
 .chart-grid::-webkit-scrollbar { display: none; }
 .chart-grid > div {
-  flex: 0 0 calc(100% - 16px);
+  flex: 0 0 100%;
   scroll-snap-align: start;
   min-width: 0;
 }
