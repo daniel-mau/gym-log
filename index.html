@@ -3769,13 +3769,17 @@ function renderExerciseSparkline(exerciseId) {
     .filter(p => p.weight === minWeightValue || p.weight === maxWeightValue)
     .map(p => {
       const label = `${p.weight.toFixed(1)} kg`;
-      const labelW = label.length * 5.5 + 8;
+      const labelW = label.length * 5.5 + 10;
       const labelH = 16;
-      const isMax = p.weight === maxWeightValue;
-      const labelY = isMax ? Math.max(2, p.y - labelH - 4) : Math.min(svgHeight - labelH - 2, p.y + 5);
+      const labelY = Math.max(2, p.y - labelH - 8);
       const labelX = Math.max(2, Math.min(svgWidth - labelW - 2, p.x - labelW / 2));
+      const arrowCx = Math.min(labelX + labelW - 6, Math.max(labelX + 6, p.x));
+      const arrowW = 5;
+      const arrowLen = 4;
+      const arrowPath = `M${(arrowCx-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(arrowCx-1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} Q${arrowCx.toFixed(1)},${(labelY+labelH+arrowLen).toFixed(1)} ${(arrowCx+1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} L${(arrowCx+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
       return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="rgba(52,199,89,1)"/>
-        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="4" fill="rgba(30,30,30,0.75)"/>
+        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="8" fill="rgba(30,30,30,0.75)"/>
+        <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
         <text x="${(labelX + labelW/2).toFixed(1)}" y="${(labelY + 11.5).toFixed(1)}" font-size="9.5" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${label}</text>`;
     }).join('');
 
