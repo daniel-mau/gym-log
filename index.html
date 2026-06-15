@@ -2735,94 +2735,72 @@ function renderStats() {
         const progress = Math.min(Math.max((achieved / totalGoal) * 100, 0), 100);
         const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
 
-        // SVG wedge segments progress bar
+        // SVG wedge segments progress bar - mathematisch exakte Version
         const totalSegments = 10;
         const activeSegments = Math.round((progress / 100) * totalSegments);
-        const gapAngle = 8;
+        const gapAngle = 4;
         const innerRadius = 55;
-        const outerRadius = 85;
+        const outerRadius = 88;
+        const cornerRounding = 4.5;
         const cx = 100;
         const cy = 100;
 
-        const totalAngle = 180;
         const totalGapAngle = gapAngle * (totalSegments - 1);
-        const segmentAngle = (totalAngle - totalGapAngle) / totalSegments;
+        const segmentAngle = (180 - totalGapAngle) / totalSegments;
 
-        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-          const angleInRadians = angleInDegrees * Math.PI / 180.0;
-          return {
-            x: centerX + (radius * Math.cos(angleInRadians)),
-            y: centerY + (radius * Math.sin(angleInRadians))
-          };
+        // Mathematisch exakte Rundung an den vier Ecken jedes Keils
+        function createRoundedWedgePath(cx, cy, Ro, Ri, startDeg, endDeg, r) {
+          const t1 = startDeg * Math.PI / 180;
+          const t2 = endDeg * Math.PI / 180;
+
+          const dtOut = Math.asin(r / (Ro - r));
+          const dtIn = Math.asin(r / (Ri + r));
+
+          const at1_out = t1 + dtOut;
+          const at2_out = t2 - dtOut;
+          const at1_in = t1 + dtIn;
+          const at2_in = t2 - dtIn;
+
+          const p_tl_line = { x: cx + (Ro - r) * Math.cos(t1), y: cy + (Ro - r) * Math.sin(t1) };
+          const p_tl_arc  = { x: cx + Ro * Math.cos(at1_out), y: cy + Ro * Math.sin(at1_out) };
+
+          const p_tr_arc  = { x: cx + Ro * Math.cos(at2_out), y: cy + Ro * Math.sin(at2_out) };
+          const p_tr_line = { x: cx + (Ro - r) * Math.cos(t2), y: cy + (Ro - r) * Math.sin(t2) };
+
+          const p_br_line = { x: cx + (Ri + r) * Math.cos(t2), y: cy + (Ri + r) * Math.sin(t2) };
+          const p_br_arc  = { x: cx + Ri * Math.cos(at2_in), y: cy + Ri * Math.sin(at2_in) };
+
+          const p_bl_arc  = { x: cx + Ri * Math.cos(at1_in), y: cy + Ri * Math.sin(at1_in) };
+          const p_bl_line = { x: cx + (Ri + r) * Math.cos(t1), y: cy + (Ri + r) * Math.sin(t1) };
+
+          return 'M ' + p_tl_line.x + ' ' + p_tl_line.y +
+                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_tl_arc.x + ' ' + p_tl_arc.y +
+                 ' A ' + Ro + ' ' + Ro + ' 0 0 1 ' + p_tr_arc.x + ' ' + p_tr_arc.y +
+                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_tr_line.x + ' ' + p_tr_line.y +
+                 ' L ' + p_br_line.x + ' ' + p_br_line.y +
+                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_br_arc.x + ' ' + p_br_arc.y +
+                 ' A ' + Ri + ' ' + Ri + ' 0 0 0 ' + p_bl_arc.x + ' ' + p_bl_arc.y +
+                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_bl_line.x + ' ' + p_bl_line.y +
+                 ' Z';
         }
 
-        function createWedgePath(cx, cy, rIn, rOut, startAngle, endAngle) {
-          const r = 2.5; // corner radius
-
-          // Outer arc points
-          const outerStart = polarToCartesian(cx, cy, rOut, startAngle);
-          const outerEnd = polarToCartesian(cx, cy, rOut, endAngle);
-
-          // Inner arc points
-          const innerEnd = polarToCartesian(cx, cy, rIn, endAngle);
-          const innerStart = polarToCartesian(cx, cy, rIn, startAngle);
-
-          // Calculate offset points for rounded corners on the radial edges
-          const angleOffset = (r / rOut) * (180 / Math.PI);
-          const outerStartOffset = polarToCartesian(cx, cy, rOut, startAngle + angleOffset);
-          const outerEndOffset = polarToCartesian(cx, cy, rOut, endAngle - angleOffset);
-          const innerStartOffset = polarToCartesian(cx, cy, rIn, startAngle + angleOffset);
-          const innerEndOffset = polarToCartesian(cx, cy, rIn, endAngle - angleOffset);
-
-          // Start at outer arc with offset
-          let path = 'M ' + outerStartOffset.x + ' ' + outerStartOffset.y;
-
-          // Outer arc
-          path += ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + outerEndOffset.x + ' ' + outerEndOffset.y;
-
-          // Rounded corner to inner arc (top right)
-          path += ' Q ' + outerEnd.x + ' ' + outerEnd.y + ' ' + innerEndOffset.x + ' ' + innerEndOffset.y;
-
-          // Inner arc
-          path += ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + innerStartOffset.x + ' ' + innerStartOffset.y;
-
-          // Rounded corner back to outer arc (top left)
-          path += ' Q ' + innerStart.x + ' ' + innerStart.y + ' ' + outerStartOffset.x + ' ' + outerStartOffset.y;
-
-          path += ' Z';
-
-          return path;
-        }
-
-        const gradientId = 'weightGradient_' + Date.now();
-        const filterId = 'roundCorners_' + Date.now();
-        let segmentsSvg = '<defs>' +
-          '<linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
-            '<stop offset="0%" stop-color="#34C759" stop-opacity="0.9"/>' +
-            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.5"/>' +
-          '</linearGradient>' +
-          '<filter id="' + filterId + '">' +
-            '<feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur"/>' +
-            '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo"/>' +
-            '<feComposite in="SourceGraphic" in2="goo" operator="atop"/>' +
-          '</filter>' +
-        '</defs>';
+        let segmentsSvg = '';
 
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? 'url(#' + gradientId + ')' : 'rgba(150, 150, 150, 0.15)';
-          const pathD = createWedgePath(cx, cy, innerRadius, outerRadius, startAngle, endAngle);
+          const color = i < activeSegments ? '#f5c352' : '#e2e8f0';
+          const pathD = createRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle, cornerRounding);
 
-          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '" stroke="' + color + '" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>';
+          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
         }
 
         weightLossCard = '<div class="stat-card">' +
           '<div class="stat-label" style="margin-bottom:4px;">Gewichtsverlust</div>' +
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:space-around;flex:1;">' +
             '<svg width="100%" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;height:auto;">' +
-              '<g filter="url(#' + filterId + ')">' + segmentsSvg + '</g>' +
-              '<text x="100" y="105" text-anchor="middle" font-size="48" font-weight="bold" fill="var(--text)">' +
+              '<g>' + segmentsSvg + '</g>' +
+              '<text x="100" y="100" text-anchor="middle" font-size="48" font-weight="bold" fill="var(--text)">' +
                 weightLoss +
                 '<tspan font-size="18" font-weight="500" fill="var(--text-mute)" dx="5">kg</tspan>' +
               '</text>' +
