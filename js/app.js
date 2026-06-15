@@ -2548,6 +2548,8 @@ function checkPassword() {
     input.focus();
   }
 }
+// Make checkPassword globally available immediately for onclick handler
+window.checkPassword = checkPassword;
 
 function unlockApp() {
   document.getElementById('passwordScreen').classList.add('hidden');
@@ -2649,7 +2651,7 @@ window.toggleWeekPicker = toggleWeekPicker;
 window.closeWeekPicker = closeWeekPicker;
 window.deleteCurrentWorkout = deleteCurrentWorkout;
 window.deleteWorkoutDate = deleteWorkoutDate;
-window.checkPassword = checkPassword;
+// checkPassword is already exposed earlier for immediate onclick availability
 window.toggleTheme = toggleTheme;
 window.changeAvatar = changeAvatar;
 window.saveCroppedAvatar = saveCroppedAvatar;
