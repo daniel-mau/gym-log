@@ -1715,7 +1715,7 @@
     <div class="calendar-modal-content">
       <button class="calendar-modal-close" onclick="closeTitleEditor()">✕</button>
       <div style="padding:20px;">
-        <div class="calendar-modal-title">Benutzername ändern</div>
+        <div class="calendar-modal-title">Begrüßung ändern</div>
         <input type="text" id="titleInput" placeholder="Name eingeben..." style="width:100%;padding:8px 12px;margin-top:12px;border:1px solid var(--surface-input-border);border-radius:8px;font-size:16px;font-family:inherit;background:var(--bg-input);color:var(--text);">
         <button onclick="saveTitleEditor()" style="width:100%;padding:10px;margin-top:12px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">Speichern</button>
       </div>
@@ -3055,14 +3055,19 @@ async function saveTitleEditor() {
   closeTitleEditor();
 
   // Try to save to Supabase (if available)
-  if (typeof supabase !== 'undefined' && supabase.auth) {
+  if (typeof supabase !== 'undefined' && supabase.from) {
     try {
-      await supabase.from('settings').upsert(
-        { key: 'user_title', value: newTitle },
-        { onConflict: 'key' }
-      );
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ key: 'user_title', value: newTitle })
+        .select();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        localStorage.setItem('user_title', newTitle);
+      }
     } catch (err) {
-      console.log('Supabase not configured, saving to localStorage only');
+      console.log('Supabase error, saving to localStorage:', err);
       localStorage.setItem('user_title', newTitle);
     }
   } else {
@@ -3073,16 +3078,26 @@ async function saveTitleEditor() {
 
 function loadUserTitle() {
   // Try Supabase first (if available)
-  if (typeof supabase !== 'undefined' && supabase.auth) {
-    supabase.from('settings').select('value').eq('key', 'user_title').single().then(({ data }) => {
-      if (data && data.value) {
-        document.getElementById('userTitle').textContent = data.value;
-      }
-    }).catch(() => {
-      // Fallback to localStorage
-      const saved = localStorage.getItem('user_title');
-      if (saved) document.getElementById('userTitle').textContent = saved;
-    });
+  if (typeof supabase !== 'undefined' && supabase.from) {
+    supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'user_title')
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data && data.value) {
+          document.getElementById('userTitle').textContent = data.value;
+        } else {
+          // Fallback to localStorage
+          const saved = localStorage.getItem('user_title');
+          if (saved) document.getElementById('userTitle').textContent = saved;
+        }
+      })
+      .catch((err) => {
+        console.log('Supabase load error, using localStorage:', err);
+        const saved = localStorage.getItem('user_title');
+        if (saved) document.getElementById('userTitle').textContent = saved;
+      });
   } else {
     // Fallback to localStorage
     const saved = localStorage.getItem('user_title');
