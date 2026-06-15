@@ -3721,7 +3721,8 @@ function getExerciseHistory(exerciseId) {
       week: weekKey,
       maxWeight: weeklyData[weekKey].maxWeight,
       sets: weeklyData[weekKey].sets
-    }));
+    }))
+    .filter(h => h.maxWeight > 0);
 }
 
 function renderExerciseSparkline(exerciseId) {
