@@ -1880,7 +1880,8 @@ let state = {
   saveTimer: null,
   syncStatus: 'idle',
   readOnly: false,
-  dirty: false
+  dirty: false,
+  title: 'Daniel Mau'
 };
 
 function getDateKey(date) {
@@ -3050,22 +3051,23 @@ async function saveTitleEditor() {
   const newTitle = document.getElementById('titleInput').value.trim();
   if (!newTitle) return;
 
-  // Update UI only - no state mutation, no re-render
+  // 1. Spread state — only mutate title, leave all workout/chart data untouched
+  state = { ...state, title: newTitle };
+
+  // 2. Update DOM immediately (no full re-render)
   document.getElementById('userTitle').textContent = newTitle;
   closeTitleEditor();
 
-  // Save to Supabase
+  // 3. Sync to Supabase directly
   try {
     const { error } = await supabaseClient
       .from('settings')
       .upsert({ key: 'user_title', value: newTitle });
     if (error) {
       console.error('Supabase settings error:', error);
-      localStorage.setItem('user_title', newTitle);
     }
   } catch (err) {
     console.error('Supabase save failed:', err);
-    localStorage.setItem('user_title', newTitle);
   }
 }
 
@@ -3077,16 +3079,11 @@ function loadUserTitle() {
     .single()
     .then(({ data, error }) => {
       if (!error && data && data.value) {
+        state = { ...state, title: data.value };
         document.getElementById('userTitle').textContent = data.value;
-      } else {
-        const saved = localStorage.getItem('user_title');
-        if (saved) document.getElementById('userTitle').textContent = saved;
       }
     })
-    .catch(() => {
-      const saved = localStorage.getItem('user_title');
-      if (saved) document.getElementById('userTitle').textContent = saved;
-    });
+    .catch(() => {});
 }
 
 function calendarPrev() {
