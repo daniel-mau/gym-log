@@ -3858,7 +3858,7 @@ function renderBodyMetricSparkline(metric) {
   const pathD = smoothPath(points);
 
   const gradId = `grad_${metric}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
   const fillPath = pathD + ` L${W-r},${H-b} L${l},${H-b} Z`;
 
   const gridLines = points.map(p =>
@@ -4010,7 +4010,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Fill gradient in chart color
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
 
   // Grid lines + labels: one every 2 calendar days
   let gridLines = '';
