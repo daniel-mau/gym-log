@@ -2784,12 +2784,18 @@ function renderStats() {
                  ' Z';
         }
 
-        let segmentsSvg = '';
+        const gradientId = 'weightGradient_' + Date.now();
+        let segmentsSvg = '<defs>' +
+          '<linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+            '<stop offset="0%" stop-color="#34C759" stop-opacity="1"/>' +
+            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.6"/>' +
+          '</linearGradient>' +
+        '</defs>';
 
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? '#f5c352' : '#e2e8f0';
+          const color = i < activeSegments ? 'url(#' + gradientId + ')' : '#e2e8f0';
           const pathD = createRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle, cornerRounding);
 
           segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
@@ -2797,11 +2803,14 @@ function renderStats() {
 
         weightLossCard = '<div class="stat-card">' +
           '<div class="stat-label">Gewichtsverlust</div>' +
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:4px;">' +
-            '<svg width="100%" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;height:auto;margin-bottom:-8px;">' +
-              '<g>' + segmentsSvg + '</g>' +
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;">' +
+            '<svg width="100%" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;height:auto;">' +
+              segmentsSvg +
+              '<text x="100" y="100" text-anchor="middle" font-size="28" font-weight="700" fill="var(--text)">' +
+                weightLoss +
+                '<tspan font-size="15" font-weight="500" fill="var(--text-mute)" dx="3">kg</tspan>' +
+              '</text>' +
             '</svg>' +
-            '<div class="stat-value">' + weightLoss + '<span class="stat-unit">kg</span></div>' +
           '</div>' +
         '</div>';
       } else {
