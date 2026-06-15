@@ -2748,39 +2748,33 @@ function renderStats() {
         const totalGapAngle = gapAngle * (totalSegments - 1);
         const segmentAngle = (180 - totalGapAngle) / totalSegments;
 
-        // Mathematisch exakte Rundung an den vier Ecken jedes Keils
-        function createRoundedWedgePath(cx, cy, Ro, Ri, startDeg, endDeg, r) {
+        // Vollständig abgerundete Enden mit perfekten Halbkreisen
+        function createFullyRoundedWedgePath(cx, cy, Ro, Ri, startDeg, endDeg) {
           const t1 = startDeg * Math.PI / 180;
           const t2 = endDeg * Math.PI / 180;
+          const alpha = ((endDeg - startDeg) * Math.PI / 180) / 2;
 
-          const dtOut = Math.asin(r / (Ro - r));
-          const dtIn = Math.asin(r / (Ri + r));
+          const sinAlpha = Math.sin(alpha);
+          const cosAlpha = Math.cos(alpha);
 
-          const at1_out = t1 + dtOut;
-          const at2_out = t2 - dtOut;
-          const at1_in = t1 + dtIn;
-          const at2_in = t2 - dtIn;
+          const dOut = Ro / (1 + sinAlpha);
+          const rOut = dOut * sinAlpha;
+          const rOutLine = dOut * cosAlpha;
 
-          const p_tl_line = { x: cx + (Ro - r) * Math.cos(t1), y: cy + (Ro - r) * Math.sin(t1) };
-          const p_tl_arc  = { x: cx + Ro * Math.cos(at1_out), y: cy + Ro * Math.sin(at1_out) };
+          const dIn = Ri / (1 - sinAlpha);
+          const rIn = dIn * sinAlpha;
+          const rInLine = dIn * cosAlpha;
 
-          const p_tr_arc  = { x: cx + Ro * Math.cos(at2_out), y: cy + Ro * Math.sin(at2_out) };
-          const p_tr_line = { x: cx + (Ro - r) * Math.cos(t2), y: cy + (Ro - r) * Math.sin(t2) };
+          const p_bl = { x: cx + rInLine * Math.cos(t1), y: cy + rInLine * Math.sin(t1) };
+          const p_tl = { x: cx + rOutLine * Math.cos(t1), y: cy + rOutLine * Math.sin(t1) };
+          const p_tr = { x: cx + rOutLine * Math.cos(t2), y: cy + rOutLine * Math.sin(t2) };
+          const p_br = { x: cx + rInLine * Math.cos(t2), y: cy + rInLine * Math.sin(t2) };
 
-          const p_br_line = { x: cx + (Ri + r) * Math.cos(t2), y: cy + (Ri + r) * Math.sin(t2) };
-          const p_br_arc  = { x: cx + Ri * Math.cos(at2_in), y: cy + Ri * Math.sin(at2_in) };
-
-          const p_bl_arc  = { x: cx + Ri * Math.cos(at1_in), y: cy + Ri * Math.sin(at1_in) };
-          const p_bl_line = { x: cx + (Ri + r) * Math.cos(t1), y: cy + (Ri + r) * Math.sin(t1) };
-
-          return 'M ' + p_tl_line.x + ' ' + p_tl_line.y +
-                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_tl_arc.x + ' ' + p_tl_arc.y +
-                 ' A ' + Ro + ' ' + Ro + ' 0 0 1 ' + p_tr_arc.x + ' ' + p_tr_arc.y +
-                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_tr_line.x + ' ' + p_tr_line.y +
-                 ' L ' + p_br_line.x + ' ' + p_br_line.y +
-                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_br_arc.x + ' ' + p_br_arc.y +
-                 ' A ' + Ri + ' ' + Ri + ' 0 0 0 ' + p_bl_arc.x + ' ' + p_bl_arc.y +
-                 ' A ' + r + ' ' + r + ' 0 0 1 ' + p_bl_line.x + ' ' + p_bl_line.y +
+          return 'M ' + p_bl.x + ' ' + p_bl.y +
+                 ' L ' + p_tl.x + ' ' + p_tl.y +
+                 ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + p_tr.x + ' ' + p_tr.y +
+                 ' L ' + p_br.x + ' ' + p_br.y +
+                 ' A ' + rIn + ' ' + rIn + ' 0 0 1 ' + p_bl.x + ' ' + p_bl.y +
                  ' Z';
         }
 
@@ -2796,7 +2790,7 @@ function renderStats() {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
           const color = i < activeSegments ? 'url(#' + gradientId + ')' : '#e2e8f0';
-          const pathD = createRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle, cornerRounding);
+          const pathD = createFullyRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle);
 
           segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
         }
