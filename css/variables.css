@@ -13,6 +13,7 @@
   --surface-input: rgba(255, 255, 255, 0.4);
   --surface-input-border: rgba(255, 255, 255, 0.5);
   --surface-subtle: rgba(255, 255, 255, 0.15);
+  --surface-inset: rgba(255, 255, 255, 0.35);
   --surface-overlay: rgba(255, 255, 255, 0.3);
   --surface-divider: rgba(255, 255, 255, 0.3);
   --text: #1A1A1A;
@@ -49,6 +50,7 @@
   --surface-input: rgba(255, 255, 255, 0.06);
   --surface-input-border: rgba(255, 255, 255, 0.12);
   --surface-subtle: rgba(255, 255, 255, 0.04);
+  --surface-inset: rgba(255, 255, 255, 0.12);
   --surface-overlay: rgba(255, 255, 255, 0.08);
   --surface-divider: rgba(255, 255, 255, 0.08);
   --text: #FFFFFF;

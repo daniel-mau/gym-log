@@ -656,7 +656,7 @@ button.secondary:hover { opacity: 0.8; }
   background: var(--text-dim);
 }
 .stat-card {
-  background: var(--surface-subtle);
+  background: var(--surface-inset);
   border-radius: var(--radius-sm);
   padding: 8px 14px;
   box-shadow: var(--glass-shadow);
@@ -1038,7 +1038,7 @@ button.secondary:hover { opacity: 0.8; }
 .sparkline-card {
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: var(--surface-subtle);
+  background: var(--surface-inset);
 }
 .sparkline-header {
   display: flex;

@@ -1061,10 +1061,13 @@ function renderStats() {
           '</linearGradient>' +
         '</defs>';
 
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const emptySegmentColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)';
+
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? 'url(#' + gradientId + ')' : '#e2e8f0';
+          const color = i < activeSegments ? 'url(#' + gradientId + ')' : emptySegmentColor;
           const pathD = createFullyRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle);
 
           segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
@@ -2201,11 +2204,13 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       const pillGradient = `<defs><linearGradient id="${pillGradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="${topOpacity}"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="${baseOpacity}"/></linearGradient></defs>`;
 
       // Add gray placeholder pills for ALL positions (background)
+      const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const emptyBarColor = _isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)';
       let placeholderPills = '';
       const maxHeight = chartBottom - t;
       for (let i = 0; i < totalSlots; i++) {
         const x = l + (i + 0.5) / totalSlots * (W - l - r);
-        placeholderPills += `<rect x="${(x - barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="rgba(150,150,150,0.08)"/>`;
+        placeholderPills += `<rect x="${(x - barW/2).toFixed(1)}" y="${t}" width="${barW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="${emptyBarColor}"/>`;
       }
 
       // Find min and max values for tooltips
