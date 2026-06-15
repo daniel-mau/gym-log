@@ -3738,13 +3738,17 @@ function renderExerciseSparkline(exerciseId) {
   const padding = range * 0.1;
 
   const svgWidth = 200;
-  const svgHeight = 40;
-  const chartWidth = svgWidth - 20;
-  const chartHeight = svgHeight - 20;
+  const svgHeight = 64;
+  const chartTop = 26;
+  const chartBottom = 10;
+  const chartLeft = 10;
+  const chartRight = 10;
+  const chartWidth = svgWidth - chartLeft - chartRight;
+  const chartHeight = svgHeight - chartTop - chartBottom;
 
   const points = history.map((h, i) => {
-    const x = 10 + (i / (history.length - 1 || 1)) * chartWidth;
-    const y = svgHeight - 10 - ((h.maxWeight - minWeight + padding) / (range + padding * 2)) * chartHeight;
+    const x = chartLeft + (i / (history.length - 1 || 1)) * chartWidth;
+    const y = svgHeight - chartBottom - ((h.maxWeight - minWeight + padding) / (range + padding * 2)) * chartHeight;
     return { x: isFinite(x) ? x : 0, y: isFinite(y) ? y : 0, weight: h.maxWeight, sets: h.sets };
   }).filter(p => isFinite(p.x) && isFinite(p.y));
 
@@ -3769,24 +3773,26 @@ function renderExerciseSparkline(exerciseId) {
     .filter(p => p.weight === minWeightValue || p.weight === maxWeightValue)
     .map(p => {
       const label = `${p.weight.toFixed(1)} kg`;
-      const labelW = label.length * 5.5 + 10;
-      const labelH = 16;
-      const labelY = Math.max(2, p.y - labelH - 8);
-      const labelX = Math.max(2, Math.min(svgWidth - labelW - 2, p.x - labelW / 2));
-      const arrowCx = Math.min(labelX + labelW - 6, Math.max(labelX + 6, p.x));
-      const arrowW = 5;
+      const labelW = label.length * 5.8 + 12;
+      const labelH = 18;
+      const labelY = Math.max(2, p.y - labelH - 6);
+      const labelX = Math.max(4, Math.min(svgWidth - labelW - 4, p.x - labelW / 2));
+      const arrowCx = Math.min(labelX + labelW - 8, Math.max(labelX + 8, p.x));
+      const arrowW = 6;
       const arrowLen = 4;
       const arrowPath = `M${(arrowCx-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(arrowCx-1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} Q${arrowCx.toFixed(1)},${(labelY+labelH+arrowLen).toFixed(1)} ${(arrowCx+1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} L${(arrowCx+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="rgba(52,199,89,1)"/>
-        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="8" fill="rgba(30,30,30,0.75)"/>
+      return `<g>
+        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="9" fill="rgba(30,30,30,0.75)"/>
         <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
-        <text x="${(labelX + labelW/2).toFixed(1)}" y="${(labelY + 11.5).toFixed(1)}" font-size="9.5" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${label}</text>`;
+        <text x="${(labelX + labelW/2).toFixed(1)}" y="${(labelY + 12.5).toFixed(1)}" font-size="10" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${label}</text>
+        <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="rgba(52,199,89,1)"/>
+      </g>`;
     }).join('');
 
   return `
     <div style="margin-top:10px;font-size:12px;color:var(--text-mute);">
-      <svg viewBox="0 0 ${svgWidth} ${svgHeight + 8}" style="width:100%;height:48px;display:block;">
-        <path d="${pathData} L${svgWidth-10},${svgHeight-10} L10,${svgHeight-10} Z"
+      <svg viewBox="0 0 ${svgWidth} ${svgHeight}" style="width:100%;height:64px;display:block;">
+        <path d="${pathData} L${svgWidth-chartRight},${svgHeight-chartBottom} L${chartLeft},${svgHeight-chartBottom} Z"
           fill="rgba(52,199,89,0.08)" stroke="none"/>
         <path d="${pathData}"
           fill="none" stroke="rgba(52,199,89,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
