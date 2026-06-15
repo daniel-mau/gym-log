@@ -2302,8 +2302,8 @@ function renderWeekNav() {
       statusIcon = '×';
     }
 
-    let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Run' : plan.type;
-    if (typeLabel === 'rest') typeLabel = 'Rest';
+    let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Lauf' : plan.type;
+    if (typeLabel === 'rest') typeLabel = 'Ruhe';
 
     // Extract actual day of month from date
     const dayNumber = String(date.getDate()).padStart(2, '0');
