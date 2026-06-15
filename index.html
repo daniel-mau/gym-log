@@ -1,16 +1,4 @@
-Bitte überarbeite die Login-Funktion in meiner Datei `gym-log/`. Da mein `supabaseClient` nun global als `window.supabaseClient` verfügbar ist, muss der Login-Prozess nun transparent debuggt werden.
-
-Bitte führe folgende Änderungen durch:
-
-1. **Login-Debugging**: Suche die Funktion, die `window.supabaseClient.auth.signInWithPassword` aufruft.
-2. **Logging & Error Handling**: Implementiere ein detailliertes Logging um den Aufruf herum:
-   - Logge den Start des Login-Versuchs.
-   - Wenn ein Fehler auftritt, logge `error.message` und `error.code` explizit in die Konsole.
-   - Wenn der Login erfolgreich ist, logge `data.session` und bestätige, dass der Login technisch funktioniert hat.
-3. **Session-Verifizierung**: Füge nach einem erfolgreichen Login einen kurzen Konsolen-Check hinzu:
-```javascript
-   const { data: sessionData } = await window.supabaseClient.auth.getSession();
-   console.log('[Login Debug] Session nach Login:', sessionData.session ? 'EXISTIERT' : 'NULL');<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
