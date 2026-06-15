@@ -3512,8 +3512,11 @@ function renderExerciseSparkline(exerciseId) {
   const history = getExerciseHistory(exerciseId);
   if (history.length === 0) return '';
 
-  const maxWeight = Math.max(...history.map(h => h.maxWeight));
-  const minWeight = Math.min(...history.filter(h => h.maxWeight > 0).map(h => h.maxWeight));
+  const weights = history.map(h => h.maxWeight).filter(w => isFinite(w) && w > 0);
+  if (weights.length === 0) return '';
+
+  const maxWeight = Math.max(...weights);
+  const minWeight = Math.min(...weights);
   const range = Math.max(maxWeight - minWeight, 5);
   const padding = range * 0.1;
 
@@ -3525,8 +3528,8 @@ function renderExerciseSparkline(exerciseId) {
   const points = history.map((h, i) => {
     const x = 10 + (i / (history.length - 1 || 1)) * chartWidth;
     const y = svgHeight - 10 - ((h.maxWeight - minWeight + padding) / (range + padding * 2)) * chartHeight;
-    return { x, y, weight: h.maxWeight, sets: h.sets };
-  });
+    return { x: isFinite(x) ? x : 0, y: isFinite(y) ? y : 0, weight: h.maxWeight, sets: h.sets };
+  }).filter(p => isFinite(p.x) && isFinite(p.y));
 
   // Smooth bezier curve
   let pathData;
@@ -3586,7 +3589,7 @@ function renderBodyMetricSparkline(metric) {
       const val = metric === 'weight' ? parseFloat(m.data.weight) : parseFloat(m.data.fat);
       return { date: m.date, value: val };
     })
-    .filter(m => !isNaN(m.value) && m.value > 0);
+    .filter(m => isFinite(m.value) && m.value > 0);
 
   if (values.length === 0) return `<div class="sparkline-card" style="display:flex;align-items:center;justify-content:center;height:64px;"><span style="font-size:11px;color:var(--text-mute);">Noch keine Daten</span></div>`;
 
@@ -3601,8 +3604,8 @@ function renderBodyMetricSparkline(metric) {
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
     const y = H - b - ((v.value - (minVal - pad)) / (range + pad * 2)) * (H - t - b);
-    return { x, y, value: v.value, date: v.date };
-  });
+    return { x: isFinite(x) ? x : 0, y: isFinite(y) ? y : 0, value: v.value, date: v.date };
+  }).filter(p => isFinite(p.x) && isFinite(p.y));
 
   // Smooth bezier curve
   function smoothPath(pts) {
@@ -3741,7 +3744,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   }
 
   const allPts = numericValues.map((v, i) => {
-    if (v === null || isNaN(v)) return null;
+    if (v === null || !isFinite(v)) return null;
     let x;
     if (isBar) {
       x = l + (totalSlots === 1 ? (W-l-r)/2 : (i+0.5)/totalSlots*(W-l-r));
@@ -3752,6 +3755,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       x = l + (n===1 ? (W-l-r)/2 : (i/(n-1))*(W-l-r));
     }
     const y = chartBottom - ((v - (yMin - (isBar ? 0 : pad)))/(yRange + (isBar ? pad : pad*2)))*(chartBottom - t);
+    if (!isFinite(x) || !isFinite(y)) return null;
     return { x, y, value: v, idx: i };
   });
   const nonNull = allPts.filter(Boolean);
