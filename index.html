@@ -3188,61 +3188,93 @@ function changeAvatar() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Pre-upload validation
     if (file.size > 2 * 1024 * 1024) {
+      console.error('[Avatar Upload] File too large:', file.size, 'bytes');
       alert('Datei zu groß. Maximum: 2MB');
       return;
     }
 
     const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
     if (!validTypes.includes(file.type)) {
+      console.error('[Avatar Upload] Invalid file type:', file.type);
       alert('Nur PNG, JPEG und WebP erlaubt');
       return;
     }
 
+    console.log('[Avatar Upload] Starting upload for file:', file.name, file.type, file.size, 'bytes');
+
     try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user?.id) {
-        alert('Nicht authentifiziert');
+      // Use getSession() instead of getUser() to avoid multiple GoTrueClient instances
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+
+      if (sessionError) {
+        console.error('[Avatar Upload] Session error:', sessionError);
+        throw new Error('Session-Fehler: ' + sessionError.message);
+      }
+
+      if (!session?.user?.id) {
+        console.error('[Avatar Upload] No active session found');
+        alert('Nicht authentifiziert. Bitte melde dich an.');
         return;
       }
 
-      const ext = file.name.split('.').pop();
-      const fileName = `${user.id}.${ext}`;
+      const userId = session.user.id;
+      console.log('[Avatar Upload] User authenticated:', userId);
 
+      // Fixed path structure: {uid}/avatar.png (matches RLS policy)
+      const fileName = `${userId}/avatar.png`;
+      console.log('[Avatar Upload] Uploading to storage path:', fileName);
+
+      // Step 1: Upload to Supabase Storage (atomic, upsert mode)
       const { error: uploadError } = await supabaseClient.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, {
+          upsert: true,
+          contentType: file.type
+        });
 
       if (uploadError) {
-        alert('Upload fehlgeschlagen: ' + uploadError.message);
-        return;
+        console.error('[Avatar Upload] Storage upload failed:', uploadError);
+        throw new Error('Upload fehlgeschlagen: ' + uploadError.message);
       }
 
+      console.log('[Avatar Upload] Storage upload successful');
+
+      // Step 2: Generate public URL
       const { data } = supabaseClient.storage
         .from('avatars')
         .getPublicUrl(fileName);
       const publicUrl = data?.publicUrl;
 
       if (!publicUrl) {
-        alert('Fehler beim Generieren der URL');
-        return;
+        console.error('[Avatar Upload] Failed to generate public URL');
+        throw new Error('Fehler beim Generieren der URL');
       }
 
+      console.log('[Avatar Upload] Public URL generated:', publicUrl);
+
+      // Step 3: Update database (atomic upsert)
       const { error: dbError } = await supabaseClient
         .from('settings')
         .upsert({ key: 'avatar_url', value: publicUrl }, { onConflict: 'key' });
 
       if (dbError) {
-        alert('Datenbankfehler: ' + dbError.message);
-        return;
+        console.error('[Avatar Upload] Database update failed:', dbError);
+        throw new Error('Datenbankfehler: ' + dbError.message);
       }
 
+      console.log('[Avatar Upload] Database updated successfully');
+
+      // Step 4: Update global state (spread operator preserves existing data)
       state = { ...state, avatar_url: publicUrl };
       document.getElementById('headerAvatar').src = publicUrl;
       localStorage.setItem('avatarUrl', publicUrl);
+
+      console.log('[Avatar Upload] ✓ Upload completed successfully');
     } catch (e) {
+      console.error('[Avatar Upload] Fatal error:', e);
       alert('Fehler: ' + e.message);
-      console.error(e);
     }
   };
   input.click();
