@@ -1,6 +1,6 @@
 :root {
   --bg: linear-gradient(160deg, #B8C4B4 0%, #C8B0CC 25%, #C4B4D8 45%, #A8C8D2 70%, #D8A870 100%);
-  --bg-flat: #C4BCC8;
+  --bg-flat: #BBC1B8;
   --bg-elevated: rgba(255, 255, 255, 0.55);
   --bg-card: rgba(255, 255, 255, 0.45);
   --bg-card-solid: rgba(255, 255, 255, 0.6);
