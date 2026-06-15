@@ -868,6 +868,70 @@
   .cropper-view-box,
   .cropper-face { border-radius: 50%; }
 
+  #uploadPwModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+  }
+  #uploadPwModal.show { display: flex; }
+  .upload-pw-box {
+    background: var(--bg-card-solid);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    width: 280px;
+    text-align: center;
+  }
+  .upload-pw-box h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .upload-pw-box input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--surface-input-border);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    background: var(--surface-input);
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .upload-pw-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+  }
+  .upload-pw-box .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+  .upload-pw-box .btn-row button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .upload-pw-box .btn-cancel {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .upload-pw-box .btn-confirm {
+    background: var(--accent);
+    color: #fff;
+  }
+
   .password-modal {
     background: var(--bg-card-solid);
     backdrop-filter: var(--glass-blur);
@@ -3229,12 +3293,30 @@ function updateSyncIndicator() {
 let activeCropper = null;
 
 function changeAvatar() {
-  const pw = prompt('Upload-Passwort:');
+  const modal = document.getElementById('uploadPwModal');
+  const input = document.getElementById('uploadPwInput');
+  input.value = '';
+  modal.classList.add('show');
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeUploadPwModal() {
+  document.getElementById('uploadPwModal').classList.remove('show');
+}
+
+function confirmUploadPw() {
+  const pw = document.getElementById('uploadPwInput').value.trim();
   if (pw !== 'fusion2026') {
-    alert('Falsches Passwort!');
+    document.getElementById('uploadPwInput').value = '';
+    document.getElementById('uploadPwInput').style.borderColor = 'var(--danger)';
+    setTimeout(() => { document.getElementById('uploadPwInput').style.borderColor = ''; }, 1500);
     return;
   }
+  closeUploadPwModal();
+  openAvatarFilePicker();
+}
 
+function openAvatarFilePicker() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/png,image/jpeg,image/webp';
@@ -4418,6 +4500,8 @@ window.toggleTheme = toggleTheme;
 window.changeAvatar = changeAvatar;
 window.saveCroppedAvatar = saveCroppedAvatar;
 window.closeCropperModal = closeCropperModal;
+window.closeUploadPwModal = closeUploadPwModal;
+window.confirmUploadPw = confirmUploadPw;
 window.saveBodyMetrics = saveBodyMetrics;
 window.saveBodyTargets = saveBodyTargets;
 window.toggleStopwatch = toggleStopwatch;
@@ -4434,6 +4518,9 @@ window.saveTitleEditor = saveTitleEditor;
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
   initializeAuthScreen();
+  document.getElementById('uploadPwInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') confirmUploadPw();
+  });
 }
 
 if (document.readyState === 'loading') {
@@ -4442,6 +4529,16 @@ if (document.readyState === 'loading') {
   handleDOMReady();
 }
 </script>
+<div id="uploadPwModal" onclick="if(event.target===this)closeUploadPwModal()">
+  <div class="upload-pw-box">
+    <h3>Upload-Passwort</h3>
+    <input type="password" id="uploadPwInput" placeholder="Passwort eingeben">
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeUploadPwModal()">Abbrechen</button>
+      <button class="btn-confirm" onclick="confirmUploadPw()">OK</button>
+    </div>
+  </div>
+</div>
 <div id="cropperModal" onclick="if(event.target===this)closeCropperModal()">
   <div class="cropper-container-inner">
     <img id="cropperImage" src="">
