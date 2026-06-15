@@ -1669,7 +1669,7 @@ function renderDashboard() {
     const wEl  = document.getElementById('weightStatSparkline');
     const fEl  = document.getElementById('fatStatSparkline');
 
-    if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { type: 'bar', labels: volumeLabels });
+    if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { labels: volumeLabels });
     if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace', { labels: paceLabels });
     if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: painLabels });
     if (wEl)  wEl.innerHTML  = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: weightLabels });
@@ -2117,9 +2117,22 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   const maxVal = Math.max(...valid);
   const minVal = Math.min(...valid);
-  const yMin = isBar ? 0 : minVal;
-  const yRange = Math.max(maxVal - yMin, 0.5);
-  const pad = yRange * 0.15;
+
+  // For Laufvolumen: Y-axis with exponential scale (powers) from 0 to maxVal * 1.05
+  let yMin, yRange, pad, useExpScale = false;
+  const isRunVolumeCheck = title === 'Laufvolumen';
+  if (isRunVolumeCheck) {
+    useExpScale = true;
+    yMin = 0;
+    const yMax = maxVal * 1.05;
+    // For exponential scale: use power function to amplify higher values
+    yRange = Math.pow(yMax, 1.5);
+    pad = 0;
+  } else {
+    yMin = isBar ? 0 : minVal;
+    yRange = Math.max(maxVal - yMin, 0.5);
+    pad = yRange * 0.15;
+  }
 
   const W = 400, H = 210;
   const l = 24, r = 24;
@@ -2130,13 +2143,24 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const n = numericValues.length;
   const totalSlots = isBar ? n + 2 : n;
 
-  const parseDayMonth = (lbl) => {
+  const parseLabel = (lbl) => {
+    // KW format: "KW23", "KW24" etc. Map to approximate date (Monday of that week)
+    const kwMatch = lbl.match(/KW(\d+)/);
+    if (kwMatch) {
+      const week = parseInt(kwMatch[1]);
+      const year = 2026;
+      const d = new Date(year, 0, 4);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      const monday = new Date(d.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
+      return monday;
+    }
+    // Day.Month format: "15.06."
     const p = lbl.split('.');
     return new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
   };
   let lineDates = null, lineFirstDate = null, lineTotalDays = 0;
   if (!isBar && hasLabels && labels.length === n) {
-    lineDates = labels.map(lbl => parseDayMonth(lbl));
+    lineDates = labels.map(lbl => parseLabel(lbl));
     lineFirstDate = lineDates[0];
     const today = new Date(); today.setHours(0,0,0,0);
     lineTotalDays = Math.round((today - lineFirstDate) / (24*60*60*1000));
@@ -2146,29 +2170,61 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const allPts = numericValues.map((v, i) => {
     if (v === null || !isFinite(v)) return null;
     let x;
-    if (isBar) {
-      x = l + (totalSlots === 1 ? (W-l-r)/2 : (i+0.5)/totalSlots*(W-l-r));
+    const isRunVolumeForPositioning = title === 'Laufvolumen';
+    if (isBar || isRunVolumeForPositioning) {
+      // Center each point in its pill (n data points + 2 empty pills)
+      const slots = isRunVolumeForPositioning ? (n + 2) : totalSlots;
+      x = l + (i + 0.5) / slots * (W - l - r);
     } else if (lineDates) {
       const daysFromStart = Math.round((lineDates[i] - lineFirstDate)/(24*60*60*1000));
       x = l + (daysFromStart/lineTotalDays)*(W-l-r);
     } else {
       x = l + (n===1 ? (W-l-r)/2 : (i/(n-1))*(W-l-r));
     }
-    const y = chartBottom - ((v - (yMin - (isBar ? 0 : pad)))/(yRange + (isBar ? pad : pad*2)))*(chartBottom - t);
+    let y;
+    if (useExpScale) {
+      // Exponential scale: amplify higher values using power
+      const expVal = Math.pow(v, 1.5);
+      y = chartBottom - (expVal / yRange) * (chartBottom - t);
+    } else {
+      y = chartBottom - ((v - yMin) / yRange) * (chartBottom - t);
+    }
     if (!isFinite(x) || !isFinite(y)) return null;
     return { x, y, value: v, idx: i };
   });
   const nonNull = allPts.filter(Boolean);
 
-  // Smooth bezier curve path
+  // Smooth bezier curve path with horizontal extension to pill edges
   function smoothPath(pts) {
     if (pts.length < 2) return '';
-    let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+
+    const isRunVolumeForPath = title === 'Laufvolumen';
+    let startPt = pts[0];
+    let endPt = pts[pts.length - 1];
+
+    if (isRunVolumeForPath) {
+      const pillW = Math.min(((W-l-r)/Math.max(n+2,1))*0.7, 50);
+      const pillLeft = startPt.x - pillW / 2;
+      const pillRight = endPt.x + pillW / 2;
+
+      // Extend to left pill edge horizontally
+      if (pillLeft < startPt.x) {
+        startPt = { x: pillLeft, y: startPt.y };
+      }
+
+      // Extend to right pill edge horizontally
+      if (pillRight > endPt.x) {
+        endPt = { x: pillRight, y: endPt.y };
+      }
+    }
+
+    let d = `M${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
     for (let i = 1; i < pts.length; i++) {
       const p0 = pts[i-1], p1 = pts[i];
       const mx = ((p0.x + p1.x)/2).toFixed(1);
       d += ` C${mx},${p0.y.toFixed(1)} ${mx},${p1.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`;
     }
+    d += ` L${endPt.x.toFixed(1)},${endPt.y.toFixed(1)}`;
     return d;
   }
 
@@ -2190,12 +2246,37 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.24" stroke-width="0.6"/>`;
     }
   } else if (lineDates && lineTotalDays > 0) {
-    for (let d = 0; d <= lineTotalDays; d += 2) {
-      const x = l + (d/lineTotalDays)*(W-l-r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
-      const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
-      const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
-      gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
+    // For KW labels, show the labels directly at all pill positions; for date labels, show every 2 days
+    const isKWLabels = labels && labels[0] && labels[0].match(/KW\d+/);
+    if (isKWLabels && isRunVolume) {
+      // Show KW label at each pill position (n data points + 2 empty)
+      const allLabels = [...labels];
+      // Add labels for the 2 empty pills
+      if (labels.length > 0) {
+        const lastLabel = labels[labels.length - 1];
+        const kwMatch = lastLabel.match(/KW(\d+)/);
+        const lastWeek = kwMatch ? parseInt(kwMatch[1]) : 0;
+        allLabels.push(`KW${lastWeek + 1}`);
+        allLabels.push(`KW${lastWeek + 2}`);
+      }
+
+      const gap = (W - l - r) / Math.max(n + 2, 1);
+      for (let i = 0; i < n + 2; i++) {
+        const x = l + (i + 0.5) / (n + 2) * (W - l - r);
+        const label = allLabels[i] || '';
+        if (label) {
+          const opacity = i < n ? '1' : '0.5';
+          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="11" fill="var(--text-mute)" opacity="${opacity}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${label}</text>`;
+        }
+      }
+    } else {
+      for (let d = 0; d <= lineTotalDays; d += 2) {
+        const x = l + (d/lineTotalDays)*(W-l-r);
+        gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
+        const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
+        const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
+        gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
+      }
     }
   }
 
@@ -2291,12 +2372,39 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     }
   }
 
+  // Gray background pills for line charts (Laufvolumen)
+  let bgPillsEl = '';
+  if (!isBar && isRunVolume && nonNull.length > 0) {
+    const gap = (W - l - r) / Math.max(n + 2, 1);
+    const pillW = Math.min(gap * 0.7, 50);
+    const pillRadius = pillW / 2;
+    const maxHeight = chartBottom - t;
+    const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const emptyBarColor = _isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)';
+
+    // Add pills for all n+2 positions (n data points + 2 empty)
+    for (let i = 0; i < n + 2; i++) {
+      const x = l + (i + 0.5) / (n + 2) * (W - l - r);
+      bgPillsEl += `<rect x="${(x - pillW/2).toFixed(1)}" y="${t}" width="${pillW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="${emptyBarColor}"/>`;
+    }
+  }
+
   // Line path + fill (smooth curves)
   let lineEl = '', fillEl = '';
   if (!isBar && nonNull.length > 0) {
     const pathD = smoothPath(nonNull);
     if (nonNull.length > 1) {
-      fillEl = `<path d="${pathD} L${nonNull[nonNull.length-1].x.toFixed(1)},${chartBottom} L${nonNull[0].x.toFixed(1)},${chartBottom} Z" fill="url(#${gradId})" stroke="none"/>`;
+      const isRunVolumeForFill = title === 'Laufvolumen';
+      let startPt = nonNull[0];
+      let endPt = nonNull[nonNull.length - 1];
+
+      if (isRunVolumeForFill) {
+        const pillW = Math.min(((W-l-r)/Math.max(n+2,1))*0.7, 50);
+        startPt = { x: startPt.x - pillW / 2, y: startPt.y };
+        endPt = { x: endPt.x + pillW / 2, y: endPt.y };
+      }
+
+      fillEl = `<path d="${pathD} L${endPt.x.toFixed(1)},${chartBottom} L${startPt.x.toFixed(1)},${chartBottom} Z" fill="url(#${gradId})" stroke="none"/>`;
     }
     lineEl = `<path d="${pathD}" fill="none" stroke="${chartColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
@@ -2358,6 +2466,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
         ${fillGradient}
         ${gridLines}
+        ${bgPillsEl}
         ${fillEl}
         ${barsEl}
         ${lineEl}
