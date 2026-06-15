@@ -711,12 +711,11 @@
   .chart-grid {
     display: flex;
     overflow-x: auto;
-    overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    border-radius: 18px;
+    padding: 4px 0 8px;
   }
   .chart-grid::-webkit-scrollbar { display: none; }
   .chart-grid > div {
@@ -1126,11 +1125,8 @@
   .sparkline-card {
     border-radius: var(--radius-sm);
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--surface-subtle);
     box-shadow: var(--glass-shadow);
-  }
-  [data-theme="dark"] .sparkline-card {
-    background: rgba(255, 255, 255, 0.06);
   }
   .sparkline-header {
     display: flex;
