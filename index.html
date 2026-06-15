@@ -6,6 +6,8 @@
 <title>Trainings Log</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1/dist/cropper.min.js"></script>
 <style>
   :root {
     --bg: linear-gradient(160deg, #B8C4B4 0%, #C8B0CC 25%, #C4B4D8 45%, #A8C8D2 70%, #D8A870 100%);
@@ -824,6 +826,47 @@
   #passwordScreen.hidden {
     display: none;
   }
+
+  #cropperModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+  }
+  #cropperModal.show { display: flex; }
+  .cropper-container-inner {
+    background: var(--bg-card-solid);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .cropper-container-inner img {
+    max-width: 100%;
+    max-height: 60vh;
+    display: block;
+  }
+  .cropper-save-btn {
+    padding: 12px 32px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cropper-view-box,
+  .cropper-face { border-radius: 50%; }
 
   .password-modal {
     background: var(--bg-card-solid);
@@ -3183,6 +3226,8 @@ function updateSyncIndicator() {
   }
 }
 
+let activeCropper = null;
+
 function changeAvatar() {
   const pw = prompt('Upload-Passwort:');
   if (pw !== 'fusion2026') {
@@ -3193,23 +3238,61 @@ function changeAvatar() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/png,image/jpeg,image/webp';
-  input.onchange = async (e) => {
+  input.onchange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) { alert('Datei zu groß. Maximum: 2MB'); return; }
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) { alert('Nur PNG, JPEG und WebP erlaubt'); return; }
 
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const modal = document.getElementById('cropperModal');
+      const img = document.getElementById('cropperImage');
+      img.src = ev.target.result;
+      modal.classList.add('show');
+
+      if (activeCropper) { activeCropper.destroy(); activeCropper = null; }
+
+      img.onload = () => {
+        activeCropper = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          cropBoxResizable: true,
+          cropBoxMovable: true,
+          background: false
+        });
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function closeCropperModal() {
+  const modal = document.getElementById('cropperModal');
+  modal.classList.remove('show');
+  if (activeCropper) { activeCropper.destroy(); activeCropper = null; }
+}
+
+async function saveCroppedAvatar() {
+  if (!activeCropper) return;
+
+  const canvas = activeCropper.getCroppedCanvas({ width: 256, height: 256 });
+  canvas.toBlob(async (blob) => {
+    if (!blob) { alert('Fehler beim Zuschneiden'); return; }
+
     const fileName = `avatars/avatar.png`;
 
     const { error: uploadError } = await window.supabaseClient.storage
       .from('avatars')
-      .upload(fileName, file, { upsert: true, contentType: file.type });
+      .upload(fileName, blob, { upsert: true, contentType: 'image/png' });
 
     if (uploadError) { alert('Upload fehlgeschlagen: ' + uploadError.message); return; }
 
     const { data } = window.supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-    const publicUrl = data?.publicUrl;
+    const publicUrl = data?.publicUrl + '?t=' + Date.now();
 
     const { error: dbError } = await window.supabaseClient
       .from('settings')
@@ -3220,8 +3303,8 @@ function changeAvatar() {
     state = { ...state, avatar_url: publicUrl };
     document.getElementById('headerAvatar').src = publicUrl;
     localStorage.setItem('avatarUrl', publicUrl);
-  };
-  input.click();
+    closeCropperModal();
+  }, 'image/png');
 }
 
 function toggleDashboard() {}
@@ -4333,6 +4416,8 @@ window.deleteWorkoutDate = deleteWorkoutDate;
 window.checkPassword = checkPassword;
 window.toggleTheme = toggleTheme;
 window.changeAvatar = changeAvatar;
+window.saveCroppedAvatar = saveCroppedAvatar;
+window.closeCropperModal = closeCropperModal;
 window.saveBodyMetrics = saveBodyMetrics;
 window.saveBodyTargets = saveBodyTargets;
 window.toggleStopwatch = toggleStopwatch;
@@ -4357,5 +4442,11 @@ if (document.readyState === 'loading') {
   handleDOMReady();
 }
 </script>
+<div id="cropperModal" onclick="if(event.target===this)closeCropperModal()">
+  <div class="cropper-container-inner">
+    <img id="cropperImage" src="">
+    <button class="cropper-save-btn" onclick="saveCroppedAvatar()">Zuschneiden & Speichern</button>
+  </div>
+</div>
 </body>
 </html>
