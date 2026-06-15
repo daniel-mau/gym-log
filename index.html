@@ -116,6 +116,12 @@
     flex-shrink: 0;
     background: var(--surface-overlay);
     border: 2px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .header-avatar:hover {
+    transform: scale(1.05);
+    border-color: var(--accent);
   }
   .header-info {
     display: flex;
@@ -1888,7 +1894,8 @@ let state = {
   syncStatus: 'idle',
   readOnly: false,
   dirty: false,
-  title: 'Daniel Mau'
+  title: 'Daniel Mau',
+  avatar_url: null
 };
 
 let isSavingTitle = false;
@@ -3174,11 +3181,71 @@ function updateSyncIndicator() {
 }
 
 function changeAvatar() {
-  const url = prompt('Avatar-URL eingeben:');
-  if (url) {
-    document.getElementById('headerAvatar').src = url;
-    localStorage.setItem('avatarUrl', url);
-  }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png,image/jpeg,image/webp';
+  input.onchange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Datei zu groß. Maximum: 2MB');
+      return;
+    }
+
+    const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Nur PNG, JPEG und WebP erlaubt');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user?.id) {
+        alert('Nicht authentifiziert');
+        return;
+      }
+
+      const ext = file.name.split('.').pop();
+      const fileName = `${user.id}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        alert('Upload fehlgeschlagen: ' + uploadError.message);
+        return;
+      }
+
+      const { data } = supabaseClient.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      const publicUrl = data?.publicUrl;
+
+      if (!publicUrl) {
+        alert('Fehler beim Generieren der URL');
+        return;
+      }
+
+      const { error: dbError } = await supabaseClient
+        .from('settings')
+        .upsert({ key: 'avatar_url', value: publicUrl }, { onConflict: 'key' });
+
+      if (dbError) {
+        alert('Datenbankfehler: ' + dbError.message);
+        return;
+      }
+
+      state = { ...state, avatar_url: publicUrl };
+      document.getElementById('headerAvatar').src = publicUrl;
+      localStorage.setItem('avatarUrl', publicUrl);
+    } catch (e) {
+      alert('Fehler: ' + e.message);
+      console.error(e);
+    }
+  };
+  input.click();
 }
 
 function toggleDashboard() {}
@@ -4217,9 +4284,28 @@ function initializeAuthScreen() {
   });
 }
 
-function init() {
+async function init() {
   const savedAvatar = localStorage.getItem('avatarUrl');
-  if (savedAvatar) document.getElementById('headerAvatar').src = savedAvatar;
+  if (savedAvatar) {
+    document.getElementById('headerAvatar').src = savedAvatar;
+    state.avatar_url = savedAvatar;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('settings')
+      .select('value')
+      .eq('key', 'avatar_url')
+      .single();
+    if (!error && data?.value) {
+      state.avatar_url = data.value;
+      document.getElementById('headerAvatar').src = data.value;
+      localStorage.setItem('avatarUrl', data.value);
+    }
+  } catch (e) {
+    console.error('Avatar loading error:', e);
+  }
+
   loadUserTitle();
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
