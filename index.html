@@ -2797,14 +2797,13 @@ function renderStats() {
 
         weightLossCard = '<div class="stat-card">' +
           '<div class="stat-label">Gewichtsverlust</div>' +
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;margin:-4px 0;">' +
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;margin:-4px 0;position:relative;">' +
             '<svg width="100%" viewBox="10 0 180 100" preserveAspectRatio="xMidYMid meet" style="display:block;">' +
               segmentsSvg +
-              '<text x="100" y="96" text-anchor="middle" font-size="28" font-weight="700" fill="var(--text)">' +
-                weightLoss +
-                '<tspan font-size="15" font-weight="500" fill="var(--text-mute)" dx="3">kg</tspan>' +
-              '</text>' +
             '</svg>' +
+            '<div class="stat-value" style="position:absolute;top:50%;transform:translateY(-50%);">' +
+              weightLoss + '<span class="stat-unit">kg</span>' +
+            '</div>' +
           '</div>' +
         '</div>';
       } else {
