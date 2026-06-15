@@ -136,7 +136,8 @@ let state = {
   todayData: null,
   saveTimer: null,
   syncStatus: 'idle',
-  readOnly: false,
+  get readOnly() { return window.gymLogReadOnly || false; },
+  set readOnly(val) { window.gymLogReadOnly = val; },
   dirty: false,
   title: 'Daniel Mau',
   avatar_url: null
@@ -2523,63 +2524,7 @@ async function syncBodyTargetsToSupabase(targets) {
 // ============================================================
 // PASSWORD PROTECTION
 // ============================================================
-
-const CORRECT_PASSWORD = 'fusion2026';
-const VIEWER_PASSWORD = 'viewer2025';
-
-function checkPassword() {
-  const input = document.getElementById('passwordInput');
-  const password = input.value.trim();
-  const errorEl = document.getElementById('passwordError');
-
-  if (password === CORRECT_PASSWORD) {
-    errorEl.classList.remove('show');
-    localStorage.setItem('gymLogAuth', 'full');
-    state.readOnly = false;
-    unlockApp();
-  } else if (password === VIEWER_PASSWORD) {
-    errorEl.classList.remove('show');
-    localStorage.setItem('gymLogAuth', 'viewer');
-    state.readOnly = true;
-    unlockApp();
-  } else {
-    errorEl.classList.add('show');
-    input.value = '';
-    input.focus();
-  }
-}
-// Make checkPassword globally available immediately for onclick handler
-window.checkPassword = checkPassword;
-
-function unlockApp() {
-  document.getElementById('passwordScreen').classList.add('hidden');
-  document.getElementById('mainContent').style.display = 'block';
-  if (state.readOnly) applyReadOnly();
-  window.dispatchEvent(new Event('gymLogUnlocked'));
-}
-
-function applyReadOnly() {
-  document.body.classList.add('read-only');
-}
-
-function initializeAuthScreen() {
-  const authLevel = localStorage.getItem('gymLogAuth');
-
-  if (authLevel === 'full' || authLevel === 'true') {
-    state.readOnly = false;
-    unlockApp();
-  } else if (authLevel === 'viewer') {
-    state.readOnly = true;
-    unlockApp();
-  } else {
-    document.getElementById('passwordInput').focus();
-  }
-
-  // Allow Enter key to submit password
-  document.getElementById('passwordInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') checkPassword();
-  });
-}
+// Auth code moved to js/auth.js for early loading
 
 async function init() {
   const savedAvatar = localStorage.getItem('avatarUrl');
@@ -2673,10 +2618,13 @@ window.saveTitleEditor = saveTitleEditor;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
-  initializeAuthScreen();
-  document.getElementById('uploadPwInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') confirmUploadPw();
-  });
+  // initializeAuthScreen() is now called from auth.js
+  const uploadPwInput = document.getElementById('uploadPwInput');
+  if (uploadPwInput) {
+    uploadPwInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') confirmUploadPw();
+    });
+  }
 }
 
 if (document.readyState === 'loading') {
