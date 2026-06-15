@@ -1585,7 +1585,7 @@
     <div class="header-left">
       <img class="header-avatar" id="headerAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2'/%3E%3C/svg%3E" alt="Avatar" onclick="changeAvatar()">
       <div class="header-info">
-        <h1>Daniel Mau</h1>
+        <h1 id="userTitle" onclick="openTitleEditor()" style="cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Daniel Mau</h1>
         <div class="header-status" id="syncStatus">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
@@ -1708,6 +1708,17 @@
     <div class="calendar-modal-content" style="position:relative;">
       <button class="calendar-modal-close" onclick="closeCalendarModal()">✕</button>
       <div id="calendarModalContent"></div>
+    </div>
+  </div>
+
+  <div class="calendar-modal" id="titleEditorModal" onclick="if(event.target===this)closeTitleEditor()">
+    <div class="calendar-modal-content">
+      <button class="calendar-modal-close" onclick="closeTitleEditor()">✕</button>
+      <div style="padding:20px;">
+        <div class="calendar-modal-title">Benutzername ändern</div>
+        <input type="text" id="titleInput" placeholder="Name eingeben..." style="width:100%;padding:8px 12px;margin-top:12px;border:1px solid var(--surface-input-border);border-radius:8px;font-size:16px;font-family:inherit;background:var(--bg-input);color:var(--text);">
+        <button onclick="saveTitleEditor()" style="width:100%;padding:10px;margin-top:12px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">Speichern</button>
+      </div>
     </div>
   </div>
 
@@ -3023,6 +3034,62 @@ function closeCalendarModal() {
   document.getElementById('calendarModal').classList.remove('open');
 }
 
+// Title Editor
+async function openTitleEditor() {
+  const current = document.getElementById('userTitle').textContent;
+  document.getElementById('titleInput').value = current;
+  document.getElementById('titleEditorModal').classList.add('open');
+  document.getElementById('titleInput').focus();
+}
+
+function closeTitleEditor() {
+  document.getElementById('titleEditorModal').classList.remove('open');
+}
+
+async function saveTitleEditor() {
+  const newTitle = document.getElementById('titleInput').value.trim();
+  if (!newTitle) return;
+
+  // Update UI
+  document.getElementById('userTitle').textContent = newTitle;
+  closeTitleEditor();
+
+  // Try to save to Supabase (if available)
+  if (typeof supabase !== 'undefined' && supabase.auth) {
+    try {
+      await supabase.from('settings').upsert(
+        { key: 'user_title', value: newTitle },
+        { onConflict: 'key' }
+      );
+    } catch (err) {
+      console.log('Supabase not configured, saving to localStorage only');
+      localStorage.setItem('user_title', newTitle);
+    }
+  } else {
+    // Fallback: localStorage
+    localStorage.setItem('user_title', newTitle);
+  }
+}
+
+function loadUserTitle() {
+  // Try Supabase first (if available)
+  if (typeof supabase !== 'undefined' && supabase.auth) {
+    supabase.from('settings').select('value').eq('key', 'user_title').single().then(({ data }) => {
+      if (data && data.value) {
+        document.getElementById('userTitle').textContent = data.value;
+      }
+    }).catch(() => {
+      // Fallback to localStorage
+      const saved = localStorage.getItem('user_title');
+      if (saved) document.getElementById('userTitle').textContent = saved;
+    });
+  } else {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('user_title');
+    if (saved) document.getElementById('userTitle').textContent = saved;
+  }
+}
+
 function calendarPrev() {
   calendarMonth--;
   if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
@@ -4127,6 +4194,7 @@ function initializeAuthScreen() {
 function init() {
   const savedAvatar = localStorage.getItem('avatarUrl');
   if (savedAvatar) document.getElementById('headerAvatar').src = savedAvatar;
+  loadUserTitle();
   renderHeader();
   state.selectedDay = getDayOfWeek(new Date());
   renderWeekNav();
@@ -4186,6 +4254,9 @@ window.calendarPrev = calendarPrev;
 window.calendarNext = calendarNext;
 window.openCalendarModal = openCalendarModal;
 window.closeCalendarModal = closeCalendarModal;
+window.openTitleEditor = openTitleEditor;
+window.closeTitleEditor = closeTitleEditor;
+window.saveTitleEditor = saveTitleEditor;
 
 function handleDOMReady() {
   window.addEventListener('gymLogUnlocked', init);
