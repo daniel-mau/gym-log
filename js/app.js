@@ -2190,11 +2190,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     const rx = 11;
     const margin = rx + arrowWidth / 2; // min distance from pill edge to arrow center
     // Shift pill so arrow (at cx) always lands in the flat area — no diagonal
+    const overflow = 8;
     let tx = cx - tw / 2;
-    tx = Math.max(4, Math.min(W - tw - 4, tx));
+    tx = Math.max(-overflow, Math.min(W - tw + overflow, tx));
     tx = Math.min(tx, cx - margin);          // arrow not left of left flat area
     tx = Math.max(tx, cx - tw + margin);     // arrow not right of right flat area
-    tx = Math.max(4, Math.min(W - tw - 4, tx)); // final bounds
+    tx = Math.max(-overflow, Math.min(W - tw + overflow, tx)); // final bounds
     // Arrow drawn first (tip → base at ty+th), then rect covers the base → no gap
     const arrowPath = `M${(cx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(cx-2).toFixed(1)},${(tip-2).toFixed(1)} Q${cx.toFixed(1)},${tip.toFixed(1)} ${(cx+2).toFixed(1)},${(tip-2).toFixed(1)} L${(cx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
     return `<g>
