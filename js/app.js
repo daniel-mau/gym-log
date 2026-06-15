@@ -1873,7 +1873,7 @@ function renderExerciseSparkline(exerciseId) {
 
   const svgWidth = 200;
   const svgHeight = 64;
-  const chartTop = 26;
+  const chartTop = 30;
   const chartBottom = 0;
   const chartLeft = 10;
   const chartRight = 10;
@@ -1911,8 +1911,9 @@ function renderExerciseSparkline(exerciseId) {
       const labelH = 18;
       const arrowLen = 4;
       const gap = 3;
+      const liftOff = 2; // gap between arrow tip and point
       // Arrow tip always on p.y — no Math.max clamping
-      const labelY = p.y - labelH - arrowLen - gap;
+      const labelY = p.y - labelH - arrowLen - gap - liftOff;
       const arrowW = 6;
       const gymRx = 9;
       const gymMargin = gymRx + arrowW / 2;
@@ -1922,8 +1923,9 @@ function renderExerciseSparkline(exerciseId) {
       labelX = Math.min(labelX, p.x - gymMargin);      // arrow not in left corner
       labelX = Math.max(labelX, p.x - labelW + gymMargin); // arrow not in right corner
       labelX = Math.max(-overflow, Math.min(svgWidth - labelW + overflow, labelX));
-      // Arrow always vertical at p.x, rect covers base
-      const arrowPath = `M${(p.x-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(p.x-1.5).toFixed(1)},${(p.y-1.5).toFixed(1)} Q${p.x.toFixed(1)},${p.y.toFixed(1)} ${(p.x+1.5).toFixed(1)},${(p.y-1.5).toFixed(1)} L${(p.x+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
+      // Arrow starts liftOff above the point
+      const arrowTip = p.y - liftOff;
+      const arrowPath = `M${(p.x-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(p.x-1.5).toFixed(1)},${(arrowTip-1.5).toFixed(1)} Q${p.x.toFixed(1)},${arrowTip.toFixed(1)} ${(p.x+1.5).toFixed(1)},${(arrowTip-1.5).toFixed(1)} L${(p.x+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
       return `<g>
         <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
         <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="9" fill="rgba(30,30,30,0.75)"/>
@@ -1978,7 +1980,7 @@ function renderBodyMetricSparkline(metric) {
   const pad = range * 0.15;
 
   const W = 200, H = 90;
-  const l = 28, r = 10, t = 10, b = 10;
+  const l = 28, r = 10, t = 32, b = 10;
 
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
@@ -2102,7 +2104,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   const W = 400, H = 210;
   const l = 24, r = 24;
-  const t = 16;
+  const t = 36;
   const b = hasLabels ? 44 : 24;
   const chartBottom = H - b;
 
@@ -2184,8 +2186,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     const arrowLength = 4;
     const arrowWidth = 8;
     const gap = 3;
+    const liftOff = 2; // gap between arrow tip and point
     const tip = (targetY !== undefined ? targetY : cy);
-    const ty = tip - th - arrowLength - gap;
+    const ty = tip - th - arrowLength - gap - liftOff;
     const textBaseline = ty + 16;
     const rx = 11;
     const margin = rx + arrowWidth / 2; // min distance from pill edge to arrow center
@@ -2196,8 +2199,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     // Increase edge margin so pills have more breathing room from chart edges
     const edgeMargin = 12;  // more room at edges to avoid hugging the border
     tx = Math.max(edgeMargin, Math.min(W - tw - edgeMargin, tx));
-    // Arrow drawn first (tip → base at ty+th), then rect covers the base → no gap
-    const arrowPath = `M${(cx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(cx-2).toFixed(1)},${(tip-2).toFixed(1)} Q${cx.toFixed(1)},${tip.toFixed(1)} ${(cx+2).toFixed(1)},${(tip-2).toFixed(1)} L${(cx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
+    // Arrow starts liftOff above the point
+    const arrowTip = tip - liftOff;
+    const arrowPath = `M${(cx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(cx-2).toFixed(1)},${(arrowTip-2).toFixed(1)} Q${cx.toFixed(1)},${arrowTip.toFixed(1)} ${(cx+2).toFixed(1)},${(arrowTip-2).toFixed(1)} L${(cx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
     return `<g>
         <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
         <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="rgba(30,30,30,0.75)"/>
