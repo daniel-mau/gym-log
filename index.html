@@ -3769,6 +3769,14 @@ function renderExerciseSparkline(exerciseId) {
   const minWeightValue = Math.min(...points.map(p => p.weight));
   const maxWeightValue = Math.max(...points.map(p => p.weight));
 
+  // Average badge dimensions for top-right corner
+  const avgValue = (history.reduce((a, h) => a + h.maxWeight, 0) / history.length).toFixed(1);
+  const badgeText = `Ø ${avgValue} kg`;
+  const badgeW = badgeText.length * 5.8 + 12;
+  const badgeH = 18;
+  const badgeX = svgWidth - badgeW - 4;
+  const badgeY = 4;
+
   const tooltips = points
     .filter(p => p.weight === minWeightValue || p.weight === maxWeightValue)
     .map(p => {
@@ -3776,7 +3784,12 @@ function renderExerciseSparkline(exerciseId) {
       const labelW = label.length * 5.8 + 12;
       const labelH = 18;
       const labelY = Math.max(2, p.y - labelH - 6);
-      const labelX = Math.max(4, Math.min(svgWidth - labelW - 4, p.x - labelW / 2));
+      let labelX = Math.max(4, Math.min(svgWidth - labelW - 4, p.x - labelW / 2));
+      // Shift tooltip left if it would overlap the average badge
+      const vertOverlap = labelY < badgeY + badgeH && labelY + labelH > badgeY;
+      if (vertOverlap && labelX + labelW > badgeX) {
+        labelX = Math.max(4, badgeX - labelW - 4);
+      }
       const arrowCx = Math.min(labelX + labelW - 8, Math.max(labelX + 8, p.x));
       const arrowW = 6;
       const arrowLen = 4;
@@ -3789,18 +3802,21 @@ function renderExerciseSparkline(exerciseId) {
       </g>`;
     }).join('');
 
+  const avgBadge = `<g>
+    <rect x="${badgeX.toFixed(1)}" y="${badgeY.toFixed(1)}" width="${badgeW.toFixed(1)}" height="${badgeH}" rx="9" fill="rgba(30,30,30,0.75)"/>
+    <text x="${(badgeX + badgeW/2).toFixed(1)}" y="${(badgeY + 12.5).toFixed(1)}" font-size="10" fill="rgba(255,255,255,0.65)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${badgeText}</text>
+  </g>`;
+
   return `
-    <div style="margin-top:10px;font-size:12px;color:var(--text-mute);">
+    <div style="margin-top:10px;font-size:12px;color:var(--text-mute);margin-left:48px;">
       <svg viewBox="0 0 ${svgWidth} ${svgHeight}" style="width:100%;height:64px;display:block;">
         <path d="${pathData} L${svgWidth-chartRight},${svgHeight-chartBottom} L${chartLeft},${svgHeight-chartBottom} Z"
           fill="rgba(52,199,89,0.08)" stroke="none"/>
         <path d="${pathData}"
           fill="none" stroke="rgba(52,199,89,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        ${avgBadge}
         ${tooltips}
       </svg>
-      <div style="text-align:right;margin-top:4px;color:var(--text-mute);font-size:12px;">
-        Ø ${(history.reduce((a, h) => a + h.maxWeight, 0) / history.length).toFixed(1)} kg
-      </div>
     </div>
   `;
 }
