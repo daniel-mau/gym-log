@@ -1211,12 +1211,17 @@
   .calendar-nav button {
     background: var(--surface-overlay);
     border: 1px solid var(--surface-input-border);
-    border-radius: 10px;
-    padding: 6px 12px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     color: var(--accent);
     font-family: inherit;
-    font-size: 17px;
+    font-size: 13px;
     font-weight: 500;
     transition: opacity 0.15s;
   }
@@ -1610,8 +1615,8 @@
       </svg>
       <span id="weekNavTitle">—</span>
       <div style="display:flex;gap:6px;margin-left:auto;">
-        <button onclick="changeWeek(-1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:10px;padding:6px 12px;cursor:pointer;color:var(--accent);font-family:inherit;font-size:17px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">‹</button>
-        <button onclick="changeWeek(1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:10px;padding:6px 12px;cursor:pointer;color:var(--accent);font-family:inherit;font-size:17px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">›</button>
+        <button onclick="changeWeek(-1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:50%;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);font-family:inherit;font-size:13px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">‹</button>
+        <button onclick="changeWeek(1)" style="background:var(--surface-overlay);border:1px solid var(--surface-input-border);border-radius:50%;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);font-family:inherit;font-size:13px;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">›</button>
       </div>
     </div>
     <nav class="week-nav" id="weekNav"></nav>
