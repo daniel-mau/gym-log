@@ -3050,59 +3050,43 @@ async function saveTitleEditor() {
   const newTitle = document.getElementById('titleInput').value.trim();
   if (!newTitle) return;
 
-  // Update UI
+  // Update UI only - no state mutation, no re-render
   document.getElementById('userTitle').textContent = newTitle;
   closeTitleEditor();
 
-  // Try to save to Supabase (if available)
-  if (typeof supabase !== 'undefined' && supabase.from) {
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ key: 'user_title', value: newTitle })
-        .select();
-
-      if (error) {
-        console.error('Supabase error:', error);
-        localStorage.setItem('user_title', newTitle);
-      }
-    } catch (err) {
-      console.log('Supabase error, saving to localStorage:', err);
+  // Save to Supabase
+  try {
+    const { error } = await supabaseClient
+      .from('settings')
+      .upsert({ key: 'user_title', value: newTitle });
+    if (error) {
+      console.error('Supabase settings error:', error);
       localStorage.setItem('user_title', newTitle);
     }
-  } else {
-    // Fallback: localStorage
+  } catch (err) {
+    console.error('Supabase save failed:', err);
     localStorage.setItem('user_title', newTitle);
   }
 }
 
 function loadUserTitle() {
-  // Try Supabase first (if available)
-  if (typeof supabase !== 'undefined' && supabase.from) {
-    supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'user_title')
-      .single()
-      .then(({ data, error }) => {
-        if (!error && data && data.value) {
-          document.getElementById('userTitle').textContent = data.value;
-        } else {
-          // Fallback to localStorage
-          const saved = localStorage.getItem('user_title');
-          if (saved) document.getElementById('userTitle').textContent = saved;
-        }
-      })
-      .catch((err) => {
-        console.log('Supabase load error, using localStorage:', err);
+  supabaseClient
+    .from('settings')
+    .select('value')
+    .eq('key', 'user_title')
+    .single()
+    .then(({ data, error }) => {
+      if (!error && data && data.value) {
+        document.getElementById('userTitle').textContent = data.value;
+      } else {
         const saved = localStorage.getItem('user_title');
         if (saved) document.getElementById('userTitle').textContent = saved;
-      });
-  } else {
-    // Fallback to localStorage
-    const saved = localStorage.getItem('user_title');
-    if (saved) document.getElementById('userTitle').textContent = saved;
-  }
+      }
+    })
+    .catch(() => {
+      const saved = localStorage.getItem('user_title');
+      if (saved) document.getElementById('userTitle').textContent = saved;
+    });
 }
 
 function calendarPrev() {
