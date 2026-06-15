@@ -1880,7 +1880,9 @@ function exerciseImageHTML(exId, exName) {
 const SUPABASE_URL = 'https://ulhlpnqqdgrphoqgqavl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsaGxwbnFxZGdycGhvcWdxYXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMDg1NzEsImV4cCI6MjA5NTg4NDU3MX0.jE5b7SQjPEO6uupySgltbYFdh9FBM5ZTgpUfKHD7kYE';
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true }
+});
 
 // ============================================================
 // STATE & PERSISTENCE
@@ -3109,7 +3111,7 @@ function loadUserTitle() {
     .from('settings')
     .select('value')
     .eq('key', 'user_title')
-    .single()
+    .maybeSingle()
     .then(({ data, error }) => {
       if (!error && data && data.value) {
         state = { ...state, title: data.value };
@@ -4328,7 +4330,7 @@ async function init() {
       .from('settings')
       .select('value')
       .eq('key', 'avatar_url')
-      .single();
+      .maybeSingle();
     if (!error && data?.value) {
       state.avatar_url = data.value;
       document.getElementById('headerAvatar').src = data.value;
