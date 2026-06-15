@@ -3071,7 +3071,7 @@ async function saveTitleEditor() {
     // 3. Sync to Supabase with await
     const { error } = await supabaseClient
       .from('settings')
-      .upsert({ key: 'user_title', value: newTitle });
+      .upsert({ key: 'user_title', value: newTitle }, { onConflict: 'key' });
 
     if (error) {
       throw new Error(`Supabase error: ${error.message}`);
