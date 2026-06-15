@@ -38,7 +38,7 @@
 
 [data-theme="dark"] {
   --bg: linear-gradient(160deg, #2A2E2A 0%, #302838 25%, #2E2838 45%, #1E2E30 70%, #302818 100%);
-  --bg-flat: #1A1A20;
+  --bg-flat: #2B2D2C;
   --bg-elevated: rgba(44, 40, 48, 0.7);
   --bg-card: rgba(44, 40, 48, 0.55);
   --bg-card-solid: rgba(44, 40, 48, 0.75);
