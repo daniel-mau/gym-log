@@ -1884,6 +1884,8 @@ let state = {
   title: 'Daniel Mau'
 };
 
+let isSavingTitle = false;
+
 function getDateKey(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -3048,26 +3050,42 @@ function closeTitleEditor() {
 }
 
 async function saveTitleEditor() {
+  // 1. Race-condition protection
+  if (isSavingTitle) return;
+  isSavingTitle = true;
+
   const newTitle = document.getElementById('titleInput').value.trim();
-  if (!newTitle) return;
+  if (!newTitle) {
+    isSavingTitle = false;
+    return;
+  }
 
-  // 1. Spread state — only mutate title, leave all workout/chart data untouched
-  state = { ...state, title: newTitle };
+  const oldTitle = state.title;
 
-  // 2. Update DOM immediately (no full re-render)
-  document.getElementById('userTitle').textContent = newTitle;
-  closeTitleEditor();
-
-  // 3. Sync to Supabase directly
   try {
+    // 2. Optimistic UI: update state + DOM immediately
+    state = { ...state, title: newTitle };
+    document.getElementById('userTitle').textContent = newTitle;
+    closeTitleEditor();
+
+    // 3. Sync to Supabase with await
     const { error } = await supabaseClient
       .from('settings')
       .upsert({ key: 'user_title', value: newTitle });
+
     if (error) {
-      console.error('Supabase settings error:', error);
+      throw new Error(`Supabase error: ${error.message}`);
     }
+
+    console.log('Title synced successfully:', newTitle);
   } catch (err) {
-    console.error('Supabase save failed:', err);
+    // Rollback on error
+    console.error('Title sync failed, rolling back:', err);
+    state = { ...state, title: oldTitle };
+    document.getElementById('userTitle').textContent = oldTitle;
+    alert('Fehler beim Speichern. Bitte versuche es nochmal.');
+  } finally {
+    isSavingTitle = false;
   }
 }
 
