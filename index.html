@@ -2388,7 +2388,7 @@ function renderSession() {
       </div>
     `;
   }
-  let html = (plan.type === 'gym' || plan.type === 'run' || plan.type === 'long') ? '' : sessionHeaderHtml;
+  let html = (plan.type === 'gym' || plan.type === 'run' || plan.type === 'long' || plan.type === 'rest') ? '' : sessionHeaderHtml;
 
   if (plan.type === 'rest') {
     html += `
