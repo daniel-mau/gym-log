@@ -3749,7 +3749,7 @@ function renderBodyMetricSparkline(metric) {
   const badgeW = badgeText.length * 6 + 10;
   const badgeH = 18;
   const badgePadding = 6;
-  const badgeX = (W - r - badgeW - badgePadding).toFixed(1);
+  const badgeX = (W - badgeW - badgePadding).toFixed(1);
   const badgeY = (badgePadding).toFixed(1);
   const avgBadge = `
     <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="6" fill="${hexToRgba(chartColor, 0.12)}"/>
