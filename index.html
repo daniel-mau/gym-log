@@ -237,6 +237,10 @@
   }
   .day-btn:hover { background: rgba(0,0,0,0.02); }
   .day-btn.future { border-color: transparent; }
+  .day-btn.is-today {
+    border-color: var(--accent);
+    border-width: 2px;
+  }
   .day-btn.done {
     border-color: var(--day-completed-border);
     border-width: 1px;
@@ -2168,6 +2172,7 @@ function renderWeekNav() {
     if (isSelected) classes.push('active');
     if (isDone) classes.push('done');
     if (isFuture) classes.push('future');
+    if (isToday) classes.push('is-today');
     btn.className = classes.join(' ');
     btn.dataset.day = dayKey;
     btn.dataset.date = dateKey;
@@ -2182,8 +2187,8 @@ function renderWeekNav() {
     let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Run' : plan.type;
     if (typeLabel === 'rest') typeLabel = 'Rest';
 
-    // Use consistent day numbers (1-7 for Mon-Sun) instead of actual dates
-    const dayNumber = String(i + 1).padStart(2, '0');
+    // Extract actual day of month from date
+    const dayNumber = String(date.getDate()).padStart(2, '0');
 
     btn.innerHTML = `
       <div class="day-label">${DAY_LABELS[dayKey]}</div>
