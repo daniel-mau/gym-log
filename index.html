@@ -863,7 +863,6 @@ Bitte führe folgende Änderungen durch:
 
   .password-input-group {
     display: flex;
-    flex-direction: column;
     gap: 8px;
     margin-bottom: 24px;
   }
@@ -1597,7 +1596,6 @@ Bitte führe folgende Änderungen durch:
     <h2>🔒 Trainings Log</h2>
     <p>Passwort erforderlich</p>
     <div class="password-input-group">
-      <input type="email" id="emailInput" placeholder="E-Mail" autocomplete="email">
       <input type="password" id="passwordInput" placeholder="Passwort eingeben" autofocus>
     </div>
     <button class="password-submit" onclick="checkPassword()">Zugriff</button>
@@ -4222,41 +4220,15 @@ async function syncBodyTargetsToSupabase(targets) {
 const CORRECT_PASSWORD = '6845d4n13l';
 const VIEWER_PASSWORD = 'viewer2025';
 
-async function checkPassword() {
+function checkPassword() {
   const input = document.getElementById('passwordInput');
-  const emailInput = document.getElementById('emailInput');
   const password = input.value.trim();
-  const email = emailInput.value.trim();
   const errorEl = document.getElementById('passwordError');
 
   if (password === CORRECT_PASSWORD) {
     errorEl.classList.remove('show');
     localStorage.setItem('gymLogAuth', 'full');
     state.readOnly = false;
-
-    if (email) {
-      console.log('[Login] Starting Supabase auth for:', email);
-      try {
-        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
-        if (error) {
-          console.error('[Login] Supabase auth failed:', error.message, error.code);
-          alert('Lokaler Zugriff OK, aber Supabase-Login fehlgeschlagen: ' + error.message);
-        } else {
-          console.log('[Login] Supabase auth successful. Session:', data.session ? 'AKTIV' : 'NULL');
-          const { data: sessionData } = await window.supabaseClient.auth.getSession();
-          console.log('[Login] Session-Verifizierung:', sessionData.session ? 'EXISTIERT' : 'NULL');
-        }
-      } catch (e) {
-        console.error('[Login] Supabase auth exception:', e);
-      }
-    } else {
-      console.warn('[Login] No email provided, skipping Supabase auth');
-    }
-
     unlockApp();
   } else if (password === VIEWER_PASSWORD) {
     errorEl.classList.remove('show');
