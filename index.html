@@ -2755,12 +2755,41 @@ function renderStats() {
         }
 
         function createWedgePath(cx, cy, rIn, rOut, startAngle, endAngle) {
-          const p1 = polarToCartesian(cx, cy, rOut, startAngle);
-          const p2 = polarToCartesian(cx, cy, rOut, endAngle);
-          const p3 = polarToCartesian(cx, cy, rIn, endAngle);
-          const p4 = polarToCartesian(cx, cy, rIn, startAngle);
+          const r = 2.5; // corner radius
 
-          return 'M ' + p1.x + ' ' + p1.y + ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + p2.x + ' ' + p2.y + ' L ' + p3.x + ' ' + p3.y + ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + p4.x + ' ' + p4.y + ' Z';
+          // Outer arc points
+          const outerStart = polarToCartesian(cx, cy, rOut, startAngle);
+          const outerEnd = polarToCartesian(cx, cy, rOut, endAngle);
+
+          // Inner arc points
+          const innerEnd = polarToCartesian(cx, cy, rIn, endAngle);
+          const innerStart = polarToCartesian(cx, cy, rIn, startAngle);
+
+          // Calculate offset points for rounded corners on the radial edges
+          const angleOffset = (r / rOut) * (180 / Math.PI);
+          const outerStartOffset = polarToCartesian(cx, cy, rOut, startAngle + angleOffset);
+          const outerEndOffset = polarToCartesian(cx, cy, rOut, endAngle - angleOffset);
+          const innerStartOffset = polarToCartesian(cx, cy, rIn, startAngle + angleOffset);
+          const innerEndOffset = polarToCartesian(cx, cy, rIn, endAngle - angleOffset);
+
+          // Start at outer arc with offset
+          let path = 'M ' + outerStartOffset.x + ' ' + outerStartOffset.y;
+
+          // Outer arc
+          path += ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + outerEndOffset.x + ' ' + outerEndOffset.y;
+
+          // Rounded corner to inner arc (top right)
+          path += ' Q ' + outerEnd.x + ' ' + outerEnd.y + ' ' + innerEndOffset.x + ' ' + innerEndOffset.y;
+
+          // Inner arc
+          path += ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + innerStartOffset.x + ' ' + innerStartOffset.y;
+
+          // Rounded corner back to outer arc (top left)
+          path += ' Q ' + innerStart.x + ' ' + innerStart.y + ' ' + outerStartOffset.x + ' ' + outerStartOffset.y;
+
+          path += ' Z';
+
+          return path;
         }
 
         const gradientId = 'weightGradient_' + Date.now();
@@ -2824,11 +2853,11 @@ function renderStats() {
     '<div class="stat-label">Gesamt-km</div>' +
     '<div class="stat-value">' + totalKm.toFixed(1) + '<span class="stat-unit">km</span></div>' +
   '</div>' +
-  weightLossCardSpan +
   '<div class="stat-card">' +
     '<div class="stat-label">Gym-Einheiten</div>' +
     '<div class="stat-value">' + totalGym + '</div>' +
-  '</div>';
+  '</div>' +
+  weightLossCardSpan;
 }
 
 // Calendar state
