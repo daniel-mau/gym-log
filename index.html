@@ -681,7 +681,7 @@
   }
   .stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1.4fr;
+    grid-template-columns: 1fr 1.68fr;
     gap: 6px;
   }
   .stats-outer-card {
@@ -2802,18 +2802,18 @@ function renderStats() {
               '<svg width="100%" viewBox="10 0 180 100" preserveAspectRatio="xMidYMid meet" style="display:block;height:100%;">' +
                 segmentsSvg +
               '</svg>' +
-              '<div class="stat-value" style="position:absolute;bottom:4%;left:50%;transform:translateX(-50%);white-space:nowrap;">' +
+              '<div class="stat-value" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);white-space:nowrap;line-height:1;">' +
                 weightLoss + '<span class="stat-unit">kg</span>' +
               '</div>' +
             '</div>' +
             '<div style="display:flex;justify-content:space-between;">' +
               '<div>' +
                 '<div style="font-size:11px;color:var(--text-mute);margin-bottom:1px;">Verbleibend</div>' +
-                '<div style="font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;">' + remaining + '<span style="font-size:11px;font-weight:500;color:var(--text-mute);margin-left:2px;">kg</span></div>' +
+                '<div style="font-size:16px;font-weight:700;color:var(--text-mute);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;">' + remaining + '<span style="font-size:11px;font-weight:500;margin-left:2px;">kg</span></div>' +
               '</div>' +
               '<div style="text-align:right;">' +
                 '<div style="font-size:11px;color:var(--text-mute);margin-bottom:1px;">Ziel</div>' +
-                '<div style="font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;">' + targetWeight + '<span style="font-size:11px;font-weight:500;color:var(--text-mute);margin-left:2px;">kg</span></div>' +
+                '<div style="font-size:16px;font-weight:700;color:var(--text-mute);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;">' + targetWeight + '<span style="font-size:11px;font-weight:500;margin-left:2px;">kg</span></div>' +
               '</div>' +
             '</div>' +
           '</div>' +
