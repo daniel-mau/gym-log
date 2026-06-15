@@ -1909,15 +1909,24 @@ function renderExerciseSparkline(exerciseId) {
       const label = `${p.weight.toFixed(1)} kg`;
       const labelW = label.length * 5.8 + 12;
       const labelH = 18;
-      const labelY = Math.max(2, p.y - labelH - 6);
-      const labelX = Math.max(4, Math.min(svgWidth - labelW - 4, p.x - labelW / 2));
-      const arrowCx = Math.min(labelX + labelW - 8, Math.max(labelX + 8, p.x));
-      const arrowW = 6;
       const arrowLen = 4;
-      const arrowPath = `M${(arrowCx-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(arrowCx-1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} Q${arrowCx.toFixed(1)},${(labelY+labelH+arrowLen).toFixed(1)} ${(arrowCx+1.5).toFixed(1)},${(labelY+labelH+arrowLen-1.5).toFixed(1)} L${(arrowCx+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
+      const gap = 3;
+      // Arrow tip always on p.y — no Math.max clamping
+      const labelY = p.y - labelH - arrowLen - gap;
+      const arrowW = 6;
+      const gymRx = 9;
+      const gymMargin = gymRx + arrowW / 2;
+      // Allow pill to go slightly outside SVG so arrow stays vertical
+      const overflow = 8;
+      let labelX = p.x - labelW / 2;
+      labelX = Math.min(labelX, p.x - gymMargin);      // arrow not in left corner
+      labelX = Math.max(labelX, p.x - labelW + gymMargin); // arrow not in right corner
+      labelX = Math.max(-overflow, Math.min(svgWidth - labelW + overflow, labelX));
+      // Arrow always vertical at p.x, rect covers base
+      const arrowPath = `M${(p.x-arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} L${(p.x-1.5).toFixed(1)},${(p.y-1.5).toFixed(1)} Q${p.x.toFixed(1)},${p.y.toFixed(1)} ${(p.x+1.5).toFixed(1)},${(p.y-1.5).toFixed(1)} L${(p.x+arrowW/2).toFixed(1)},${(labelY+labelH).toFixed(1)} Z`;
       return `<g>
-        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="9" fill="rgba(30,30,30,0.75)"/>
         <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
+        <rect x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" width="${labelW.toFixed(1)}" height="${labelH}" rx="9" fill="rgba(30,30,30,0.75)"/>
         <text x="${(labelX + labelW/2).toFixed(1)}" y="${(labelY + 12.5).toFixed(1)}" font-size="10" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${label}</text>
         <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="rgba(52,199,89,1)"/>
       </g>`;
@@ -2169,22 +2178,28 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     }
   }
 
-  // Tooltip bubble
+  // Tooltip bubble — arrow always fixed length, points to targetY (top edge of bar/point)
   function tipBubble(cx, cy, text, targetY) {
     const th = 24, tw = text.length * 7.2 + 14;
-    const ty = Math.max(t - 10, cy - 34);
-    const tx = Math.max(4, Math.min(W - tw - 4, cx - tw/2));
-    const arrowCx = Math.min(tx + tw - 10, Math.max(tx + 10, cx));
-    const textBaseline = ty + 16;
-    // Fixed arrow length and rounded corners
-    const arrowLength = 6;
-    const arrowTargetY = (ty + th + arrowLength).toFixed(1);
+    const arrowLength = 4;
     const arrowWidth = 8;
-    // Create path with rounded arrow instead of sharp polygon
-    const arrowPath = `M${(arrowCx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(arrowCx-2).toFixed(1)},${(ty+th+arrowLength-2).toFixed(1)} Q${arrowCx.toFixed(1)},${arrowTargetY} ${(arrowCx+2).toFixed(1)},${(ty+th+arrowLength-2).toFixed(1)} L${(arrowCx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
+    const gap = 3;
+    const tip = (targetY !== undefined ? targetY : cy);
+    const ty = tip - th - arrowLength - gap;
+    const textBaseline = ty + 16;
+    const rx = 11;
+    const margin = rx + arrowWidth / 2; // min distance from pill edge to arrow center
+    // Shift pill so arrow (at cx) always lands in the flat area — no diagonal
+    let tx = cx - tw / 2;
+    tx = Math.max(4, Math.min(W - tw - 4, tx));
+    tx = Math.min(tx, cx - margin);          // arrow not left of left flat area
+    tx = Math.max(tx, cx - tw + margin);     // arrow not right of right flat area
+    tx = Math.max(4, Math.min(W - tw - 4, tx)); // final bounds
+    // Arrow drawn first (tip → base at ty+th), then rect covers the base → no gap
+    const arrowPath = `M${(cx-arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} L${(cx-2).toFixed(1)},${(tip-2).toFixed(1)} Q${cx.toFixed(1)},${tip.toFixed(1)} ${(cx+2).toFixed(1)},${(tip-2).toFixed(1)} L${(cx+arrowWidth/2).toFixed(1)},${(ty+th).toFixed(1)} Z`;
     return `<g>
-        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="rgba(30,30,30,0.75)"/>
         <path d="${arrowPath}" fill="rgba(30,30,30,0.75)"/>
+        <rect x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" rx="11" fill="rgba(30,30,30,0.75)"/>
       </g>
       <text x="${(tx+tw/2).toFixed(1)}" y="${textBaseline.toFixed(1)}" font-size="12" fill="white" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="600" letter-spacing="-0.2">${text}</text>`;
   }
@@ -2226,8 +2241,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
         // Only show tooltips for min and max values
         if (p.value === minValue || p.value === maxValue) {
-          const tooltipY = p.y - 8;
-          pillSvg += tipBubble(p.x, tooltipY, formatted, p.y);
+          pillSvg += tipBubble(p.x, p.y, formatted, p.y);
         }
         return pillSvg;
       }).join('');
