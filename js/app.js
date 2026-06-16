@@ -1454,6 +1454,10 @@ function closeUploadPwModal() {
   document.getElementById('uploadPwModal').classList.remove('show');
 }
 
+function cancelUploadPw() {
+  closeUploadPwModal();
+}
+
 function confirmUploadPw() {
   const pw = document.getElementById('uploadPwInput').value.trim();
   if (pw !== 'fusion2026') {
@@ -2747,6 +2751,7 @@ window.changeAvatar = changeAvatar;
 window.saveCroppedAvatar = saveCroppedAvatar;
 window.closeCropperModal = closeCropperModal;
 window.closeUploadPwModal = closeUploadPwModal;
+window.cancelUploadPw = cancelUploadPw;
 window.confirmUploadPw = confirmUploadPw;
 window.saveBodyMetrics = saveBodyMetrics;
 window.saveBodyTargets = saveBodyTargets;
