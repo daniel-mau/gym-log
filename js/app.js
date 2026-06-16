@@ -674,8 +674,8 @@ function renderSession() {
           <label>Notizen zum Lauf</label>
           <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen...">${state.todayData.notes || ''}</textarea>
         </div>
-        <div class="run-field run-field-full" style="margin-top:16px;">
-          <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;width:100%;">🗑 Diesen Lauf löschen</button>
+        <div style="margin-top:12px;display:flex;justify-content:center;">
+          <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Lauf löschen</button>
         </div>
       </div>
       </div>
