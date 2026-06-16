@@ -1059,7 +1059,7 @@ function renderStats() {
         '</defs>';
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const emptySegmentColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.07)';
+        const emptySegmentColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
@@ -2381,7 +2381,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     const pillRadius = pillW / 2;
     const maxHeight = chartBottom - t;
     const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const emptyBarColor = _isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.07)';
+    const emptyBarColor = _isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
     // Add pills for all n+2 positions (n data points + 2 empty)
     for (let i = 0; i < n + 2; i++) {
