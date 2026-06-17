@@ -1083,12 +1083,12 @@ function renderStats() {
             '</div>' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
               '<div>' +
-                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:3px;">Verbleibend</div>' +
-                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:2px 7px;border-radius:20px;font-variant-numeric:tabular-nums;">' + remaining + ' kg</span>' +
+                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Verbleibend</div>' +
+                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + remaining + ' kg</span>' +
               '</div>' +
               '<div style="text-align:right;">' +
-                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:3px;">Ziel</div>' +
-                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:2px 7px;border-radius:20px;font-variant-numeric:tabular-nums;">' + targetWeight + ' kg</span>' +
+                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Ziel</div>' +
+                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + targetWeight + ' kg</span>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -2081,14 +2081,14 @@ function renderBodyMetricSparkline(metric) {
   `;
 
   const badgeText = `Ø ${avg} ${unit}`;
-  const badgeW = badgeText.length * 6 + 10;
-  const badgeH = 18;
+  const badgeW = badgeText.length * 7.2 + 16;
+  const badgeH = 20;
   const badgePadding = 6;
   const badgeX = (W - badgeW - badgePadding).toFixed(1);
   const badgeY = (badgePadding).toFixed(1);
   const avgBadge = `
-    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="6" fill="${hexToRgba(chartColor, 0.12)}"/>
-    <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+13).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="700" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
+    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="10" fill="${hexToRgba(chartColor, 0.12)}"/>
+    <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+14).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="600" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
   `;
 
   // Find min and max for tooltips
