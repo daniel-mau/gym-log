@@ -1659,45 +1659,124 @@ function renderDashboard() {
       return `KW${wn}`;
     });
 
-    // Per-run pace with date labels
-    const paceRuns = [];
-    recent.sort((a, b) => a.date.localeCompare(b.date)).forEach(w => {
-      if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return;
-      const dist = parseFloat(w.data.run && w.data.run.distance);
-      const time = parseTime(w.data.run && w.data.run.time);
-      if (dist > 0 && time > 0) {
-        const d = new Date(w.date);
-        paceRuns.push({ value: (time / dist) / 60, label: `${d.getDate()}.${d.getMonth()+1}.` });
-      }
-    });
-    const paceValues = paceRuns.map(r => r.value);
-    const paceLabels = paceRuns.map(r => r.label);
-
-    // Pain with date labels
+    // Per-run pace with date labels - show every day from first to last data point
     const workoutMap = {};
     workouts.forEach(w => { if (w.data) workoutMap[w.date] = w.data; });
-    const painValues = [], painLabels = [];
-    for (let i = 41; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const wo = workoutMap[getDateKey(d)];
-      if (wo && wo.run && typeof wo.run.pain === 'number') {
-        painValues.push(wo.run.pain);
-        painLabels.push(`${d.getDate()}.${d.getMonth()+1}.`);
+
+    // Find first and last pace data
+    const paceDataDates = workouts.filter(w => {
+      if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return false;
+      const dist = parseFloat(w.data.run && w.data.run.distance);
+      const time = parseTime(w.data.run && w.data.run.time);
+      return dist > 0 && time > 0;
+    }).map(w => w.date).sort();
+
+    const paceValues = [], paceLabels = [];
+    if (paceDataDates.length > 0) {
+      const firstDate = new Date(paceDataDates[0]);
+      firstDate.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+
+      for (let i = 0; i <= daysDiff; i++) {
+        const d = new Date(firstDate);
+        d.setDate(firstDate.getDate() + i);
+        const wo = workoutMap[getDateKey(d)];
+        const label = `${d.getDate()}.${d.getMonth()+1}.`;
+        if (wo && (wo.type === 'run' || wo.type === 'long')) {
+          const dist = parseFloat(wo.run && wo.run.distance);
+          const time = parseTime(wo.run && wo.run.time);
+          if (dist > 0 && time > 0) {
+            paceValues.push((time / dist) / 60);
+          } else {
+            paceValues.push(null);
+          }
+        } else {
+          paceValues.push(null);
+        }
+        paceLabels.push(label);
       }
     }
 
-    // Weight + KFA with date labels
+    // Pain with date labels - show every day from first to last data point
+    const painDataDates = workouts.filter(w => {
+      return w.data && w.data.run && typeof w.data.run.pain === 'number';
+    }).map(w => w.date).sort();
+
+    const painValues = [], painLabels = [];
+    if (painDataDates.length > 0) {
+      const firstDate = new Date(painDataDates[0]);
+      firstDate.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+
+      for (let i = 0; i <= daysDiff; i++) {
+        const d = new Date(firstDate);
+        d.setDate(firstDate.getDate() + i);
+        const wo = workoutMap[getDateKey(d)];
+        const label = `${d.getDate()}.${d.getMonth()+1}.`;
+        if (wo && wo.run && typeof wo.run.pain === 'number') {
+          painValues.push(wo.run.pain);
+        } else {
+          painValues.push(null);
+        }
+        painLabels.push(label);
+      }
+    }
+
+    // Weight + KFA with date labels - show every day from first to last data point
     const allMetrics = loadAllBodyMetrics();
+    const metricsMap = {};
+    allMetrics.forEach(m => { metricsMap[m.date] = m.data; });
+
+    const weightDataDates = allMetrics.filter(m => {
+      const w = parseFloat(m.data.weight);
+      return !isNaN(w) && w > 0;
+    }).map(m => m.date).sort();
+
+    const fatDataDates = allMetrics.filter(m => {
+      const f = parseFloat(m.data.fat);
+      return !isNaN(f) && f > 0;
+    }).map(m => m.date).sort();
+
     const weightValues = [], weightLabels = [];
     const fatValues = [], fatLabels = [];
-    allMetrics.forEach(m => {
-      const d = new Date(m.date);
-      const label = `${d.getDate()}.${d.getMonth()+1}.`;
-      const w = parseFloat(m.data.weight);
-      if (!isNaN(w) && w > 0) { weightValues.push(w); weightLabels.push(label); }
-      const f = parseFloat(m.data.fat);
-      if (!isNaN(f) && f > 0) { fatValues.push(f); fatLabels.push(label); }
-    });
+
+    if (weightDataDates.length > 0) {
+      const firstDate = new Date(weightDataDates[0]);
+      firstDate.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+
+      for (let i = 0; i <= daysDiff; i++) {
+        const d = new Date(firstDate);
+        d.setDate(firstDate.getDate() + i);
+        const dateKey = getDateKey(d);
+        const label = `${d.getDate()}.${d.getMonth()+1}.`;
+        const metrics = metricsMap[dateKey];
+        const w = metrics ? parseFloat(metrics.weight) : NaN;
+        weightValues.push(!isNaN(w) && w > 0 ? w : null);
+        weightLabels.push(label);
+      }
+    }
+
+    if (fatDataDates.length > 0) {
+      const firstDate = new Date(fatDataDates[0]);
+      firstDate.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+
+      for (let i = 0; i <= daysDiff; i++) {
+        const d = new Date(firstDate);
+        d.setDate(firstDate.getDate() + i);
+        const dateKey = getDateKey(d);
+        const label = `${d.getDate()}.${d.getMonth()+1}.`;
+        const metrics = metricsMap[dateKey];
+        const f = metrics ? parseFloat(metrics.fat) : NaN;
+        fatValues.push(!isNaN(f) && f > 0 ? f : null);
+        fatLabels.push(label);
+      }
+    }
 
     const formatPace = v => {
       const mins = Math.floor(v);
@@ -2188,8 +2267,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const totalSlots = isBar ? n + 2 : n;
 
   const parseLabel = (lbl) => {
-    // KW format: "KW23", "KW24" etc. Map to approximate date (Monday of that week)
-    const kwMatch = lbl.match(/KW(\d+)/);
+    // Week number format: "23", "24" or "KW23", "KW24" etc. Map to approximate date (Monday of that week)
+    const kwMatch = lbl.match(/^(?:KW)?(\d+)$/);
     if (kwMatch) {
       const week = parseInt(kwMatch[1]);
       const year = 2026;
@@ -2286,22 +2365,27 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     }
   } else if (lineDates && lineTotalDays > 0) {
     // For KW labels, show the labels directly at all pill positions; for date labels, show every 2 days
-    const isKWLabels = labels && labels[0] && labels[0].match(/KW\d+/);
+    const isKWLabels = labels && labels[0] && labels[0].match(/^(?:KW)?(\d+)$/);
     if (isKWLabels && isRunVolume) {
       for (let i = 0; i < n; i++) {
         const x = l + (i + 0.5) / n * (W - l - r);
         const label = labels[i] || '';
         if (label) {
-          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="11" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${label}</text>`;
+          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${label}</text>`;
         }
       }
     } else {
-      for (let d = 0; d <= lineTotalDays; d += 2) {
+      for (let d = 0; d <= lineTotalDays; d++) {
         const x = l + (d/lineTotalDays)*(W-l-r);
         gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
-        const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
-        const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
-        gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
+        const isFirst = d === 0;
+        const isLast = d === lineTotalDays;
+        const isEven = d % 2 === 0;
+        if (isFirst || isLast || isEven) {
+          const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
+          const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
+          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
+        }
       }
     }
   }
