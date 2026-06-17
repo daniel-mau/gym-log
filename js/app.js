@@ -2040,8 +2040,8 @@ function renderBodyMetricSparkline(metric) {
   const range = Math.max(maxVal - minVal, 0.5);
   const pad = range * 0.15;
 
-  const W = 200, H = 90;
-  const l = 28, r = 10, t = 32, b = 10;
+  const W = 200, H = 110;
+  const l = 28, r = 10, t = 10, b = 10;
 
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
