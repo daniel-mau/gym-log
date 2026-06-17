@@ -958,7 +958,7 @@ function markIncomplete() {
 function renderStats() {
   const workouts = loadAllWorkouts();
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 28);
+  cutoff.setDate(cutoff.getDate() - 42);
   const cutoffKey = getDateKey(cutoff);
   const recent = workouts.filter(w => w.date >= cutoffKey);
 
@@ -1592,11 +1592,11 @@ function renderDashboard() {
     }
 
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 56);
+    cutoff.setDate(cutoff.getDate() - 42);
     const cutoffKey = getDateKey(cutoff);
     const recent = workouts.filter(w => w.date >= cutoffKey && w.data);
 
-    // Weekly run volume with KW labels
+    // Weekly run volume with KW labels — fixed 6-bar rolling window
     const weeklyRuns = {};
     recent.forEach(w => {
       if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return;
@@ -1608,8 +1608,49 @@ function renderDashboard() {
       const dist = parseFloat(w.data.run && w.data.run.distance);
       if (!isNaN(dist) && dist > 0) weeklyRuns[wk] += dist;
     });
-    const weeks = Object.keys(weeklyRuns).sort().slice(-8);
-    const volumeValues = weeks.map(w => weeklyRuns[w] || 0);
+
+    // Determine the 6-week window: anchored at first data week until current exceeds 6 weeks, then slides
+    const getWeekStart = (d) => { const s = new Date(d); s.setDate(s.getDate() - ((s.getDay() + 6) % 7)); s.setHours(0,0,0,0); return s; };
+    const currentWeekStart = getWeekStart(new Date());
+    const dataWeeks = Object.keys(weeklyRuns).sort();
+    const firstDataWeekStart = dataWeeks.length > 0 ? new Date(dataWeeks[0]) : currentWeekStart;
+    const firstPlusFive = new Date(firstDataWeekStart); firstPlusFive.setDate(firstPlusFive.getDate() + 35);
+
+    let windowStart, windowEnd;
+    if (currentWeekStart <= firstPlusFive) {
+      // Still within initial 6 weeks: fixed window from first data week
+      windowStart = firstDataWeekStart;
+      windowEnd = firstPlusFive;
+    } else {
+      // Past 6 weeks: rolling window of last 6 weeks
+      windowEnd = currentWeekStart;
+      windowStart = new Date(currentWeekStart);
+      windowStart.setDate(windowStart.getDate() - 35);
+    }
+
+    // Generate exactly 6 week slots
+    const weeks = [];
+    for (let i = 0; i < 6; i++) {
+      const ws = new Date(windowStart); ws.setDate(ws.getDate() + i * 7);
+      weeks.push(getDateKey(ws));
+    }
+    // Helper: get ISO week number
+    const getISOWeek = (d) => {
+      const date = new Date(d);
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+      const week1 = new Date(date.getFullYear(), 0, 4);
+      return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
+    const currentWeekNumber = getISOWeek(new Date());
+
+    const volumeValues = weeks.map(w => {
+      const weekNumber = getISOWeek(new Date(w));
+      if (weekNumber > currentWeekNumber) {
+        return null; // Future weeks: no data point
+      }
+      return weeklyRuns[w] || 0; // Past + current weeks: show 0 if no data
+    });
     const volumeLabels = weeks.map(w => {
       const d = new Date(w);
       d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
@@ -1636,7 +1677,7 @@ function renderDashboard() {
     const workoutMap = {};
     workouts.forEach(w => { if (w.data) workoutMap[w.date] = w.data; });
     const painValues = [], painLabels = [];
-    for (let i = 27; i >= 0; i--) {
+    for (let i = 41; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i);
       const wo = workoutMap[getDateKey(d)];
       if (wo && wo.run && typeof wo.run.pain === 'number') {
@@ -2136,7 +2177,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   }
 
   const W = 400, H = 210;
-  const l = 24, r = 24;
+  const l = isRunVolumeCheck ? 10 : 24;
+  const r = isRunVolumeCheck ? 10 : 24;
   const t = 36;
   const b = hasLabels ? 44 : 24;
   const chartBottom = H - b;
@@ -2173,8 +2215,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     let x;
     const isRunVolumeForPositioning = title === 'Laufvolumen';
     if (isBar || isRunVolumeForPositioning) {
-      // Center each point in its pill (n data points + 2 empty pills)
-      const slots = isRunVolumeForPositioning ? (n + 2) : totalSlots;
+      const slots = isRunVolumeForPositioning ? n : totalSlots;
       x = l + (i + 0.5) / slots * (W - l - r);
     } else if (lineDates) {
       const daysFromStart = Math.round((lineDates[i] - lineFirstDate)/(24*60*60*1000));
@@ -2204,19 +2245,15 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     let endPt = pts[pts.length - 1];
 
     if (isRunVolumeForPath) {
-      const pillW = Math.min(((W-l-r)/Math.max(n+2,1))*0.7, 50);
+      const pillW = Math.min(((W-l-r)/Math.max(n,1))*0.7, 50);
       const pillLeft = startPt.x - pillW / 2;
-      const pillRight = endPt.x + pillW / 2;
 
       // Extend to left pill edge horizontally
       if (pillLeft < startPt.x) {
         startPt = { x: pillLeft, y: startPt.y };
       }
 
-      // Extend to right pill edge horizontally
-      if (pillRight > endPt.x) {
-        endPt = { x: pillRight, y: endPt.y };
-      }
+      // Do NOT extend to right pill edge - stop at the data point
     }
 
     let d = `M${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
@@ -2250,24 +2287,11 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     // For KW labels, show the labels directly at all pill positions; for date labels, show every 2 days
     const isKWLabels = labels && labels[0] && labels[0].match(/KW\d+/);
     if (isKWLabels && isRunVolume) {
-      // Show KW label at each pill position (n data points + 2 empty)
-      const allLabels = [...labels];
-      // Add labels for the 2 empty pills
-      if (labels.length > 0) {
-        const lastLabel = labels[labels.length - 1];
-        const kwMatch = lastLabel.match(/KW(\d+)/);
-        const lastWeek = kwMatch ? parseInt(kwMatch[1]) : 0;
-        allLabels.push(`KW${lastWeek + 1}`);
-        allLabels.push(`KW${lastWeek + 2}`);
-      }
-
-      const gap = (W - l - r) / Math.max(n + 2, 1);
-      for (let i = 0; i < n + 2; i++) {
-        const x = l + (i + 0.5) / (n + 2) * (W - l - r);
-        const label = allLabels[i] || '';
+      for (let i = 0; i < n; i++) {
+        const x = l + (i + 0.5) / n * (W - l - r);
+        const label = labels[i] || '';
         if (label) {
-          const opacity = i < n ? '1' : '0.5';
-          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="11" fill="var(--text-mute)" opacity="${opacity}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${label}</text>`;
+          gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="11" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${label}</text>`;
         }
       }
     } else {
@@ -2375,17 +2399,16 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Gray background pills for line charts (Laufvolumen)
   let bgPillsEl = '';
-  if (!isBar && isRunVolume && nonNull.length > 0) {
-    const gap = (W - l - r) / Math.max(n + 2, 1);
+  if (!isBar && isRunVolume && n > 0) {
+    const gap = (W - l - r) / Math.max(n, 1);
     const pillW = Math.min(gap * 0.7, 50);
     const pillRadius = pillW / 2;
     const maxHeight = chartBottom - t;
     const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const emptyBarColor = _isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
-    // Add pills for all n+2 positions (n data points + 2 empty)
-    for (let i = 0; i < n + 2; i++) {
-      const x = l + (i + 0.5) / (n + 2) * (W - l - r);
+    for (let i = 0; i < n; i++) {
+      const x = l + (i + 0.5) / n * (W - l - r);
       bgPillsEl += `<rect x="${(x - pillW/2).toFixed(1)}" y="${t}" width="${pillW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="${emptyBarColor}"/>`;
     }
   }
@@ -2400,9 +2423,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       let endPt = nonNull[nonNull.length - 1];
 
       if (isRunVolumeForFill) {
-        const pillW = Math.min(((W-l-r)/Math.max(n+2,1))*0.7, 50);
+        const pillW = Math.min(((W-l-r)/Math.max(n,1))*0.7, 50);
         startPt = { x: startPt.x - pillW / 2, y: startPt.y };
-        endPt = { x: endPt.x + pillW / 2, y: endPt.y };
+        // Do NOT extend endPt to right - keep it at the data point
       }
 
       fillEl = `<path d="${pathD} L${endPt.x.toFixed(1)},${chartBottom} L${startPt.x.toFixed(1)},${chartBottom} Z" fill="url(#${gradId})" stroke="none"/>`;
