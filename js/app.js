@@ -478,10 +478,8 @@ function renderSession() {
       <div class="session-header">
         <div>
           <div class="session-title-gym">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <rect x="2" y="9" width="4" height="6" rx="1"/>
-              <rect x="18" y="9" width="4" height="6" rx="1"/>
-              <line x1="6" y1="12" x2="18" y2="12"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 7v10"/><path d="M18 7v10"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6 12h12"/>
             </svg>
             ${plan.name}
           </div>
@@ -1698,6 +1696,35 @@ function renderDashboard() {
       }
     }
 
+    // Cadence with date labels - show every day from first to last data point
+    const cadenceDataDates = workouts.filter(w => {
+      if (!w.data || (w.data.type !== 'run' && w.data.type !== 'long')) return false;
+      const c = parseFloat(w.data.run && w.data.run.cadence);
+      return c > 0;
+    }).map(w => w.date).sort();
+
+    const cadenceValues = [], cadenceLabels = [];
+    if (cadenceDataDates.length > 0) {
+      const firstDate = new Date(cadenceDataDates[0]);
+      firstDate.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+
+      for (let i = 0; i <= daysDiff; i++) {
+        const d = new Date(firstDate);
+        d.setDate(firstDate.getDate() + i);
+        const wo = workoutMap[getDateKey(d)];
+        const label = `${d.getDate()}.${d.getMonth()+1}.`;
+        if (wo && (wo.type === 'run' || wo.type === 'long')) {
+          const c = parseFloat(wo.run && wo.run.cadence);
+          cadenceValues.push(c > 0 ? c : null);
+        } else {
+          cadenceValues.push(null);
+        }
+        cadenceLabels.push(label);
+      }
+    }
+
     // Pain with date labels - show every day from first to last data point
     const painDataDates = workouts.filter(w => {
       return w.data && w.data.run && typeof w.data.run.pain === 'number';
@@ -1786,12 +1813,14 @@ function renderDashboard() {
 
     const rvEl = document.getElementById('runVolumeSparkline');
     const paEl = document.getElementById('paceSparkline');
+    const caEl = document.getElementById('cadenceSparkline');
     const piEl = document.getElementById('painSparkline');
     const wEl  = document.getElementById('weightStatSparkline');
     const fEl  = document.getElementById('fatStatSparkline');
 
     if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { labels: volumeLabels });
     if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace', { labels: paceLabels });
+    if (caEl) caEl.innerHTML = buildSparklineSVG(cadenceValues, 'spm', v => `${Math.round(v)} spm`, 'Kadenz', { labels: cadenceLabels });
     if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: painLabels });
     if (wEl)  wEl.innerHTML  = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: weightLabels });
     if (fEl)  fEl.innerHTML  = buildSparklineSVG(fatValues, '%', v => `${v.toFixed(1)} %`, 'KFA', { labels: fatLabels });
@@ -2121,10 +2150,13 @@ function renderBodyMetricSparkline(metric) {
 
   const W = 200, H = 80;
   const l = 34, r = 10, t = 10, b = 10;
+  const chartHeight = H - t - b;
+  const fadeZone = chartHeight * 0.15;
+  const dataTop = t + fadeZone; // data plots start below the fade zone
 
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
-    const y = H - b - ((v.value - (minVal - pad)) / (range + pad * 2)) * (H - t - b);
+    const y = H - b - ((v.value - (minVal - pad)) / (range + pad * 2)) * (chartHeight - fadeZone);
     return { x: isFinite(x) ? x : 0, y: isFinite(y) ? y : 0, value: v.value, date: v.date };
   }).filter(p => isFinite(p.x) && isFinite(p.y));
 
@@ -2146,8 +2178,17 @@ function renderBodyMetricSparkline(metric) {
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
   const fillPath = pathD + ` L${W-r},${H-b} L${l},${H-b} Z`;
 
+  // Gridlines: normal from dataTop to bottom, fade zone from t to dataTop
+  const bodyGridGradId = `bodyGridGrad_${metric}_${Math.random().toString(36).slice(2,6)}`;
+  const resolvedBodyGridColor = getComputedStyle(document.documentElement).getPropertyValue('--text-mute').trim() || '#999';
+  const bodyGridGradient = `<linearGradient id="${bodyGridGradId}" x1="0" y1="${t}" x2="0" y2="${dataTop}" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="${resolvedBodyGridColor}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="${resolvedBodyGridColor}" stop-opacity="0.1"/>
+  </linearGradient>`;
+
   const gridLines = points.map(p =>
-    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${H-b}" stroke="var(--text-mute)" opacity="0.1" stroke-width="0.5"/>`
+    `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${dataTop}" stroke="url(#${bodyGridGradId})" stroke-width="0.5"/>
+     <line x1="${p.x.toFixed(1)}" y1="${dataTop}" x2="${p.x.toFixed(1)}" y2="${H-b}" stroke="var(--text-mute)" opacity="0.1" stroke-width="0.5"/>`
   ).join('');
 
   const avg = (values.reduce((a,v) => a+v.value, 0) / values.length).toFixed(1);
@@ -2155,7 +2196,7 @@ function renderBodyMetricSparkline(metric) {
   const maxLabel = Number.isInteger(maxVal) ? String(maxVal) : maxVal.toFixed(1);
   const minLabel = Number.isInteger(minVal) ? String(minVal) : minVal.toFixed(1);
   const minMaxLabels = `
-    <text x="${l-3}" y="${t+7}" font-size="9" fill="var(--text-mute)" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${maxLabel}</text>
+    <text x="${l-3}" y="${dataTop+7}" font-size="9" fill="var(--text-mute)" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${maxLabel}</text>
     <text x="${l-3}" y="${H-b-1}" font-size="9" fill="var(--text-mute)" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="600">${minLabel}</text>
   `;
 
@@ -2185,6 +2226,7 @@ function renderBodyMetricSparkline(metric) {
     <div class="sparkline-card">
       <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;">
         ${fillGradient}
+        <defs>${bodyGridGradient}</defs>
         ${gridLines}
         ${minMaxLabels}
         <path d="${fillPath}" fill="url(#${gradId})" stroke="none"/>
@@ -2205,15 +2247,19 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const configs = {
     'Laufvolumen': {
       color: '#007AFF',
-      iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,14 7,9 11,12 17,6"/><polyline points="13,6 17,6 17,10"/></svg>`
+      iconSvg: `<svg viewBox="0 0 1024 1024" fill="currentColor"><path d="M918.4 201.6c-6.4-6.4-12.8-9.6-22.4-9.6H768V96c0-9.6-3.2-16-9.6-22.4C752 67.2 745.6 64 736 64H288c-9.6 0-16 3.2-22.4 9.6C259.2 80 256 86.4 256 96v96H128c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 16-9.6 22.4 3.2 108.8 25.6 185.6 64 224 34.4 34.4 77.56 55.65 127.65 61.99 10.91 20.44 24.78 39.25 41.95 56.41 40.86 40.86 91 65.47 150.4 71.9V768h-96c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 12.8-9.6 22.4s3.2 16 9.6 22.4c6.4 6.4 12.8 9.6 22.4 9.6h256c9.6 0 16-3.2 22.4-9.6 6.4-6.4 9.6-12.8 9.6-22.4s-3.2-16-9.6-22.4c-6.4-6.4-12.8-9.6-22.4-9.6h-96V637.26c59.4-7.71 109.54-30.01 150.4-70.86 17.2-17.2 31.51-36.06 42.81-56.55 48.93-6.51 90.02-27.7 126.79-61.85 38.4-38.4 60.8-112 64-224 0-6.4-3.2-16-9.6-22.4zM256 438.4c-19.2-6.4-35.2-19.2-51.2-35.2-22.4-22.4-35.2-70.4-41.6-147.2H256v182.4zm390.4 80C608 553.6 566.4 576 512 576s-99.2-19.2-134.4-57.6C342.4 480 320 438.4 320 384V128h384v256c0 54.4-19.2 99.2-57.6 134.4zm172.8-115.2c-16 16-32 25.6-51.2 35.2V256h92.8c-6.4 76.8-19.2 124.8-41.6 147.2zM768 896H256c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 12.8-9.6 22.4s3.2 16 9.6 22.4c6.4 6.4 12.8 9.6 22.4 9.6h512c9.6 0 16-3.2 22.4-9.6 6.4-6.4 9.6-12.8 9.6-22.4s-3.2-16-9.6-22.4c-6.4-6.4-12.8-9.6-22.4-9.6z"/></svg>`
     },
     'Pace': {
       color: '#5856D6',
       iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><polyline points="10,6 10,10 13,13"/></svg>`
     },
-    'Schmerz': {
+    'Kadenz': {
       color: '#FF9500',
-      iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,10 5,10 7,5 10,15 13,10 18,10"/></svg>`
+      iconSvg: `<svg viewBox="-48 0 512 512" fill="currentColor"><path d="M272 96c26.51 0 48-21.49 48-48S298.51 0 272 0s-48 21.49-48 48 21.49 48 48 48zM113.69 317.47l-14.8 34.52H32c-17.67 0-32 14.33-32 32s14.33 32 32 32h77.45c19.25 0 36.58-11.44 44.11-29.09l8.79-20.52-10.67-6.3c-17.32-10.23-30.06-25.37-37.99-42.61zM384 223.99h-44.03l-26.06-53.25c-12.5-25.55-35.45-44.23-61.78-50.94l-71.08-21.14c-28.3-6.8-57.77-.55-80.84 17.14l-39.67 30.41c-14.03 10.75-16.69 30.83-5.92 44.86s30.84 16.66 44.86 5.92l39.69-30.41c7.67-5.89 17.44-8 25.27-6.14l14.7 4.37-37.46 87.39c-12.62 29.48-1.31 64.01 26.3 80.31l84.98 50.17-27.47 87.73c-5.28 16.86 4.11 34.81 20.97 40.09 3.19 1 6.41 1.48 9.58 1.48 13.61 0 26.23-8.77 30.52-22.45l31.64-101.06c5.91-20.77-2.89-43.08-21.64-54.39l-61.24-36.14 31.31-78.28 20.27 41.43c8 16.34 24.92 26.89 43.11 26.89H384c17.67 0 32-14.33 32-32s-14.33-31.99-32-31.99z"/></svg>`
+    },
+    'Schmerz': {
+      color: '#FF2D55',
+      iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 5.46436 12 6.42958Z"/></svg>`
     },
     'Gewicht': {
       color: '#34C759',
@@ -2262,6 +2308,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const t = 36;
   const b = hasLabels ? 44 : 24;
   const chartBottom = H - b;
+  const gridExtension = (chartBottom - t) * 0.2;
+  const extendedTop = t - gridExtension;
 
   const n = numericValues.length;
   const totalSlots = isBar ? n + 2 : n;
@@ -2350,18 +2398,27 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
   const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
 
-  // Grid lines + labels: one every 2 calendar days
+  // Grid lines + labels with extended height and gradient fade at top
   let gridLines = '';
   let gridLabelEls = '';
   const gridColor = 'var(--text-mute)';
   const isRunVolume = title === 'Laufvolumen';
+  const gridGradId = `gridGrad_${title.replace(/\s/g,'')}_${Math.random().toString(36).slice(2,6)}`;
+  const resolvedGridColor = getComputedStyle(document.documentElement).getPropertyValue('--text-mute').trim() || '#999';
+  const gridGradient = `<linearGradient id="${gridGradId}" x1="0" y1="${extendedTop}" x2="0" y2="${t}" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="${resolvedGridColor}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="${resolvedGridColor}" stop-opacity="0.3"/>
+  </linearGradient>`;
+
   if (isBar && !isRunVolume) {
     gridLines = nonNull.map(p =>
-      `<line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.4" stroke-width="0.8"/>`
+      `<line x1="${p.x.toFixed(1)}" y1="${extendedTop}" x2="${p.x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.8"/>
+       <line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.4" stroke-width="0.8"/>`
     ).join('');
     for (let i = n; i < n+2; i++) {
       const x = l + (i+0.5)/totalSlots*(W-l-r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.24" stroke-width="0.6"/>`;
+      gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.6"/>
+                    <line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.24" stroke-width="0.6"/>`;
     }
   } else if (lineDates && lineTotalDays > 0) {
     // For KW labels, show the labels directly at all pill positions; for date labels, show every 2 days
@@ -2375,13 +2432,20 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         }
       }
     } else {
+      // Dynamic label step based on time span
+      let labelStep = 2; // default: every 2nd line
+      if (lineTotalDays > 28) {
+        labelStep = 4; // >4 weeks: every 4th
+      } else if (lineTotalDays > 14) {
+        labelStep = 3; // >2 weeks: every 3rd
+      }
+
       for (let d = 0; d <= lineTotalDays; d++) {
         const x = l + (d/lineTotalDays)*(W-l-r);
-        gridLines += `<line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
-        const isFirst = d === 0;
-        const isLast = d === lineTotalDays;
-        const isEven = d % 2 === 0;
-        if (isFirst || isLast || isEven) {
+        gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.5"/>
+                      <line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
+        const distFromEnd = lineTotalDays - d;
+        if (distFromEnd % labelStep === 0) {
           const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
           const dateStr = `${date.getDate()}.${date.getMonth()+1}.`;
           gridLabelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif">${dateStr}</text>`;
@@ -2520,11 +2584,15 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD}" fill="none" stroke="${chartColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
 
-  // Dots
+  // Dots - max 20 visible, dynamic step based on data count
   let dotsEl = '';
   let specialLabelsEl = '';
   if (!isBar && nonNull.length > 0) {
-    dotsEl = nonNull.map(p =>
+    const step = Math.ceil(nonNull.length / 20);
+    dotsEl = nonNull.filter((p, i) => {
+      const distFromEnd = nonNull.length - 1 - i;
+      return distFromEnd % step === 0;
+    }).map(p =>
       `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${chartColor}" stroke="white" stroke-width="1.5"/>`
     ).join('');
 
@@ -2575,6 +2643,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         <span class="sparkline-badge" style="background:${hexToRgba(chartColor,0.1)};color:${chartColor};">${badgeText}</span>
       </div>
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
+        <defs>${gridGradient}</defs>
         ${fillGradient}
         ${gridLines}
         ${bgPillsEl}

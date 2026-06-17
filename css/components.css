@@ -706,7 +706,7 @@ button.secondary:hover { opacity: 0.8; }
 }
 .stat-icon-run {
   background: rgba(0, 122, 255, 0.12);
-  color: var(--run);
+  color: #007AFF;
 }
 .stat-icon-gym {
   background: rgba(52, 199, 89, 0.12);
