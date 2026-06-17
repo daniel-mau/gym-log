@@ -2040,8 +2040,8 @@ function renderBodyMetricSparkline(metric) {
   const range = Math.max(maxVal - minVal, 0.5);
   const pad = range * 0.15;
 
-  const W = 200, H = 110;
-  const l = 28, r = 10, t = 10, b = 10;
+  const W = 200, H = 80;
+  const l = 34, r = 10, t = 10, b = 10;
 
   const points = values.map((v, i) => {
     const x = l + (i / Math.max(values.length - 1, 1)) * (W - l - r);
@@ -2086,8 +2086,9 @@ function renderBodyMetricSparkline(metric) {
   const badgePadding = 6;
   const badgeX = (W - badgeW - badgePadding).toFixed(1);
   const badgeY = (badgePadding).toFixed(1);
+  const badgeFillColor = metric === 'weight' ? '#d7e1df' : '#e4d7ef';
   const avgBadge = `
-    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="10" fill="${hexToRgba(chartColor, 0.12)}"/>
+    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="10" fill="${badgeFillColor}" opacity="0.85"/>
     <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+14).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="600" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
   `;
 
@@ -2108,9 +2109,9 @@ function renderBodyMetricSparkline(metric) {
         ${gridLines}
         ${minMaxLabels}
         <path d="${fillPath}" fill="url(#${gradId})" stroke="none"/>
-        ${avgBadge}
         <path d="${pathD}" fill="none" stroke="${chartColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         ${tooltips}
+        ${avgBadge}
       </svg>
     </div>
   `;
