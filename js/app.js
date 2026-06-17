@@ -2125,7 +2125,10 @@ function renderExerciseSparkline(exerciseId) {
 function renderBodyMetricSparkline(metric) {
   const allMetrics = loadAllBodyMetrics();
   const unit = metric === 'weight' ? 'kg' : '%';
-  const chartColor = metric === 'weight' ? '#34C759' : '#AF52DE';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const chartColor = metric === 'weight'
+    ? (isDark ? '#30D158' : '#34C759')
+    : (isDark ? '#BF5AF2' : '#AF52DE');
 
   function hexToRgba(hex, a) {
     const rr = parseInt(hex.slice(1,3),16), gg = parseInt(hex.slice(3,5),16), bb = parseInt(hex.slice(5,7),16);
@@ -2206,9 +2209,11 @@ function renderBodyMetricSparkline(metric) {
   const badgePadding = 6;
   const badgeX = (W - badgeW - badgePadding).toFixed(1);
   const badgeY = (badgePadding).toFixed(1);
-  const badgeFillColor = metric === 'weight' ? '#d7e1df' : '#e4d7ef';
+  const badgeFillColor = metric === 'weight'
+    ? (isDark ? 'rgba(48, 209, 88, 0.25)' : 'rgba(52, 199, 89, 0.15)')
+    : (isDark ? 'rgba(191, 90, 242, 0.25)' : 'rgba(175, 82, 222, 0.15)');
   const avgBadge = `
-    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="10" fill="${badgeFillColor}" opacity="0.85"/>
+    <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="10" fill="${badgeFillColor}"/>
     <text x="${(parseFloat(badgeX) + badgeW/2).toFixed(1)}" y="${(parseFloat(badgeY)+14).toFixed(1)}" text-anchor="middle" font-size="13" fill="${chartColor}" font-weight="600" font-family="system-ui,-apple-system,sans-serif">${badgeText}</text>
   `;
 
@@ -2244,33 +2249,34 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const labels = opts.labels || [];
   const hasLabels = labels.length > 0;
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const configs = {
     'Laufvolumen': {
-      color: '#007AFF',
+      color: isDark ? '#0A84FF' : '#007AFF',
       iconSvg: `<svg viewBox="0 0 1024 1024" fill="currentColor"><path d="M918.4 201.6c-6.4-6.4-12.8-9.6-22.4-9.6H768V96c0-9.6-3.2-16-9.6-22.4C752 67.2 745.6 64 736 64H288c-9.6 0-16 3.2-22.4 9.6C259.2 80 256 86.4 256 96v96H128c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 16-9.6 22.4 3.2 108.8 25.6 185.6 64 224 34.4 34.4 77.56 55.65 127.65 61.99 10.91 20.44 24.78 39.25 41.95 56.41 40.86 40.86 91 65.47 150.4 71.9V768h-96c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 12.8-9.6 22.4s3.2 16 9.6 22.4c6.4 6.4 12.8 9.6 22.4 9.6h256c9.6 0 16-3.2 22.4-9.6 6.4-6.4 9.6-12.8 9.6-22.4s-3.2-16-9.6-22.4c-6.4-6.4-12.8-9.6-22.4-9.6h-96V637.26c59.4-7.71 109.54-30.01 150.4-70.86 17.2-17.2 31.51-36.06 42.81-56.55 48.93-6.51 90.02-27.7 126.79-61.85 38.4-38.4 60.8-112 64-224 0-6.4-3.2-16-9.6-22.4zM256 438.4c-19.2-6.4-35.2-19.2-51.2-35.2-22.4-22.4-35.2-70.4-41.6-147.2H256v182.4zm390.4 80C608 553.6 566.4 576 512 576s-99.2-19.2-134.4-57.6C342.4 480 320 438.4 320 384V128h384v256c0 54.4-19.2 99.2-57.6 134.4zm172.8-115.2c-16 16-32 25.6-51.2 35.2V256h92.8c-6.4 76.8-19.2 124.8-41.6 147.2zM768 896H256c-9.6 0-16 3.2-22.4 9.6-6.4 6.4-9.6 12.8-9.6 22.4s3.2 16 9.6 22.4c6.4 6.4 12.8 9.6 22.4 9.6h512c9.6 0 16-3.2 22.4-9.6 6.4-6.4 9.6-12.8 9.6-22.4s-3.2-16-9.6-22.4c-6.4-6.4-12.8-9.6-22.4-9.6z"/></svg>`
     },
     'Pace': {
-      color: '#5856D6',
+      color: isDark ? '#5E5CE6' : '#5856D6',
       iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><polyline points="10,6 10,10 13,13"/></svg>`
     },
     'Kadenz': {
-      color: '#FF9500',
+      color: isDark ? '#FF9F0A' : '#FF9500',
       iconSvg: `<svg viewBox="-48 0 512 512" fill="currentColor"><path d="M272 96c26.51 0 48-21.49 48-48S298.51 0 272 0s-48 21.49-48 48 21.49 48 48 48zM113.69 317.47l-14.8 34.52H32c-17.67 0-32 14.33-32 32s14.33 32 32 32h77.45c19.25 0 36.58-11.44 44.11-29.09l8.79-20.52-10.67-6.3c-17.32-10.23-30.06-25.37-37.99-42.61zM384 223.99h-44.03l-26.06-53.25c-12.5-25.55-35.45-44.23-61.78-50.94l-71.08-21.14c-28.3-6.8-57.77-.55-80.84 17.14l-39.67 30.41c-14.03 10.75-16.69 30.83-5.92 44.86s30.84 16.66 44.86 5.92l39.69-30.41c7.67-5.89 17.44-8 25.27-6.14l14.7 4.37-37.46 87.39c-12.62 29.48-1.31 64.01 26.3 80.31l84.98 50.17-27.47 87.73c-5.28 16.86 4.11 34.81 20.97 40.09 3.19 1 6.41 1.48 9.58 1.48 13.61 0 26.23-8.77 30.52-22.45l31.64-101.06c5.91-20.77-2.89-43.08-21.64-54.39l-61.24-36.14 31.31-78.28 20.27 41.43c8 16.34 24.92 26.89 43.11 26.89H384c17.67 0 32-14.33 32-32s-14.33-31.99-32-31.99z"/></svg>`
     },
     'Schmerz': {
-      color: '#FF2D55',
+      color: isDark ? '#FF375F' : '#FF2D55',
       iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.9998H8L9.5 8.99976L11.5 13.9998L13 11.9998H15M12 6.42958C12.4844 5.46436 13.4683 4.72543 14.2187 4.35927C16.1094 3.43671 17.9832 3.91202 19.5355 5.46436C21.4881 7.41698 21.4881 10.5828 19.5355 12.5354L12.7071 19.3639C12.3166 19.7544 11.6834 19.7544 11.2929 19.3639L4.46447 12.5354C2.51184 10.5828 2.51184 7.41698 4.46447 5.46436C6.0168 3.91202 7.89056 3.43671 9.78125 4.35927C10.5317 4.72543 11.5156 5.46436 12 6.42958Z"/></svg>`
     },
     'Gewicht': {
-      color: '#34C759',
+      color: isDark ? '#30D158' : '#34C759',
       iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h10a1.5 1.5 0 0 0 1.5-1.5L15 8H5L3.5 15.5A1.5 1.5 0 0 0 5 17z"/><circle cx="10" cy="5" r="2.5"/></svg>`
     },
     'KFA': {
-      color: '#AF52DE',
+      color: isDark ? '#BF5AF2' : '#AF52DE',
       iconSvg: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="13.5" cy="13.5" r="2.5"/><line x1="16" y1="4" x2="4" y2="16"/></svg>`
     }
   };
-  const cfg = configs[title] || { color: '#007AFF', iconSvg: '' };
+  const cfg = configs[title] || { color: isDark ? '#0A84FF' : '#007AFF', iconSvg: '' };
   const chartColor = cfg.color;
 
   function hexToRgba(hex, a) {
@@ -2635,12 +2641,15 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const avgStr = avgFormatter ? avgFormatter(avg) : `${avg.toFixed(1)} ${unit}`;
   const badgeText = `Ø ${avgStr}`;
 
+  const badgeBgOpacity = isDark ? 0.25 : 0.1;
+  const iconBgOpacity = isDark ? 0.2 : 0.12;
+
   return `
     <div class="sparkline-card">
       <div class="sparkline-header">
-        <div class="sparkline-icon" style="background:${hexToRgba(chartColor,0.12)};color:${chartColor};">${cfg.iconSvg}</div>
+        <div class="sparkline-icon" style="background:${hexToRgba(chartColor,iconBgOpacity)};color:${chartColor};">${cfg.iconSvg}</div>
         <span class="sparkline-title">${title}</span>
-        <span class="sparkline-badge" style="background:${hexToRgba(chartColor,0.1)};color:${chartColor};">${badgeText}</span>
+        <span class="sparkline-badge" style="background:${hexToRgba(chartColor,badgeBgOpacity)};color:${chartColor};">${badgeText}</span>
       </div>
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
         <defs>${gridGradient}</defs>
