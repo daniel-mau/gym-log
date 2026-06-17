@@ -2399,16 +2399,18 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Gray background pills for line charts (Laufvolumen)
   let bgPillsEl = '';
-  if (!isBar && isRunVolume && n > 0) {
-    const gap = (W - l - r) / Math.max(n, 1);
+  const isRunVolumeForPills = title === 'Laufvolumen';
+  if (!isBar && isRunVolumeForPills && n >= 6) {
+    const pillCount = 6; // Always show 6 pills for Laufvolumen
+    const gap = (W - l - r) / pillCount;
     const pillW = Math.min(gap * 0.7, 50);
     const pillRadius = pillW / 2;
     const maxHeight = chartBottom - t;
     const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const emptyBarColor = _isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
-    for (let i = 0; i < n; i++) {
-      const x = l + (i + 0.5) / n * (W - l - r);
+    for (let i = 0; i < pillCount; i++) {
+      const x = l + (i + 0.5) / pillCount * (W - l - r);
       bgPillsEl += `<rect x="${(x - pillW/2).toFixed(1)}" y="${t}" width="${pillW.toFixed(1)}" height="${maxHeight.toFixed(1)}" rx="${pillRadius}" fill="${emptyBarColor}"/>`;
     }
   }
