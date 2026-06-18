@@ -296,6 +296,19 @@ async function syncAllFromSupabase() {
       localStorage.setItem('bodyTargets', JSON.stringify(targetsData.data));
     }
 
+    // Sync week overrides
+    const { data: overridesData, error: overridesError } = await supabaseClient
+      .from('week_overrides')
+      .select('week_key, data');
+
+    if (overridesError) {
+      console.error('Supabase week_overrides load error:', overridesError.message);
+    } else if (overridesData) {
+      overridesData.forEach(o => {
+        localStorage.setItem(`weekOverride:${o.week_key}`, JSON.stringify(o.data));
+      });
+    }
+
     state.syncStatus = 'synced';
     console.log('Supabase full sync completed');
   } catch (e) {
@@ -343,6 +356,7 @@ function renderHeader() {
 function changeWeek(delta) {
   collectAndSave();
   state.weekOffset += delta;
+  validateSelectedDay();
   renderHeader();
   renderWeekNav();
   renderSession();
@@ -352,10 +366,18 @@ function changeWeek(delta) {
 function goToWeekOffset(offset) {
   collectAndSave();
   state.weekOffset = offset;
+  validateSelectedDay();
   renderHeader();
   renderWeekNav();
   renderSession();
   closeWeekPicker();
+}
+
+function validateSelectedDay() {
+  const days = getEffectiveDays();
+  if (!days.includes(state.selectedDay)) {
+    state.selectedDay = days[0] || DAYS[0];
+  }
 }
 
 function toggleWeekPicker() {
@@ -395,18 +417,193 @@ function closeWeekPicker() {
   document.getElementById('weekPickerOverlay').classList.remove('open');
 }
 
+function getWeekKey(offset) {
+  const dates = getWeekDates(offset);
+  return getDateKey(dates[0]);
+}
+
+function getWeekOverride() {
+  const key = `weekOverride:${getWeekKey(state.weekOffset)}`;
+  const stored = localStorage.getItem(key);
+  return stored ? JSON.parse(stored) : null;
+}
+
+function saveWeekOverride(dayOrder) {
+  const weekKey = getWeekKey(state.weekOffset);
+  const key = `weekOverride:${weekKey}`;
+  localStorage.setItem(key, JSON.stringify(dayOrder));
+  syncWeekOverrideToSupabase(weekKey, dayOrder);
+}
+
+function removeWeekOverride() {
+  const weekKey = getWeekKey(state.weekOffset);
+  const key = `weekOverride:${weekKey}`;
+  localStorage.removeItem(key);
+  deleteWeekOverrideFromSupabase(weekKey);
+}
+
+async function syncWeekOverrideToSupabase(weekKey, dayOrder) {
+  try {
+    await supabaseClient
+      .from('week_overrides')
+      .upsert({ week_key: weekKey, data: dayOrder }, { onConflict: 'week_key' });
+  } catch (e) {
+    console.error('Week override sync error:', e);
+  }
+}
+
+async function deleteWeekOverrideFromSupabase(weekKey) {
+  try {
+    await supabaseClient
+      .from('week_overrides')
+      .delete()
+      .eq('week_key', weekKey);
+  } catch (e) {
+    console.error('Week override delete error:', e);
+  }
+}
+
+function getEffectiveDays() {
+  const override = getWeekOverride();
+  return override || [...DAYS];
+}
+
+function openWeekEditor() {
+  const overlay = document.getElementById('weekEditorOverlay');
+  overlay.classList.add('open');
+  renderWeekEditorList();
+}
+
+function closeWeekEditor() {
+  document.getElementById('weekEditorOverlay').classList.remove('open');
+}
+
+function resetWeekOverride() {
+  removeWeekOverride();
+  renderWeekEditorList();
+  renderWeekNav();
+  renderSession();
+}
+
+function renderWeekEditorList() {
+  const list = document.getElementById('weekEditorList');
+  const days = getEffectiveDays();
+  list.innerHTML = '';
+
+  days.forEach((dayKey, idx) => {
+    const plan = WEEK_PLAN[dayKey];
+    const item = document.createElement('div');
+    item.className = 'week-editor-item';
+    item.dataset.day = dayKey;
+    item.dataset.idx = idx;
+
+    let typeLabel = DAY_TYPE_LABELS[plan.type] || plan.type;
+
+    item.innerHTML = `
+      <span class="drag-handle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="8" y1="12" x2="8" y2="12.01"/><line x1="16" y1="12" x2="16" y2="12.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg></span>
+      <div class="we-day-info">
+        <span class="we-day-label">${DAY_LABELS[dayKey]} — ${plan.name}</span>
+        <span class="we-day-type">${typeLabel}</span>
+      </div>
+      <button class="we-delete-btn" onclick="deleteWeekDay('${dayKey}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    `;
+    list.appendChild(item);
+  });
+
+  initWeekEditorDrag(list);
+}
+
+function deleteWeekDay(dayKey) {
+  let days = getEffectiveDays();
+  days = days.filter(d => d !== dayKey);
+  saveWeekOverride(days);
+  renderWeekEditorList();
+  renderWeekNav();
+  if (state.selectedDay === dayKey) {
+    state.selectedDay = days[0] || DAYS[0];
+  }
+  renderSession();
+}
+
+function initWeekEditorDrag(list) {
+  let dragEl = null;
+  let startY = 0;
+  let startIdx = 0;
+
+  const items = () => Array.from(list.querySelectorAll('.week-editor-item'));
+
+  function onPointerDown(e) {
+    if (!e.target.closest('.drag-handle')) return;
+    const item = e.target.closest('.week-editor-item');
+    if (!item) return;
+    dragEl = item;
+    startY = e.clientY;
+    startIdx = items().indexOf(item);
+    item.classList.add('dragging');
+    item.setPointerCapture(e.pointerId);
+    item.addEventListener('pointermove', onPointerMove);
+    item.addEventListener('pointerup', onPointerUp);
+  }
+
+  function onPointerMove(e) {
+    if (!dragEl) return;
+    const dy = e.clientY - startY;
+    dragEl.style.transform = `translateY(${dy}px) scale(1.02)`;
+
+    const allItems = items();
+    const dragRect = dragEl.getBoundingClientRect();
+    const dragCenter = dragRect.top + dragRect.height / 2;
+
+    for (let i = 0; i < allItems.length; i++) {
+      if (allItems[i] === dragEl) continue;
+      const rect = allItems[i].getBoundingClientRect();
+      const center = rect.top + rect.height / 2;
+      if (i > startIdx && dragCenter > center) {
+        list.insertBefore(dragEl, allItems[i].nextSibling);
+        startIdx = items().indexOf(dragEl);
+        startY = e.clientY;
+        dragEl.style.transform = 'scale(1.02)';
+        break;
+      } else if (i < startIdx && dragCenter < center) {
+        list.insertBefore(dragEl, allItems[i]);
+        startIdx = items().indexOf(dragEl);
+        startY = e.clientY;
+        dragEl.style.transform = 'scale(1.02)';
+        break;
+      }
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!dragEl) return;
+    dragEl.classList.remove('dragging');
+    dragEl.style.transform = '';
+    dragEl.removeEventListener('pointermove', onPointerMove);
+    dragEl.removeEventListener('pointerup', onPointerUp);
+    dragEl = null;
+
+    const newOrder = items().map(item => item.dataset.day);
+    saveWeekOverride(newOrder);
+    renderWeekNav();
+    renderSession();
+  }
+
+  list.addEventListener('pointerdown', onPointerDown);
+}
 
 function renderWeekNav() {
   const dates = getWeekDates();
   const today = new Date();
   const todayKey = getDateKey(today);
+  const effectiveDays = getEffectiveDays();
 
   const nav = document.getElementById('weekNav');
   nav.innerHTML = '';
 
-  for (let i = 0; i < DAYS.length; i++) {
-    const dayKey = DAYS[i];
-    const date = dates[i];
+  for (let i = 0; i < effectiveDays.length; i++) {
+    const dayKey = effectiveDays[i];
+    const dayIdx = DAYS.indexOf(dayKey);
+    const date = dates[dayIdx];
     const dateKey = getDateKey(date);
     const plan = WEEK_PLAN[dayKey];
     const isSelected = dayKey === state.selectedDay;
@@ -2926,7 +3123,9 @@ async function init() {
 
   loadUserTitle();
   renderHeader();
-  state.selectedDay = getDayOfWeek(new Date());
+  const todayDay = getDayOfWeek(new Date());
+  const effectiveDaysInit = getEffectiveDays();
+  state.selectedDay = effectiveDaysInit.includes(todayDay) ? todayDay : effectiveDaysInit[0] || DAYS[0];
   renderWeekNav();
   renderSession();
   renderHistory();
