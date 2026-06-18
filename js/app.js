@@ -1169,9 +1169,9 @@ function renderCalendar() {
 
   let html = `
     <div class="calendar-nav">
-      <button onclick="calendarPrev()">‹</button>
+      <button onclick="calendarPrev()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="15 18 9 12 15 6"/></svg></button>
       <span class="calendar-month-label">${monthNames[calendarMonth]} ${calendarYear}</span>
-      <button onclick="calendarNext()">›</button>
+      <button onclick="calendarNext()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="9 18 15 12 9 6"/></svg></button>
     </div>
     <div class="calendar-grid">
       <div class="calendar-weekday">Mo</div>
@@ -2562,8 +2562,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   // Gray background pills for line charts (Laufvolumen)
   let bgPillsEl = '';
   const isRunVolumeForPills = title === 'Laufvolumen';
-  if (!isBar && isRunVolumeForPills && n >= 6) {
-    const pillCount = 6; // Always show 6 pills for Laufvolumen
+  if (!isBar && isRunVolumeForPills && n >= 1) {
+    const pillCount = n;
     const gap = (W - l - r) / pillCount;
     const pillW = Math.min(gap * 0.7, 50);
     const pillRadius = pillW / 2;
@@ -2676,9 +2676,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         <div class="sparkline-icon" style="background:${hexToRgba(chartColor,iconBgOpacity)};color:${chartColor};">${cfg.iconSvg}</div>
         <span class="sparkline-title">${title}</span>
         <span class="sparkline-badge" style="background:${hexToRgba(chartColor,badgeBgOpacity)};color:${chartColor};">${badgeText}</span>
-        <button class="sparkline-expand" onclick="toggleSparklineTable(this)" aria-label="Details anzeigen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
+        <button class="sparkline-expand" onclick="toggleSparklineTable(this)" aria-label="Details anzeigen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       </div>
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
         <defs>${gridGradient}</defs>
