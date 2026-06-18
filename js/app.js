@@ -2243,6 +2243,13 @@ function renderBodyMetricSparkline(metric) {
   `;
 }
 
+function toggleSparklineTable(btn) {
+  const card = btn.closest('.sparkline-card');
+  const wrap = card.querySelector('.sparkline-table-wrap');
+  const isOpen = card.classList.toggle('expanded');
+  wrap.style.maxHeight = isOpen ? wrap.scrollHeight + 'px' : '0';
+}
+
 function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   opts = opts || {};
   const isBar = opts.type === 'bar';
@@ -2644,12 +2651,34 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const badgeBgOpacity = isDark ? 0.25 : 0.1;
   const iconBgOpacity = isDark ? 0.2 : 0.12;
 
+  // Build table rows from data (newest first)
+  const tableRows = [];
+  for (let i = numericValues.length - 1; i >= 0; i--) {
+    const v = numericValues[i];
+    if (v === null || isNaN(v)) continue;
+    const lbl = labels[i] || '';
+    const formatted = avgFormatter ? avgFormatter(v) : `${v.toFixed(1)} ${unit}`;
+    const prev = (() => { for (let j = i - 1; j >= 0; j--) { if (numericValues[j] !== null && !isNaN(numericValues[j])) return numericValues[j]; } return null; })();
+    let delta = '';
+    if (prev !== null) {
+      const diff = v - prev;
+      const sign = diff > 0 ? '+' : '';
+      delta = `<span class="sparkline-table-delta ${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${sign}${diff.toFixed(1)}</span>`;
+    }
+    tableRows.push(`<tr><td>${lbl}</td><td>${formatted}</td><td>${delta}</td></tr>`);
+  }
+
+  const tableId = `table_${(title||'x').replace(/\s/g,'')}`;
+
   return `
     <div class="sparkline-card">
       <div class="sparkline-header">
         <div class="sparkline-icon" style="background:${hexToRgba(chartColor,iconBgOpacity)};color:${chartColor};">${cfg.iconSvg}</div>
         <span class="sparkline-title">${title}</span>
         <span class="sparkline-badge" style="background:${hexToRgba(chartColor,badgeBgOpacity)};color:${chartColor};">${badgeText}</span>
+        <button class="sparkline-expand" onclick="toggleSparklineTable(this)" aria-label="Details anzeigen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
       </div>
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
         <defs>${gridGradient}</defs>
@@ -2663,6 +2692,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         ${specialLabelsEl}
         ${labelEls}
       </svg>
+      <div class="sparkline-table-wrap" id="${tableId}">
+        <table class="sparkline-table">
+          <thead><tr><th>Datum</th><th>Wert</th><th>Δ</th></tr></thead>
+          <tbody>${tableRows.join('')}</tbody>
+        </table>
+      </div>
     </div>
   `;
 }

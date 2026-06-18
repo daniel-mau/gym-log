@@ -1127,6 +1127,73 @@ button.secondary:hover { opacity: 0.8; }
   letter-spacing: -0.01em;
 }
 .sparkline-card svg.sparkline-chart { display: block; width: 100%; }
+.sparkline-expand {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--surface-input-border);
+  background: var(--surface-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, opacity 0.15s;
+}
+.sparkline-expand svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+.sparkline-card.expanded .sparkline-expand {
+  transform: rotate(180deg);
+}
+.sparkline-table-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.sparkline-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  padding: 0 14px;
+}
+.sparkline-table thead th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 14px 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--surface-divider);
+}
+.sparkline-table thead th:last-child,
+.sparkline-table tbody td:last-child {
+  text-align: right;
+}
+.sparkline-table thead th:nth-child(2),
+.sparkline-table tbody td:nth-child(2) {
+  text-align: right;
+}
+.sparkline-table tbody tr {
+  border-bottom: 1px solid var(--surface-divider);
+}
+.sparkline-table tbody tr:last-child {
+  border-bottom: none;
+}
+.sparkline-table tbody td {
+  padding: 8px 14px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.sparkline-table-delta {
+  font-size: 11px;
+  font-weight: 600;
+}
+.sparkline-table-delta.up { color: var(--success); }
+.sparkline-table-delta.down { color: var(--warn); }
 .sparkline-stats {
   display: flex;
   justify-content: flex-end;
