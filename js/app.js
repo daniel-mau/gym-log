@@ -1841,6 +1841,12 @@ function initChartCarousel() {
   carousel._dotHandler = () => {
     const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    // Close all expanded tables on scroll
+    carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
+      const wrap = card.querySelector('.sparkline-table-wrap');
+      card.classList.remove('expanded');
+      if (wrap) wrap.style.maxHeight = '0';
+    });
   };
   carousel.addEventListener('scroll', carousel._dotHandler, { passive: true });
   carousel._dotHandler();
@@ -2676,7 +2682,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         <div class="sparkline-icon" style="background:${hexToRgba(chartColor,iconBgOpacity)};color:${chartColor};">${cfg.iconSvg}</div>
         <span class="sparkline-title">${title}</span>
         <span class="sparkline-badge" style="background:${hexToRgba(chartColor,badgeBgOpacity)};color:${chartColor};">${badgeText}</span>
-        <button class="sparkline-expand" onclick="toggleSparklineTable(this)" aria-label="Details anzeigen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="sparkline-expand" onclick="toggleSparklineTable(this)" aria-label="Details anzeigen" style="color:${chartColor};"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       </div>
       <svg viewBox="0 0 ${W} ${H}" class="sparkline-chart">
         <defs>${gridGradient}</defs>

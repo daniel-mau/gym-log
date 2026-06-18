@@ -1144,7 +1144,6 @@ button.secondary:hover { opacity: 0.8; }
 .sparkline-expand svg {
   width: 14px;
   height: 14px;
-  color: var(--accent);
 }
 .sparkline-card.expanded .sparkline-expand {
   transform: rotate(180deg);
