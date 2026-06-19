@@ -2104,35 +2104,64 @@ function initChartCarousel() {
   const dots = dotsEl.querySelectorAll('.chart-dot');
 
   let scrollTimeout = null;
-  let lastScrollLeft = carousel.scrollLeft;
+  let isScrolling = false;
+  let touchStartX = 0;
+
+  // Collapse instantly on touch start if swiping horizontally
+  const handleTouchStart = (e) => {
+    touchStartX = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStartX) return;
+    const touchDelta = Math.abs(e.touches[0].clientX - touchStartX);
+
+    // If horizontal swipe detected (>5px), instantly collapse all
+    if (touchDelta > 5 && !isScrolling) {
+      isScrolling = true;
+      carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
+        const wrap = card.querySelector('.sparkline-table-wrap');
+        // Disable transition for instant collapse
+        wrap.style.transition = 'none';
+        card.classList.remove('expanded');
+        wrap.style.maxHeight = '0';
+        // Re-enable transition after collapse
+        requestAnimationFrame(() => {
+          wrap.style.transition = '';
+        });
+      });
+      // Re-enable snap immediately
+      carousel.style.scrollSnapType = 'x mandatory';
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartX = 0;
+    isScrolling = false;
+  };
 
   carousel.removeEventListener('scroll', carousel._dotHandler);
   carousel._dotHandler = () => {
-    // Detect actual swipe movement
-    const currentScrollLeft = carousel.scrollLeft;
-    const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
-
-    // If user is actively swiping (delta > 10px), collapse all expanded cards
-    if (scrollDelta > 10) {
-      carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
-        const wrap = card.querySelector('.sparkline-table-wrap');
-        card.classList.remove('expanded');
-        if (wrap) wrap.style.maxHeight = '0';
-      });
-      // Re-enable snap
-      carousel.style.scrollSnapType = 'x mandatory';
-    }
-
-    lastScrollLeft = currentScrollLeft;
-
     // Update dot indicator
     clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(() => {
       const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
       dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    }, 50);
+      isScrolling = false;
+    }, 100);
   };
 
+  carousel.removeEventListener('touchstart', carousel._touchStartHandler);
+  carousel.removeEventListener('touchmove', carousel._touchMoveHandler);
+  carousel.removeEventListener('touchend', carousel._touchEndHandler);
+
+  carousel._touchStartHandler = handleTouchStart;
+  carousel._touchMoveHandler = handleTouchMove;
+  carousel._touchEndHandler = handleTouchEnd;
+
+  carousel.addEventListener('touchstart', handleTouchStart, { passive: true });
+  carousel.addEventListener('touchmove', handleTouchMove, { passive: true });
+  carousel.addEventListener('touchend', handleTouchEnd, { passive: true });
   carousel.addEventListener('scroll', carousel._dotHandler, { passive: true });
   carousel._dotHandler();
 }
