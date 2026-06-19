@@ -1703,67 +1703,62 @@ button.secondary:hover { opacity: 0.8; }
 .week-editor-list {
   padding: 0 12px 12px;
 }
-.week-editor-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 12px;
-  margin: 2px 0;
-  border-radius: var(--radius-sm);
+.we-ios-group {
   background: var(--surface-overlay);
   border: 1px solid var(--surface-input-border);
-  font-size: 15px;
-  color: var(--text);
-  gap: 10px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.we-ios-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 0.5px solid var(--surface-input-border);
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
 }
-.week-editor-item.dragging {
-  opacity: 0.95;
+.we-ios-row:last-child {
+  border-bottom: none;
+}
+.we-ios-placeholder {
+  background: rgba(0,122,255,0.04);
+  border-bottom-color: transparent;
+}
+.we-ios-dragging {
+  background: var(--bg-card-solid);
   box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-  border-color: var(--accent);
+  border-radius: 10px;
+  border-bottom: none;
+  transform: scale(1.02);
 }
-.week-editor-item.drag-placeholder {
-  transition: none;
+.we-ios-day {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  width: 24px;
+  flex-shrink: 0;
 }
-.week-editor-item .drag-handle {
+.we-ios-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.we-ios-grip {
   color: var(--text-mute);
   cursor: grab;
   display: flex;
   align-items: center;
   flex-shrink: 0;
-}
-.week-editor-item .drag-handle:active { cursor: grabbing; }
-.week-editor-item .we-day-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.week-editor-item .we-day-label {
-  font-weight: 600;
-  font-size: 14px;
-}
-.week-editor-item .we-day-type {
-  font-size: 12px;
-  color: var(--text-mute);
-}
-.week-editor-item .we-delete-btn {
-  background: none;
-  border: none;
-  color: var(--text-mute);
-  cursor: pointer;
   padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  transition: color 0.15s, background 0.15s;
 }
-.week-editor-item .we-delete-btn:hover {
-  color: var(--danger, #ff3b30);
-  background: rgba(255,59,48,0.08);
-}
+.we-ios-grip:active { cursor: grabbing; }
 
 @media (max-width: 768px) {
   .container { padding: 12px; }

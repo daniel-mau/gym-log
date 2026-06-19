@@ -476,13 +476,13 @@ function openWeekEditor() {
 
 function closeWeekEditor() {
   document.getElementById('weekEditorOverlay').classList.remove('open');
+  renderWeekNav();
+  renderSession();
 }
 
 function resetWeekOverride() {
   removeWeekOverride();
   renderWeekEditorList();
-  renderWeekNav();
-  renderSession();
 }
 
 function renderWeekEditorList() {
@@ -490,26 +490,28 @@ function renderWeekEditorList() {
   const days = getEffectiveDays();
   list.innerHTML = '';
 
+  const group = document.createElement('div');
+  group.className = 'we-ios-group';
+
   days.forEach((dayKey, idx) => {
     const plan = WEEK_PLAN[dayKey];
-    const item = document.createElement('div');
-    item.className = 'week-editor-item';
-    item.dataset.day = dayKey;
-    item.dataset.idx = idx;
+    const slotDay = DAYS[idx] || DAYS[DAYS.length - 1];
 
-    let typeLabel = DAY_TYPE_LABELS[plan.type] || plan.type;
+    const row = document.createElement('div');
+    row.className = 'we-ios-row';
+    row.dataset.day = dayKey;
+    row.dataset.idx = idx;
 
-    item.innerHTML = `
-      <span class="drag-handle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="8" y1="12" x2="8" y2="12.01"/><line x1="16" y1="12" x2="16" y2="12.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg></span>
-      <div class="we-day-info">
-        <span class="we-day-label">${DAY_LABELS[dayKey]} — ${plan.name}</span>
-        <span class="we-day-type">${typeLabel}</span>
-      </div>
-      <button class="we-delete-btn" onclick="deleteWeekDay('${dayKey}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    row.innerHTML = `
+      <span class="we-ios-day">${DAY_LABELS[slotDay]}</span>
+      <span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type] || plan.type}</span>
+      <span class="we-ios-title">${plan.name}</span>
+      <span class="we-ios-grip drag-handle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg></span>
     `;
-    list.appendChild(item);
+    group.appendChild(row);
   });
 
+  list.appendChild(group);
   initWeekEditorDrag(list);
 }
 
@@ -526,118 +528,108 @@ function deleteWeekDay(dayKey) {
 }
 
 function initWeekEditorDrag(list) {
-  let dragEl = null;
-  let placeholder = null;
-  let startY = 0;
-  let offsetY = 0;
-  let itemHeight = 0;
-  let listRect = null;
-  let itemRects = [];
+  const group = list.querySelector('.we-ios-group');
+  if (!group) return;
 
-  function getItems() {
-    return Array.from(list.querySelectorAll('.week-editor-item:not(.drag-placeholder)'));
+  let dragRow = null;
+  let placeholder = null;
+  let offsetY = 0;
+  let gripEl = null;
+
+  function getRows() {
+    return Array.from(group.querySelectorAll('.we-ios-row:not(.we-ios-placeholder)'));
   }
 
   function onPointerDown(e) {
-    if (!e.target.closest('.drag-handle')) return;
-    const item = e.target.closest('.week-editor-item');
-    if (!item) return;
+    const grip = e.target.closest('.drag-handle');
+    if (!grip) return;
+    const row = grip.closest('.we-ios-row');
+    if (!row) return;
 
     e.preventDefault();
-    dragEl = item;
-    listRect = list.getBoundingClientRect();
-    const itemRect = item.getBoundingClientRect();
-    itemHeight = itemRect.height + 4;
-    startY = e.clientY;
-    offsetY = e.clientY - itemRect.top;
+    dragRow = row;
+    gripEl = grip;
 
-    itemRects = getItems().map(el => {
-      const r = el.getBoundingClientRect();
-      return { el, top: r.top, center: r.top + r.height / 2 };
-    });
+    const groupRect = group.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    offsetY = e.clientY - rowRect.top;
+
+    group.style.position = 'relative';
 
     placeholder = document.createElement('div');
-    placeholder.className = 'week-editor-item drag-placeholder';
-    placeholder.style.height = itemRect.height + 'px';
-    placeholder.style.opacity = '0';
-    placeholder.style.border = '2px dashed var(--accent)';
-    placeholder.style.background = 'rgba(0,122,255,0.04)';
-    item.parentNode.insertBefore(placeholder, item);
+    placeholder.className = 'we-ios-row we-ios-placeholder';
+    placeholder.style.height = rowRect.height + 'px';
+    row.parentNode.insertBefore(placeholder, row);
 
-    item.classList.add('dragging');
-    item.style.position = 'fixed';
-    item.style.left = itemRect.left + 'px';
-    item.style.top = itemRect.top + 'px';
-    item.style.width = itemRect.width + 'px';
-    item.style.zIndex = '9999';
-    item.style.transition = 'none';
-    item.style.transform = 'scale(1.03)';
-    item.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+    row.classList.add('we-ios-dragging');
+    row.style.position = 'absolute';
+    row.style.left = '0';
+    row.style.top = (rowRect.top - groupRect.top) + 'px';
+    row.style.width = rowRect.width + 'px';
+    row.style.zIndex = '10';
 
-    item.setPointerCapture(e.pointerId);
-    item.addEventListener('pointermove', onPointerMove);
-    item.addEventListener('pointerup', onPointerUp);
-    item.addEventListener('pointercancel', onPointerUp);
+    grip.setPointerCapture(e.pointerId);
+    grip.addEventListener('pointermove', onPointerMove);
+    grip.addEventListener('pointerup', onPointerUp);
+    grip.addEventListener('pointercancel', onPointerUp);
   }
 
   function onPointerMove(e) {
-    if (!dragEl) return;
-    const newTop = e.clientY - offsetY;
-    dragEl.style.top = newTop + 'px';
+    if (!dragRow) return;
+    const groupRect = group.getBoundingClientRect();
+    const newTop = e.clientY - offsetY - groupRect.top;
+    dragRow.style.top = newTop + 'px';
 
     const dragCenter = e.clientY;
-    const allItems = getItems();
+    const rows = getRows();
 
     let insertBefore = null;
-    for (let i = 0; i < allItems.length; i++) {
-      const rect = allItems[i].getBoundingClientRect();
+    for (let i = 0; i < rows.length; i++) {
+      const rect = rows[i].getBoundingClientRect();
       const center = rect.top + rect.height / 2;
       if (dragCenter < center) {
-        insertBefore = allItems[i];
+        insertBefore = rows[i];
         break;
       }
     }
 
     if (insertBefore) {
       if (placeholder.nextSibling !== insertBefore) {
-        list.insertBefore(placeholder, insertBefore);
+        group.insertBefore(placeholder, insertBefore);
       }
     } else {
-      if (placeholder !== list.lastElementChild || (list.lastElementChild && list.lastElementChild !== placeholder)) {
-        list.appendChild(placeholder);
+      if (group.lastElementChild !== placeholder) {
+        group.appendChild(placeholder);
       }
     }
   }
 
   function onPointerUp(e) {
-    if (!dragEl) return;
+    if (!dragRow) return;
 
-    dragEl.removeEventListener('pointermove', onPointerMove);
-    dragEl.removeEventListener('pointerup', onPointerUp);
-    dragEl.removeEventListener('pointercancel', onPointerUp);
+    gripEl.removeEventListener('pointermove', onPointerMove);
+    gripEl.removeEventListener('pointerup', onPointerUp);
+    gripEl.removeEventListener('pointercancel', onPointerUp);
 
-    list.insertBefore(dragEl, placeholder);
+    group.insertBefore(dragRow, placeholder);
     placeholder.remove();
     placeholder = null;
 
-    dragEl.classList.remove('dragging');
-    dragEl.style.position = '';
-    dragEl.style.left = '';
-    dragEl.style.top = '';
-    dragEl.style.width = '';
-    dragEl.style.zIndex = '';
-    dragEl.style.transition = '';
-    dragEl.style.transform = '';
-    dragEl.style.boxShadow = '';
-    dragEl = null;
+    dragRow.classList.remove('we-ios-dragging');
+    dragRow.style.position = '';
+    dragRow.style.left = '';
+    dragRow.style.top = '';
+    dragRow.style.width = '';
+    dragRow.style.zIndex = '';
+    dragRow = null;
+    gripEl = null;
 
-    const newOrder = getItems().map(item => item.dataset.day);
+    const newOrder = getRows().map(row => row.dataset.day);
     saveWeekOverride(newOrder);
-    renderWeekNav();
-    renderSession();
+    renderWeekEditorList();
   }
 
-  list.addEventListener('pointerdown', onPointerDown);
+  group.addEventListener('pointerdown', onPointerDown);
 }
 
 function renderWeekNav() {
