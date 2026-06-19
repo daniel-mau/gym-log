@@ -2103,64 +2103,35 @@ function initChartCarousel() {
   if (!carousel || !dotsEl) return;
   const dots = dotsEl.querySelectorAll('.chart-dot');
 
-  let scrollTimeout = null;
-  let isScrolling = false;
-  let touchStartX = 0;
+  // Collapse all expanded cards instantly (no transition)
+  function collapseAll() {
+    carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
+      const wrap = card.querySelector('.sparkline-table-wrap');
+      wrap.style.transition = 'none';
+      card.classList.remove('expanded');
+      wrap.style.maxHeight = '0';
+      // Restore transition after paint
+      requestAnimationFrame(() => { wrap.style.transition = ''; });
+    });
+  }
 
-  // Collapse instantly on touch start if swiping horizontally
-  const handleTouchStart = (e) => {
-    touchStartX = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e) => {
-    if (!touchStartX) return;
-    const touchDelta = Math.abs(e.touches[0].clientX - touchStartX);
-
-    // If horizontal swipe detected (>5px), collapse with fast transition
-    if (touchDelta > 5 && !isScrolling) {
-      isScrolling = true;
-
-      requestAnimationFrame(() => {
-        carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
-          const wrap = card.querySelector('.sparkline-table-wrap');
-          // Use fast transition instead of instant
-          wrap.style.transition = 'max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
-          card.classList.remove('expanded');
-          wrap.style.maxHeight = '0';
-        });
-        // Re-enable snap immediately
-        carousel.style.scrollSnapType = 'x mandatory';
-      });
+  // On touch start: immediately collapse so scroll-snap works cleanly
+  carousel.addEventListener('touchstart', () => {
+    if (carousel.querySelector('.sparkline-card.expanded')) {
+      collapseAll();
     }
-  };
+  }, { passive: true });
 
-  const handleTouchEnd = () => {
-    touchStartX = 0;
-    isScrolling = false;
-  };
-
+  // Update dots on scroll end
   carousel.removeEventListener('scroll', carousel._dotHandler);
+  let raf = null;
   carousel._dotHandler = () => {
-    // Update dot indicator
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
       const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
       dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-      isScrolling = false;
-    }, 100);
+    });
   };
-
-  carousel.removeEventListener('touchstart', carousel._touchStartHandler);
-  carousel.removeEventListener('touchmove', carousel._touchMoveHandler);
-  carousel.removeEventListener('touchend', carousel._touchEndHandler);
-
-  carousel._touchStartHandler = handleTouchStart;
-  carousel._touchMoveHandler = handleTouchMove;
-  carousel._touchEndHandler = handleTouchEnd;
-
-  carousel.addEventListener('touchstart', handleTouchStart, { passive: true });
-  carousel.addEventListener('touchmove', handleTouchMove, { passive: true });
-  carousel.addEventListener('touchend', handleTouchEnd, { passive: true });
   carousel.addEventListener('scroll', carousel._dotHandler, { passive: true });
   carousel._dotHandler();
 }
@@ -2565,30 +2536,8 @@ function renderBodyMetricSparkline(metric) {
 function toggleSparklineTable(btn) {
   const card = btn.closest('.sparkline-card');
   const wrap = card.querySelector('.sparkline-table-wrap');
-  const carousel = document.getElementById('chartCarousel');
   const isOpen = card.classList.toggle('expanded');
-
-  requestAnimationFrame(() => {
-    if (isOpen) {
-      // Disable snap while expanded to allow vertical scrolling
-      if (carousel) carousel.style.scrollSnapType = 'none';
-
-      // Store current scroll position
-      const currentScroll = carousel ? carousel.scrollLeft : 0;
-      wrap.style.maxHeight = wrap.scrollHeight + 'px';
-
-      // Restore scroll position after height change
-      if (carousel) {
-        requestAnimationFrame(() => {
-          carousel.scrollLeft = currentScroll;
-        });
-      }
-    } else {
-      // Re-enable snap when collapsed
-      if (carousel) carousel.style.scrollSnapType = 'x mandatory';
-      wrap.style.maxHeight = '0';
-    }
-  });
+  wrap.style.maxHeight = isOpen ? wrap.scrollHeight + 'px' : '0';
 }
 
 function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
