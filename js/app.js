@@ -2103,6 +2103,10 @@ function initChartCarousel() {
   if (!carousel || !dotsEl) return;
   const dots = dotsEl.querySelectorAll('.chart-dot');
 
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let hasMoved = false;
+
   // Collapse all expanded cards instantly (no transition)
   function collapseAll() {
     carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
@@ -2115,10 +2119,26 @@ function initChartCarousel() {
     });
   }
 
-  // On touch start: immediately collapse so scroll-snap works cleanly
-  carousel.addEventListener('touchstart', () => {
-    if (carousel.querySelector('.sparkline-card.expanded')) {
-      collapseAll();
+  // Track touch start position
+  carousel.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    hasMoved = false;
+  }, { passive: true });
+
+  // Detect horizontal vs vertical movement
+  carousel.addEventListener('touchmove', (e) => {
+    if (hasMoved) return;
+
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+
+    // Only collapse if horizontal swipe (deltaX > deltaY and > 10px)
+    if (deltaX > 10 && deltaX > deltaY) {
+      hasMoved = true;
+      if (carousel.querySelector('.sparkline-card.expanded')) {
+        collapseAll();
+      }
     }
   }, { passive: true });
 
