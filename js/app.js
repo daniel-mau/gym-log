@@ -512,7 +512,10 @@ function renderWeekEditorList() {
   });
 
   list.appendChild(group);
-  initWeekEditorDrag(list);
+  if (!list._dragInitialized) {
+    initWeekEditorDrag(list);
+    list._dragInitialized = true;
+  }
 }
 
 function deleteWeekDay(dayKey) {
@@ -528,108 +531,132 @@ function deleteWeekDay(dayKey) {
 }
 
 function initWeekEditorDrag(list) {
-  const group = list.querySelector('.we-ios-group');
-  if (!group) return;
-
+  let origIdx = -1;
+  let targetIdx = -1;
+  let startY = 0;
+  let rowHeight = 0;
+  let rows = [];
   let dragRow = null;
-  let placeholder = null;
-  let offsetY = 0;
-  let gripEl = null;
 
-  function getRows() {
-    return Array.from(group.querySelectorAll('.we-ios-row:not(.we-ios-placeholder)'));
+  function getGroup() {
+    return list.querySelector('.we-ios-group');
   }
 
-  function onPointerDown(e) {
+  function startDrag(row, clientY) {
+    const group = getGroup();
+    if (!group) return;
+    rows = Array.from(group.querySelectorAll('.we-ios-row'));
+    origIdx = rows.indexOf(row);
+    if (origIdx < 0) return;
+    targetIdx = origIdx;
+    dragRow = row;
+    startY = clientY;
+    rowHeight = row.getBoundingClientRect().height;
+
+    row.classList.add('we-ios-dragging');
+    rows.forEach((r, i) => {
+      if (i !== origIdx) r.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    });
+  }
+
+  function moveDrag(clientY) {
+    if (origIdx < 0) return;
+    const dy = clientY - startY;
+    dragRow.style.transform = `translateY(${dy}px) scale(1.03)`;
+
+    const rawTarget = origIdx + Math.round(dy / rowHeight);
+    const newTarget = Math.max(0, Math.min(rows.length - 1, rawTarget));
+
+    if (newTarget !== targetIdx) {
+      targetIdx = newTarget;
+      rows.forEach((row, i) => {
+        if (i === origIdx) return;
+        if (i >= targetIdx && i < origIdx) {
+          row.style.transform = `translateY(${rowHeight}px)`;
+        } else if (i <= targetIdx && i > origIdx) {
+          row.style.transform = `translateY(${-rowHeight}px)`;
+        } else {
+          row.style.transform = '';
+        }
+      });
+    }
+  }
+
+  function endDrag() {
+    if (origIdx < 0 || !dragRow) return;
+    const group = getGroup();
+
+    // Reset all transforms
+    rows.forEach(row => {
+      row.style.transform = '';
+      row.style.transition = '';
+      row.classList.remove('we-ios-dragging');
+    });
+
+    // Apply the reorder in DOM
+    if (targetIdx !== origIdx && group) {
+      const removed = rows.splice(origIdx, 1)[0];
+      rows.splice(targetIdx, 0, removed);
+      group.innerHTML = '';
+      rows.forEach(row => group.appendChild(row));
+    }
+
+    dragRow = null;
+    origIdx = -1;
+    targetIdx = -1;
+
+    const finalRows = Array.from(getGroup().querySelectorAll('.we-ios-row'));
+    const newOrder = finalRows.map(r => r.dataset.day);
+    saveWeekOverride(newOrder);
+
+    finalRows.forEach((row, i) => {
+      const dayLabel = row.querySelector('.we-ios-day');
+      if (dayLabel) dayLabel.textContent = DAY_LABELS[DAYS[i]] || '';
+    });
+  }
+
+  // Mouse
+  list.addEventListener('mousedown', function(e) {
     const grip = e.target.closest('.drag-handle');
     if (!grip) return;
     const row = grip.closest('.we-ios-row');
     if (!row) return;
-
     e.preventDefault();
-    dragRow = row;
-    gripEl = grip;
+    startDrag(row, e.clientY);
 
-    const groupRect = group.getBoundingClientRect();
-    const rowRect = row.getBoundingClientRect();
-    offsetY = e.clientY - rowRect.top;
-
-    group.style.position = 'relative';
-
-    placeholder = document.createElement('div');
-    placeholder.className = 'we-ios-row we-ios-placeholder';
-    placeholder.style.height = rowRect.height + 'px';
-    row.parentNode.insertBefore(placeholder, row);
-
-    row.classList.add('we-ios-dragging');
-    row.style.position = 'absolute';
-    row.style.left = '0';
-    row.style.top = (rowRect.top - groupRect.top) + 'px';
-    row.style.width = rowRect.width + 'px';
-    row.style.zIndex = '10';
-
-    grip.setPointerCapture(e.pointerId);
-    grip.addEventListener('pointermove', onPointerMove);
-    grip.addEventListener('pointerup', onPointerUp);
-    grip.addEventListener('pointercancel', onPointerUp);
-  }
-
-  function onPointerMove(e) {
-    if (!dragRow) return;
-    const groupRect = group.getBoundingClientRect();
-    const newTop = e.clientY - offsetY - groupRect.top;
-    dragRow.style.top = newTop + 'px';
-
-    const dragCenter = e.clientY;
-    const rows = getRows();
-
-    let insertBefore = null;
-    for (let i = 0; i < rows.length; i++) {
-      const rect = rows[i].getBoundingClientRect();
-      const center = rect.top + rect.height / 2;
-      if (dragCenter < center) {
-        insertBefore = rows[i];
-        break;
-      }
+    function onMove(ev) { moveDrag(ev.clientY); }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      endDrag();
     }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 
-    if (insertBefore) {
-      if (placeholder.nextSibling !== insertBefore) {
-        group.insertBefore(placeholder, insertBefore);
-      }
-    } else {
-      if (group.lastElementChild !== placeholder) {
-        group.appendChild(placeholder);
-      }
+  // Touch
+  list.addEventListener('touchstart', function(e) {
+    const grip = e.target.closest('.drag-handle');
+    if (!grip) return;
+    const row = grip.closest('.we-ios-row');
+    if (!row) return;
+    e.preventDefault();
+    startDrag(row, e.touches[0].clientY);
+
+    function onMove(ev) {
+      ev.preventDefault();
+      moveDrag(ev.touches[0].clientY);
     }
-  }
-
-  function onPointerUp(e) {
-    if (!dragRow) return;
-
-    gripEl.removeEventListener('pointermove', onPointerMove);
-    gripEl.removeEventListener('pointerup', onPointerUp);
-    gripEl.removeEventListener('pointercancel', onPointerUp);
-
-    group.insertBefore(dragRow, placeholder);
-    placeholder.remove();
-    placeholder = null;
-
-    dragRow.classList.remove('we-ios-dragging');
-    dragRow.style.position = '';
-    dragRow.style.left = '';
-    dragRow.style.top = '';
-    dragRow.style.width = '';
-    dragRow.style.zIndex = '';
-    dragRow = null;
-    gripEl = null;
-
-    const newOrder = getRows().map(row => row.dataset.day);
-    saveWeekOverride(newOrder);
-    renderWeekEditorList();
-  }
-
-  group.addEventListener('pointerdown', onPointerDown);
+    function onEnd() {
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      document.removeEventListener('touchcancel', onEnd);
+      endDrag();
+    }
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+  }, { passive: false });
 }
 
 function renderWeekNav() {

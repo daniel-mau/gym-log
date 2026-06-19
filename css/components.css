@@ -1673,9 +1673,10 @@ button.secondary:hover { opacity: 0.8; }
   padding: 0 0 env(safe-area-inset-bottom, 16px) 0;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
 }
 .week-editor-overlay.open .week-editor-sheet {
-  transform: translateY(0);
+  transform: none;
 }
 .week-editor-header {
   display: flex;
@@ -1717,21 +1718,17 @@ button.secondary:hover { opacity: 0.8; }
   border-bottom: 0.5px solid var(--surface-input-border);
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
 }
 .we-ios-row:last-child {
   border-bottom: none;
 }
-.we-ios-placeholder {
-  background: rgba(0,122,255,0.04);
-  border-bottom-color: transparent;
-}
 .we-ios-dragging {
   background: var(--bg-card-solid);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
   border-radius: 10px;
   border-bottom: none;
-  transform: scale(1.02);
+  position: relative;
+  z-index: 10;
 }
 .we-ios-day {
   font-size: 13px;
@@ -1756,7 +1753,8 @@ button.secondary:hover { opacity: 0.8; }
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 4px;
+  padding: 8px;
+  touch-action: none;
 }
 .we-ios-grip:active { cursor: grabbing; }
 
