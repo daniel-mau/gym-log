@@ -629,12 +629,13 @@ button.secondary:hover { opacity: 0.8; }
   gap: 8px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding: 0 0 8px;
   margin: 0;
   min-height: 210px;
+  will-change: scroll-position;
 }
 .chart-grid::-webkit-scrollbar { display: none; }
 .chart-grid > div {
@@ -1151,7 +1152,8 @@ button.secondary:hover { opacity: 0.8; }
 .sparkline-table-wrap {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: max-height;
 }
 .sparkline-table {
   width: 100%;

@@ -2116,22 +2116,21 @@ function initChartCarousel() {
     if (!touchStartX) return;
     const touchDelta = Math.abs(e.touches[0].clientX - touchStartX);
 
-    // If horizontal swipe detected (>5px), instantly collapse all
+    // If horizontal swipe detected (>5px), collapse with fast transition
     if (touchDelta > 5 && !isScrolling) {
       isScrolling = true;
-      carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
-        const wrap = card.querySelector('.sparkline-table-wrap');
-        // Disable transition for instant collapse
-        wrap.style.transition = 'none';
-        card.classList.remove('expanded');
-        wrap.style.maxHeight = '0';
-        // Re-enable transition after collapse
-        requestAnimationFrame(() => {
-          wrap.style.transition = '';
+
+      requestAnimationFrame(() => {
+        carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
+          const wrap = card.querySelector('.sparkline-table-wrap');
+          // Use fast transition instead of instant
+          wrap.style.transition = 'max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
+          card.classList.remove('expanded');
+          wrap.style.maxHeight = '0';
         });
+        // Re-enable snap immediately
+        carousel.style.scrollSnapType = 'x mandatory';
       });
-      // Re-enable snap immediately
-      carousel.style.scrollSnapType = 'x mandatory';
     }
   };
 
@@ -2569,25 +2568,27 @@ function toggleSparklineTable(btn) {
   const carousel = document.getElementById('chartCarousel');
   const isOpen = card.classList.toggle('expanded');
 
-  if (isOpen) {
-    // Disable snap while expanded to allow vertical scrolling
-    if (carousel) carousel.style.scrollSnapType = 'none';
+  requestAnimationFrame(() => {
+    if (isOpen) {
+      // Disable snap while expanded to allow vertical scrolling
+      if (carousel) carousel.style.scrollSnapType = 'none';
 
-    // Store current scroll position
-    const currentScroll = carousel ? carousel.scrollLeft : 0;
-    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+      // Store current scroll position
+      const currentScroll = carousel ? carousel.scrollLeft : 0;
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
 
-    // Restore scroll position after height change
-    if (carousel) {
-      requestAnimationFrame(() => {
-        carousel.scrollLeft = currentScroll;
-      });
+      // Restore scroll position after height change
+      if (carousel) {
+        requestAnimationFrame(() => {
+          carousel.scrollLeft = currentScroll;
+        });
+      }
+    } else {
+      // Re-enable snap when collapsed
+      if (carousel) carousel.style.scrollSnapType = 'x mandatory';
+      wrap.style.maxHeight = '0';
     }
-  } else {
-    // Re-enable snap when collapsed
-    if (carousel) carousel.style.scrollSnapType = 'x mandatory';
-    wrap.style.maxHeight = '0';
-  }
+  });
 }
 
 function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
