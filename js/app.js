@@ -2102,17 +2102,37 @@ function initChartCarousel() {
   const dotsEl = document.getElementById('chartDots');
   if (!carousel || !dotsEl) return;
   const dots = dotsEl.querySelectorAll('.chart-dot');
+
+  let scrollTimeout = null;
+  let lastScrollLeft = carousel.scrollLeft;
+
   carousel.removeEventListener('scroll', carousel._dotHandler);
   carousel._dotHandler = () => {
-    const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    // Close all expanded tables on scroll
-    carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
-      const wrap = card.querySelector('.sparkline-table-wrap');
-      card.classList.remove('expanded');
-      if (wrap) wrap.style.maxHeight = '0';
-    });
+    // Detect actual swipe movement
+    const currentScrollLeft = carousel.scrollLeft;
+    const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
+
+    // If user is actively swiping (delta > 10px), collapse all expanded cards
+    if (scrollDelta > 10) {
+      carousel.querySelectorAll('.sparkline-card.expanded').forEach(card => {
+        const wrap = card.querySelector('.sparkline-table-wrap');
+        card.classList.remove('expanded');
+        if (wrap) wrap.style.maxHeight = '0';
+      });
+      // Re-enable snap
+      carousel.style.scrollSnapType = 'x mandatory';
+    }
+
+    lastScrollLeft = currentScrollLeft;
+
+    // Update dot indicator
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }, 50);
   };
+
   carousel.addEventListener('scroll', carousel._dotHandler, { passive: true });
   carousel._dotHandler();
 }
@@ -2517,8 +2537,28 @@ function renderBodyMetricSparkline(metric) {
 function toggleSparklineTable(btn) {
   const card = btn.closest('.sparkline-card');
   const wrap = card.querySelector('.sparkline-table-wrap');
+  const carousel = document.getElementById('chartCarousel');
   const isOpen = card.classList.toggle('expanded');
-  wrap.style.maxHeight = isOpen ? wrap.scrollHeight + 'px' : '0';
+
+  if (isOpen) {
+    // Disable snap while expanded to allow vertical scrolling
+    if (carousel) carousel.style.scrollSnapType = 'none';
+
+    // Store current scroll position
+    const currentScroll = carousel ? carousel.scrollLeft : 0;
+    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+
+    // Restore scroll position after height change
+    if (carousel) {
+      requestAnimationFrame(() => {
+        carousel.scrollLeft = currentScroll;
+      });
+    }
+  } else {
+    // Re-enable snap when collapsed
+    if (carousel) carousel.style.scrollSnapType = 'x mandatory';
+    wrap.style.maxHeight = '0';
+  }
 }
 
 function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
