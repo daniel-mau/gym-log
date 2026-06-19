@@ -527,62 +527,111 @@ function deleteWeekDay(dayKey) {
 
 function initWeekEditorDrag(list) {
   let dragEl = null;
+  let placeholder = null;
   let startY = 0;
-  let startIdx = 0;
+  let offsetY = 0;
+  let itemHeight = 0;
+  let listRect = null;
+  let itemRects = [];
 
-  const items = () => Array.from(list.querySelectorAll('.week-editor-item'));
+  function getItems() {
+    return Array.from(list.querySelectorAll('.week-editor-item:not(.drag-placeholder)'));
+  }
 
   function onPointerDown(e) {
     if (!e.target.closest('.drag-handle')) return;
     const item = e.target.closest('.week-editor-item');
     if (!item) return;
+
+    e.preventDefault();
     dragEl = item;
+    listRect = list.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    itemHeight = itemRect.height + 4;
     startY = e.clientY;
-    startIdx = items().indexOf(item);
+    offsetY = e.clientY - itemRect.top;
+
+    itemRects = getItems().map(el => {
+      const r = el.getBoundingClientRect();
+      return { el, top: r.top, center: r.top + r.height / 2 };
+    });
+
+    placeholder = document.createElement('div');
+    placeholder.className = 'week-editor-item drag-placeholder';
+    placeholder.style.height = itemRect.height + 'px';
+    placeholder.style.opacity = '0';
+    placeholder.style.border = '2px dashed var(--accent)';
+    placeholder.style.background = 'rgba(0,122,255,0.04)';
+    item.parentNode.insertBefore(placeholder, item);
+
     item.classList.add('dragging');
+    item.style.position = 'fixed';
+    item.style.left = itemRect.left + 'px';
+    item.style.top = itemRect.top + 'px';
+    item.style.width = itemRect.width + 'px';
+    item.style.zIndex = '9999';
+    item.style.transition = 'none';
+    item.style.transform = 'scale(1.03)';
+    item.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+
     item.setPointerCapture(e.pointerId);
     item.addEventListener('pointermove', onPointerMove);
     item.addEventListener('pointerup', onPointerUp);
+    item.addEventListener('pointercancel', onPointerUp);
   }
 
   function onPointerMove(e) {
     if (!dragEl) return;
-    const dy = e.clientY - startY;
-    dragEl.style.transform = `translateY(${dy}px) scale(1.02)`;
+    const newTop = e.clientY - offsetY;
+    dragEl.style.top = newTop + 'px';
 
-    const allItems = items();
-    const dragRect = dragEl.getBoundingClientRect();
-    const dragCenter = dragRect.top + dragRect.height / 2;
+    const dragCenter = e.clientY;
+    const allItems = getItems();
 
+    let insertBefore = null;
     for (let i = 0; i < allItems.length; i++) {
-      if (allItems[i] === dragEl) continue;
       const rect = allItems[i].getBoundingClientRect();
       const center = rect.top + rect.height / 2;
-      if (i > startIdx && dragCenter > center) {
-        list.insertBefore(dragEl, allItems[i].nextSibling);
-        startIdx = items().indexOf(dragEl);
-        startY = e.clientY;
-        dragEl.style.transform = 'scale(1.02)';
+      if (dragCenter < center) {
+        insertBefore = allItems[i];
         break;
-      } else if (i < startIdx && dragCenter < center) {
-        list.insertBefore(dragEl, allItems[i]);
-        startIdx = items().indexOf(dragEl);
-        startY = e.clientY;
-        dragEl.style.transform = 'scale(1.02)';
-        break;
+      }
+    }
+
+    if (insertBefore) {
+      if (placeholder.nextSibling !== insertBefore) {
+        list.insertBefore(placeholder, insertBefore);
+      }
+    } else {
+      if (placeholder !== list.lastElementChild || (list.lastElementChild && list.lastElementChild !== placeholder)) {
+        list.appendChild(placeholder);
       }
     }
   }
 
   function onPointerUp(e) {
     if (!dragEl) return;
-    dragEl.classList.remove('dragging');
-    dragEl.style.transform = '';
+
     dragEl.removeEventListener('pointermove', onPointerMove);
     dragEl.removeEventListener('pointerup', onPointerUp);
+    dragEl.removeEventListener('pointercancel', onPointerUp);
+
+    list.insertBefore(dragEl, placeholder);
+    placeholder.remove();
+    placeholder = null;
+
+    dragEl.classList.remove('dragging');
+    dragEl.style.position = '';
+    dragEl.style.left = '';
+    dragEl.style.top = '';
+    dragEl.style.width = '';
+    dragEl.style.zIndex = '';
+    dragEl.style.transition = '';
+    dragEl.style.transform = '';
+    dragEl.style.boxShadow = '';
     dragEl = null;
 
-    const newOrder = items().map(item => item.dataset.day);
+    const newOrder = getItems().map(item => item.dataset.day);
     saveWeekOverride(newOrder);
     renderWeekNav();
     renderSession();
@@ -602,8 +651,7 @@ function renderWeekNav() {
 
   for (let i = 0; i < effectiveDays.length; i++) {
     const dayKey = effectiveDays[i];
-    const dayIdx = DAYS.indexOf(dayKey);
-    const date = dates[dayIdx];
+    const date = dates[i];
     const dateKey = getDateKey(date);
     const plan = WEEK_PLAN[dayKey];
     const isSelected = dayKey === state.selectedDay;
@@ -633,11 +681,11 @@ function renderWeekNav() {
     let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Lauf' : plan.type;
     if (typeLabel === 'rest') typeLabel = 'Ruhe';
 
-    // Extract actual day of month from date
     const dayNumber = String(date.getDate()).padStart(2, '0');
+    const positionDayKey = DAYS[i] || dayKey;
 
     btn.innerHTML = `
-      <div class="day-label">${DAY_LABELS[dayKey]}</div>
+      <div class="day-label">${DAY_LABELS[positionDayKey]}</div>
       <div class="day-date">${dayNumber}</div>
       <div class="day-type">${typeLabel}</div>
       <div class="day-status">${statusIcon}</div>
@@ -657,8 +705,9 @@ function selectDay(dayKey) {
 
 function renderSession() {
   const dates = getWeekDates();
-  const dayIdx = DAYS.indexOf(state.selectedDay);
-  const date = dates[dayIdx];
+  const effectiveDays = getEffectiveDays();
+  const posIdx = effectiveDays.indexOf(state.selectedDay);
+  const date = dates[posIdx >= 0 ? posIdx : 0];
   const dateKey = getDateKey(date);
   const plan = WEEK_PLAN[state.selectedDay];
 
