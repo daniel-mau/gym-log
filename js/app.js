@@ -980,7 +980,7 @@ function renderSession() {
       <div class="save-bar back-to-today-bar">
         <span class="back-to-today-icon">⚠️</span>
         <span class="back-to-today-label">Du siehst nicht den heutigen Tag</span>
-        <button class="back-to-today-btn" onclick="jumpToToday()">Synchronisieren</button>
+        <button class="back-to-today-btn" onclick="jumpToToday()">↩ Synchronisieren</button>
       </div>
     `;
   } else if (plan.type === 'gym') {
