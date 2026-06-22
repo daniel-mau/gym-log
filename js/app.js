@@ -979,7 +979,7 @@ function renderSession() {
     html += `
       <div class="save-bar back-to-today-bar">
         <span class="back-to-today-icon">⚠️</span>
-        <span class="back-to-today-label">Du siehst nicht den heutigen Tag</span>
+        <span class="back-to-today-label">Nicht heute</span>
         <button class="back-to-today-btn" onclick="jumpToToday()">↩ Synchronisieren</button>
       </div>
     `;

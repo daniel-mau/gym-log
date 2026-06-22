@@ -1846,6 +1846,7 @@ button.secondary:hover { opacity: 0.8; }
   font-weight: 600;
   color: #fff;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 .back-to-today-btn {
   background: #FF453A;
