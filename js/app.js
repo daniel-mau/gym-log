@@ -978,9 +978,9 @@ function renderSession() {
     const todayName = days[today.getDay()];
     html += `
       <div class="save-bar back-to-today-bar">
-        <span class="back-to-today-icon">⚠️</span>
+        <span class="back-to-today-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg></span>
         <span class="back-to-today-label">Du siehst nicht den heutigen Tag</span>
-        <button class="back-to-today-btn" onclick="jumpToToday()">↩ Synchronisieren</button>
+        <button class="back-to-today-btn" onclick="jumpToToday()">Synchronisieren</button>
       </div>
     `;
   } else if (plan.type === 'gym') {
