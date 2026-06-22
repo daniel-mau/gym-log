@@ -439,9 +439,17 @@ input[type="number"]:focus, input[type="text"]:focus, textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
+input[type="number"].prefilled, input[type="text"].prefilled {
+  background: rgba(128, 128, 128, 0.08);
+  border-color: rgba(128, 128, 128, 0.15);
+}
 input[type="number"].prefilled::placeholder, input[type="text"].prefilled::placeholder {
   color: var(--text-mute);
   opacity: 1;
+}
+input[type="number"].prefilled:focus, input[type="text"].prefilled:focus {
+  background: var(--surface-input);
+  border-color: var(--accent);
 }
 
 /* Run inputs */
@@ -1816,4 +1824,45 @@ button.secondary:hover { opacity: 0.8; }
   font-weight: 600;
   color: var(--text-mute);
   z-index: 9000;
+}
+
+/* Back to today warning bar */
+.save-bar.back-to-today-bar {
+  background: rgba(255, 59, 48, 0.35);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  box-shadow: 0 8px 32px rgba(255, 59, 48, 0.15), 0 2px 8px rgba(0,0,0,0.1);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.back-to-today-icon {
+  font-size: 30px;
+  line-height: 1;
+}
+.back-to-today-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.back-to-today-btn {
+  background: #FF453A;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.02em;
+  height: 44px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.back-to-today-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
 }

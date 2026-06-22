@@ -185,10 +185,33 @@ function loadWorkout(dateKey) {
 }
 
 function loadPreviousWeekWorkout(dayKey) {
-  const prevWeekDates = getWeekDates(state.weekOffset - 1);
   const dayIdx = DAYS.indexOf(dayKey);
-  const lastWeekDateKey = getDateKey(prevWeekDates[dayIdx]);
-  return loadWorkout(lastWeekDateKey);
+  const currentWeekDates = getWeekDates();
+  const currentDateKey = getDateKey(currentWeekDates[dayIdx]);
+  const plan = WEEK_PLAN[dayKey];
+
+  const allWorkouts = loadAllWorkouts(); // sorted newest first
+  for (const entry of allWorkouts) {
+    if (entry.date >= currentDateKey) continue;
+
+    const d = new Date(entry.date + 'T00:00:00');
+    const entryDay = getDayOfWeek(d);
+    if (entryDay !== dayKey) continue;
+
+    if (plan.type === 'gym' && entry.data && entry.data.exercises) {
+      // Check that at least one exercise has actual set data
+      const hasData = Object.values(entry.data.exercises).some(ex =>
+        ex.sets && ex.sets.some(s => s && (s.weight || s.reps || s.duration))
+      );
+      if (hasData) return entry.data;
+    }
+    if ((plan.type === 'run' || plan.type === 'long') && entry.data && entry.data.run) {
+      const r = entry.data.run;
+      if (r.distance || r.duration || r.pace) return entry.data;
+    }
+  }
+
+  return null;
 }
 
 function saveWorkout(dateKey, data) {
@@ -945,8 +968,22 @@ function renderSession() {
     `;
   }
 
-  // Save bar
-  if (plan.type === 'gym') {
+  // Save bar — show warning banner if not viewing today, otherwise show normal controls
+  const today = new Date();
+  const todayDay = getDayOfWeek(today);
+  const isViewingToday = state.weekOffset === 0 && state.selectedDay === todayDay;
+
+  if (!isViewingToday) {
+    const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    const todayName = days[today.getDay()];
+    html += `
+      <div class="save-bar back-to-today-bar">
+        <span class="back-to-today-icon">⚠️</span>
+        <span class="back-to-today-label">Du siehst nicht den heutigen Tag</span>
+        <button class="back-to-today-btn" onclick="jumpToToday()">↩ Synchronisieren</button>
+      </div>
+    `;
+  } else if (plan.type === 'gym') {
     const isCompleted = state.todayData.completed;
     html += `
       <div class="save-bar gym-bar" style="justify-content:center;align-items:center;gap:10px;">
@@ -991,13 +1028,23 @@ function renderSession() {
   }
   
   container.innerHTML = html;
-  
+
   // Bind events
   bindInputs();
   if (plan.type === 'run' || plan.type === 'long') updatePace();
   if (plan.type === 'gym' && plan.exercises.length > 0) {
     // All exercises start collapsed
   }
+}
+
+function jumpToToday() {
+  collectAndSave();
+  state.weekOffset = 0;
+  const today = new Date();
+  state.selectedDay = getDayOfWeek(today);
+  renderHeader();
+  renderWeekNav();
+  renderSession();
 }
 
 function toggleExercise(headerEl) {
