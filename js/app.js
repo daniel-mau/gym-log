@@ -970,8 +970,10 @@ function renderSession() {
 
   // Save bar — show warning banner if not viewing today, otherwise show normal controls
   const today = new Date();
-  const todayDay = getDayOfWeek(today);
-  const isViewingToday = state.weekOffset === 0 && state.selectedDay === todayDay;
+  const todayIdx = DAYS.indexOf(getDayOfWeek(today));
+  const effectiveDaysSave = getEffectiveDays();
+  const todaySlotKey = effectiveDaysSave[todayIdx];
+  const isViewingToday = state.weekOffset === 0 && state.selectedDay === todaySlotKey;
 
   if (!isViewingToday) {
     const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -1040,7 +1042,9 @@ function jumpToToday() {
   collectAndSave();
   state.weekOffset = 0;
   const today = new Date();
-  state.selectedDay = getDayOfWeek(today);
+  const todayIdx = DAYS.indexOf(getDayOfWeek(today));
+  const effectiveDays = getEffectiveDays();
+  state.selectedDay = effectiveDays[todayIdx] || effectiveDays[0] || DAYS[0];
   renderHeader();
   renderWeekNav();
   renderSession();
@@ -3276,9 +3280,9 @@ async function init() {
 
   loadUserTitle();
   renderHeader();
-  const todayDay = getDayOfWeek(new Date());
+  const todayIdx = DAYS.indexOf(getDayOfWeek(new Date()));
   const effectiveDaysInit = getEffectiveDays();
-  state.selectedDay = effectiveDaysInit.includes(todayDay) ? todayDay : effectiveDaysInit[0] || DAYS[0];
+  state.selectedDay = effectiveDaysInit[todayIdx] || effectiveDaysInit[0] || DAYS[0];
   renderWeekNav();
   renderSession();
   renderHistory();
