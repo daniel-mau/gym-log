@@ -978,9 +978,8 @@ function renderSession() {
     const todayName = days[today.getDay()];
     html += `
       <div class="save-bar back-to-today-bar">
-        <span class="back-to-today-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg></span>
-        <span class="back-to-today-label">Du siehst nicht den heutigen Tag</span>
-        <button class="back-to-today-btn" onclick="jumpToToday()">Synchronisieren</button>
+        <div class="back-to-today-left"><svg class="back-to-today-icon" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg><span class="back-to-today-label">Du siehst nicht den aktuellen Tag</span></div>
+        <button class="back-to-today-btn" onclick="jumpToToday()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync</button>
       </div>
     `;
   } else if (plan.type === 'gym') {
