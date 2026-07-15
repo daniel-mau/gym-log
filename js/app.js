@@ -184,10 +184,26 @@ function loadWorkout(dateKey) {
   }
 }
 
+function getEffectiveSlotForDate(date) {
+  const physicalDay = getDayOfWeek(date);
+  const physicalIdx = DAYS.indexOf(physicalDay);
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - physicalIdx);
+  const weekKey = getDateKey(monday);
+  let override = null;
+  try {
+    const stored = localStorage.getItem(`weekOverride:${weekKey}`);
+    if (stored) override = JSON.parse(stored);
+  } catch (e) { /* ignore */ }
+  const days = override || DAYS;
+  return days[physicalIdx];
+}
+
 function loadPreviousWeekWorkout(dayKey) {
-  const dayIdx = DAYS.indexOf(dayKey);
   const currentWeekDates = getWeekDates();
-  const currentDateKey = getDateKey(currentWeekDates[dayIdx]);
+  const currentEffectiveDays = getEffectiveDays();
+  const currentPosIdx = currentEffectiveDays.indexOf(dayKey);
+  const currentDateKey = getDateKey(currentWeekDates[currentPosIdx >= 0 ? currentPosIdx : DAYS.indexOf(dayKey)]);
   const plan = WEEK_PLAN[dayKey];
 
   const allWorkouts = loadAllWorkouts(); // sorted newest first
@@ -195,8 +211,7 @@ function loadPreviousWeekWorkout(dayKey) {
     if (entry.date >= currentDateKey) continue;
 
     const d = new Date(entry.date + 'T00:00:00');
-    const entryDay = getDayOfWeek(d);
-    if (entryDay !== dayKey) continue;
+    if (getEffectiveSlotForDate(d) !== dayKey) continue;
 
     if (plan.type === 'gym' && entry.data && entry.data.exercises) {
       // Check that at least one exercise has actual set data
