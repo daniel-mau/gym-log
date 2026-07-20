@@ -234,8 +234,8 @@ function saveWorkout(dateKey, data) {
   try {
     localStorage.setItem(`workout:${dateKey}`, JSON.stringify(data));
 
-    // Trigger async sync to Supabase (don't block)
-    syncToSupabase(dateKey, data);
+    // Trigger async sync to Supabase (don't block); store promise for callers that care
+    state.lastSyncPromise = syncToSupabase(dateKey, data);
 
     return true;
   } catch (e) {
@@ -1246,7 +1246,7 @@ function collectAndSave() {
   }
 }
 
-function markComplete() {
+async function markComplete() {
   if (state.readOnly) return;
   state.dirty = true;
   collectAndSave();
@@ -1271,17 +1271,31 @@ function markComplete() {
     // Collapse all exercises
     const exerciseCards = document.querySelectorAll('.exercise-card');
     exerciseCards.forEach(card => card.classList.remove('expanded'));
+    // Wait for cloud sync — only surface an error if it fails
+    try {
+      await state.lastSyncPromise;
+    } catch (e) { /* syncToSupabase handles its own state.syncStatus */ }
+    if (state.syncStatus === 'error') {
+      showToast('Cloud-Sync fehlgeschlagen', 'error');
+    }
   }
 }
 
 let toastTimer = null;
-function showToast(message) {
+function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   const msg = document.getElementById('toastMessage');
+  const icon = toast ? toast.querySelector('.toast-icon') : null;
   if (!toast || !msg) return;
   msg.textContent = message;
+  toast.classList.toggle('toast-error', type === 'error');
+  if (icon) {
+    icon.innerHTML = type === 'error'
+      ? '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'
+      : '<polyline points="20 6 9 17 4 12"></polyline>';
+  }
   toast.classList.add('show');
-  if ('vibrate' in navigator) navigator.vibrate(30);
+  if ('vibrate' in navigator) navigator.vibrate(type === 'error' ? [100, 50, 100] : 30);
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
 }
