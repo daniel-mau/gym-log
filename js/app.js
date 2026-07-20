@@ -1263,10 +1263,27 @@ function markComplete() {
       status.textContent = '✓ Einheit abgeschlossen';
       status.classList.add('saved');
     }
+    const t = state.todayData.type;
+    const label = t === 'gym' ? 'Gym-Einheit abgeschlossen'
+                : (t === 'run' || t === 'long') ? 'Lauf abgeschlossen'
+                : 'Einheit abgeschlossen';
+    showToast(label);
     // Collapse all exercises
     const exerciseCards = document.querySelectorAll('.exercise-card');
     exerciseCards.forEach(card => card.classList.remove('expanded'));
   }
+}
+
+let toastTimer = null;
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const msg = document.getElementById('toastMessage');
+  if (!toast || !msg) return;
+  msg.textContent = message;
+  toast.classList.add('show');
+  if ('vibrate' in navigator) navigator.vibrate(30);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
 function markIncomplete() {
