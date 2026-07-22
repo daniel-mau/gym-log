@@ -398,6 +398,7 @@ function changeWeek(delta) {
   renderHeader();
   renderWeekNav();
   renderSession();
+  renderHistory();
   closeWeekPicker();
 }
 
@@ -408,6 +409,7 @@ function goToWeekOffset(offset) {
   renderHeader();
   renderWeekNav();
   renderSession();
+  renderHistory();
   closeWeekPicker();
 }
 
@@ -758,6 +760,7 @@ function selectDay(dayKey) {
   state.selectedDay = dayKey;
   renderWeekNav();
   renderSession();
+  renderHistory();
 }
 
 function renderSession() {
@@ -1529,6 +1532,13 @@ function renderCalendar() {
   const today = new Date();
   const todayKey = getDateKey(today);
 
+  const effectiveDays = getEffectiveDays();
+  const weekDates = getWeekDates();
+  const selPosIdx = effectiveDays.indexOf(state.selectedDay);
+  const selectedDateKey = state.selectedDay && selPosIdx >= 0
+    ? getDateKey(weekDates[selPosIdx])
+    : todayKey;
+
   let html = `
     <div class="calendar-nav">
       <button onclick="calendarPrev()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -1563,8 +1573,10 @@ function renderCalendar() {
     const dayKey = getDayOfWeek(date);
     const plan = WEEK_PLAN[dayKey];
 
+    const isSelected = dateKey === selectedDateKey;
     let classes = 'calendar-day';
     if (isToday) classes += ' today';
+    if (isSelected) classes += ' selected';
 
     let dot = '';
     let onclick = '';

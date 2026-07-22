@@ -1463,6 +1463,10 @@ button.secondary:hover { opacity: 0.8; }
 }
 .calendar-day.other-month { color: var(--text-mute); opacity: 0.3; }
 .calendar-day.today {
+  font-weight: 600;
+  border-color: var(--accent);
+}
+.calendar-day.selected {
   font-weight: 700;
   color: white;
   background: var(--accent);
@@ -1474,7 +1478,7 @@ button.secondary:hover { opacity: 0.8; }
 .calendar-day.has-workout:hover, .calendar-day.planned:hover {
   background: var(--surface-overlay);
 }
-.calendar-day.today.has-workout:hover, .calendar-day.today.planned:hover {
+.calendar-day.selected.has-workout:hover, .calendar-day.selected.planned:hover {
   background: var(--accent);
   opacity: 0.85;
 }
@@ -1487,8 +1491,9 @@ button.secondary:hover { opacity: 0.8; }
 .calendar-dot.completed { background: var(--success); }
 .calendar-dot.missed { background: #FF3B30; }
 .calendar-dot.today-dot { background: var(--warn); }
-.calendar-day.today .calendar-dot.today-dot { background: rgba(255,255,255,0.7); }
-.calendar-day.today .calendar-dot.completed { background: rgba(255,255,255,0.9); }
+.calendar-day.selected .calendar-dot.today-dot { background: rgba(255,255,255,0.7); }
+.calendar-day.selected .calendar-dot.completed { background: rgba(255,255,255,0.9); }
+.calendar-day.selected .calendar-dot.missed { background: rgba(255,255,255,0.7); }
 .calendar-dot.planned { background: var(--text-mute); opacity: 0.5; }
 
 /* Calendar modal */
