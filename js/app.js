@@ -1243,6 +1243,7 @@ function collectAndSave() {
 
   if (plan.type === 'gym') {
     document.querySelectorAll('.exercise-card.expanded').forEach(checkAutoCollapseExercise);
+    refreshExerciseSparklines();
   }
 }
 
@@ -2510,7 +2511,7 @@ function renderExerciseSparkline(exerciseId) {
     }).join('');
 
   return `
-    <div style="margin-top:10px;font-size:12px;color:var(--text-mute);margin-left:48px;margin-bottom:2px;">
+    <div data-ex-sparkline="${exerciseId}" style="margin-top:10px;font-size:12px;color:var(--text-mute);margin-left:48px;margin-bottom:2px;">
       <svg viewBox="0 0 ${svgWidth} ${svgHeight}" style="width:100%;height:64px;display:block;">
         <defs>
           <linearGradient id="exGrad_${exerciseId}" x1="0" y1="0" x2="0" y2="1">
@@ -2526,6 +2527,18 @@ function renderExerciseSparkline(exerciseId) {
       </svg>
     </div>
   `;
+}
+
+function refreshExerciseSparklines() {
+  document.querySelectorAll('[data-ex-sparkline]').forEach(el => {
+    const id = el.dataset.exSparkline;
+    const html = renderExerciseSparkline(id);
+    if (html) {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = html.trim();
+      el.replaceWith(tpl.content.firstChild);
+    }
+  });
 }
 
 function renderBodyMetricSparkline(metric) {
