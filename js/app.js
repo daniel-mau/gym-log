@@ -74,6 +74,24 @@ const WEEK_PLAN = {
     type: 'rest',
     name: 'Ruhe',
     subtitle: 'Spaziergang · Mobility · Stretching · sonst nichts',
+  },
+  interval: {
+    type: 'run',
+    name: 'Intervalltraining',
+    subtitle: '8–10× 400m @ 5K-Tempo · Pause = Intervalldauer',
+    runType: 'interval',
+    targetDistance: 6,
+    targetPace: 'variabel',
+    targetHR: '160-175'
+  },
+  tempo: {
+    type: 'run',
+    name: 'Templauf',
+    subtitle: '20–25 min comfortably hard · knapp unter Schwellentempo',
+    runType: 'tempo',
+    targetDistance: 5,
+    targetPace: '5:30-6:00',
+    targetHR: '155-165'
   }
 };
 
@@ -528,10 +546,14 @@ function resetWeekOverride() {
 function renderWeekEditorList() {
   const list = document.getElementById('weekEditorList');
   const days = getEffectiveDays();
+  const allPlanKeys = Object.keys(WEEK_PLAN);
+  const benchKeys = allPlanKeys.filter(k => !days.includes(k));
   list.innerHTML = '';
 
   const group = document.createElement('div');
   group.className = 'we-ios-group';
+
+  const gripSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg>';
 
   days.forEach((dayKey, idx) => {
     const plan = WEEK_PLAN[dayKey];
@@ -540,16 +562,38 @@ function renderWeekEditorList() {
     const row = document.createElement('div');
     row.className = 'we-ios-row';
     row.dataset.day = dayKey;
-    row.dataset.idx = idx;
 
     row.innerHTML = `
       <span class="we-ios-day">${DAY_LABELS[slotDay]}</span>
       <span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type] || plan.type}</span>
       <span class="we-ios-title">${plan.name}</span>
-      <span class="we-ios-grip drag-handle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg></span>
+      <span class="we-ios-grip drag-handle">${gripSvg}</span>
     `;
     group.appendChild(row);
   });
+
+  if (benchKeys.length > 0) {
+    const divider = document.createElement('div');
+    divider.className = 'we-ios-bench-divider';
+    divider.textContent = 'Ersatzbank';
+    group.appendChild(divider);
+
+    benchKeys.forEach((dayKey) => {
+      const plan = WEEK_PLAN[dayKey];
+
+      const row = document.createElement('div');
+      row.className = 'we-ios-row we-bench';
+      row.dataset.day = dayKey;
+
+      row.innerHTML = `
+        <span class="we-ios-day"></span>
+        <span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type] || plan.type}</span>
+        <span class="we-ios-title">${plan.name}</span>
+        <span class="we-ios-grip drag-handle">${gripSvg}</span>
+      `;
+      group.appendChild(row);
+    });
+  }
 
   list.appendChild(group);
   if (!list._dragInitialized) {
@@ -624,35 +668,25 @@ function initWeekEditorDrag(list) {
 
   function endDrag() {
     if (origIdx < 0 || !dragRow) return;
-    const group = getGroup();
 
-    // Reset all transforms
     rows.forEach(row => {
       row.style.transform = '';
       row.style.transition = '';
       row.classList.remove('we-ios-dragging');
     });
 
-    // Apply the reorder in DOM
-    if (targetIdx !== origIdx && group) {
+    if (targetIdx !== origIdx) {
       const removed = rows.splice(origIdx, 1)[0];
       rows.splice(targetIdx, 0, removed);
-      group.innerHTML = '';
-      rows.forEach(row => group.appendChild(row));
     }
 
     dragRow = null;
     origIdx = -1;
     targetIdx = -1;
 
-    const finalRows = Array.from(getGroup().querySelectorAll('.we-ios-row'));
-    const newOrder = finalRows.map(r => r.dataset.day);
-    saveWeekOverride(newOrder);
-
-    finalRows.forEach((row, i) => {
-      const dayLabel = row.querySelector('.we-ios-day');
-      if (dayLabel) dayLabel.textContent = DAY_LABELS[DAYS[i]] || '';
-    });
+    const activeKeys = rows.slice(0, 7).map(r => r.dataset.day);
+    saveWeekOverride(activeKeys);
+    renderWeekEditorList();
   }
 
   // Mouse

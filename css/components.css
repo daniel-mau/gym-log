@@ -1816,6 +1816,21 @@ button.secondary:hover { opacity: 0.8; }
   touch-action: none;
 }
 .we-ios-grip:active { cursor: grabbing; }
+.we-ios-bench-divider {
+  padding: 14px 16px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 0.5px solid var(--surface-input-border);
+}
+.we-ios-row.we-bench {
+  opacity: 0.5;
+}
+.we-ios-row.we-bench .we-ios-day {
+  visibility: hidden;
+}
 
 @media (max-width: 768px) {
   .container { padding: 12px; }
