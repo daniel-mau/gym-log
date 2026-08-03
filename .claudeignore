@@ -1,0 +1,18 @@
+# Build artifacts & caches
+.build-cache/
+
+# Editor/workspace internals
+nimbalyst-local/
+
+# Backup & dead files
+index-original-backup.html
+TRAININGSPLAN.txt
+*.bak
+*.old
+
+# Static assets (no code relevance)
+apple-touch-icon.png
+
+# Thin docs (no architectural value)
+README.md
+README-STRUCTURE.md

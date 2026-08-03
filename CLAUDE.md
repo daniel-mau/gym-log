@@ -10,9 +10,30 @@ This file acts as the primary source of truth for Claude Code. It defines your e
 ---
 
 ## 2. Project Blueprint (Where to Look)
-- **Auth & DB State:** `js/supabase-client.js`
-- **Core App Logic & Workouts:** `js/app.js`
-- **UI Events & Themes:** `js/ui.js`
+
+### JavaScript modules — load order in `index.html`
+| File | Responsibility | Line limit |
+|---|---|---|
+| `js/auth.js` | Password gate, session auth | — |
+| `js/supabase-client.js` | Supabase client init | — |
+| `js/config/training-plan.js` | `WEEK_PLAN`, `DAYS`, exercise images | 200 |
+| `js/data/persistence.js` | localStorage CRUD, Supabase sync | 400 |
+| `js/ui/theme.js` | `toggleTheme`, `applyTheme` | 60 |
+| `js/ui/week-nav.js` | Week editor, drag-drop, `renderWeekNav` | 600 |
+| `js/ui/session.js` | `renderSession`, inputs, save, `markComplete` | 700 |
+| `js/ui/stats.js` | Stats panel, calendar, title editor | 600 |
+| `js/ui/profile.js` | Avatar, cropper, sync indicator | 200 |
+| `js/ui/dashboard.js` | Charts, carousel, `renderDashboard` | 500 |
+| `js/features/stopwatch.js` | Timer, countdown | 150 |
+| `js/features/sparklines.js` | SVG sparkline renderer | 800 |
+| `js/features/body-metrics.js` | Body weight/fat data + UI | 200 |
+| **`js/app.js`** | **`init()` + `handleDOMReady()` ONLY** | **200** |
+
+**Hard rule:** `app.js` is the entry point, not a dumping ground. `init()` and `handleDOMReady()` are the only functions allowed there. Everything else belongs in the module above that matches its concern.
+
+**Hard rule:** A pre-commit hook enforces `app.js ≤ 200` and all other JS modules ≤ 800 lines. If you're about to create a function that would exceed a limit, split it into a sub-module first.
+
+### CSS
 - **Design Tokens / Variables:** `css/variables.css`
 - **Component Styles:** `css/components.css`
 - **Global Reset & Base Layout:** `css/base.css`
