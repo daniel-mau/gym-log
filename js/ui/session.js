@@ -79,7 +79,7 @@ function renderSession() {
       const exData = (state.todayData.exercises && state.todayData.exercises[ex.id]) || { sets: [] };
       const prevExData = (prevWeekWorkout && prevWeekWorkout.exercises && prevWeekWorkout.exercises[ex.id]) || { sets: [] };
       const isTimeBased = ex.target.includes('sec');
-      const notDone = !state.todayData.completed;
+      const notDone = !state.todayData.completed && !state.todayData.beingEdited;
       const doneCount = (exData.sets || []).filter((s, i) => {
         if (!s) return false;
         const prev = (prevExData.sets && prevExData.sets[i]) || {};
@@ -108,7 +108,9 @@ function renderSession() {
             ${(() => {
               const isTimeBased = ex.target.includes('sec');
               let html = '';
-              const notCompleted = !state.todayData.completed;
+              const notCompleted = !state.todayData.completed && !state.todayData.beingEdited;
+              const isLocked = !!state.todayData.completed;
+              const dis = isLocked ? 'disabled' : '';
               if (isTimeBased) {
                 html += '<div class="sets-grid header"><div>Satz</div><div colspan="2">Dauer (Sekunden)</div></div>';
                 for (let i = 0; i < ex.sets; i++) {
@@ -118,7 +120,7 @@ function renderSession() {
                   const value = isStale ? '' : (set.duration || '');
                   const placeholder = prevSet.duration ? prevSet.duration : '—';
                   const className = (!value && prevSet.duration) ? 'prefilled' : '';
-                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" placeholder="${placeholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="duration" value="${value}" class="${className}" style="grid-column: span 2;" /></div>`;
+                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" placeholder="${placeholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="duration" value="${value}" class="${className}" ${dis} style="grid-column: span 2;" /></div>`;
                 }
               } else {
                 html += '<div class="sets-grid header"><div>Satz</div><div>Gewicht (kg)</div><div>Wiederholungen</div></div>';
@@ -133,7 +135,7 @@ function renderSession() {
                   const repsPlaceholder = prevSet.reps ? prevSet.reps : '—';
                   const weightClassName = (!weightValue && prevSet.weight) ? 'prefilled' : '';
                   const repsClassName = (!repsValue && prevSet.reps) ? 'prefilled' : '';
-                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" step="0.5" placeholder="${weightPlaceholder}" inputmode="decimal" data-ex="${ex.id}" data-set="${i}" data-field="weight" value="${weightValue}" class="${weightClassName}" /><input type="number" placeholder="${repsPlaceholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="reps" value="${repsValue}" class="${repsClassName}" /></div>`;
+                  html += `<div class="sets-grid"><div class="set-num">${i + 1}</div><input type="number" step="0.5" placeholder="${weightPlaceholder}" inputmode="decimal" data-ex="${ex.id}" data-set="${i}" data-field="weight" value="${weightValue}" class="${weightClassName}" ${dis}/><input type="number" placeholder="${repsPlaceholder}" inputmode="numeric" data-ex="${ex.id}" data-set="${i}" data-field="reps" value="${repsValue}" class="${repsClassName}" ${dis}/></div>`;
                 }
               }
               return html;
@@ -148,7 +150,7 @@ function renderSession() {
     html += `
       <div style="padding: 16px;">
         <label style="font-size:13px;color:var(--text-mute);font-weight:500;display:block;margin-bottom:8px;">Notizen zur Einheit</label>
-        <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist...">${state.todayData.notes || ''}</textarea>
+        <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist..." ${state.todayData.completed ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
         <div style="margin-top:12px;display:flex;justify-content:center;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Eintrag löschen</button>
         </div>
@@ -160,7 +162,7 @@ function renderSession() {
     const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
     const prevRun = (prevWeekWorkout && prevWeekWorkout.run) || {};
 
-    const notCompletedRun = !state.todayData.completed;
+    const notCompletedRun = !state.todayData.completed && !state.todayData.beingEdited;
     const getRunValue = (field) => {
       const val = r[field] || '';
       if (notCompletedRun && val && prevRun[field] && String(val) === String(prevRun[field])) return '';
@@ -175,11 +177,11 @@ function renderSession() {
       <div class="run-form" style="padding: 0 16px 16px;">
         <div class="run-field">
           <label>Distanz</label>
-          <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" />
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Gesamtzeit (mm:ss)</label>
-          <input type="text" placeholder="${getRunPlaceholder('time', 'z.B. 42:30')}" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" />
+          <input type="text" placeholder="${getRunPlaceholder('time', 'z.B. 42:30')}" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Pace (berechnet)</label>
@@ -187,15 +189,15 @@ function renderSession() {
         </div>
         <div class="run-field">
           <label>Ø Puls (Herzschläge/min)</label>
-          <input type="number" placeholder="${getRunPlaceholder('hr', 'Ziel: ' + plan.targetHR)}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('hr', 'Ziel: ' + plan.targetHR)}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Kalorien (kcal)</label>
-          <input type="number" placeholder="${getRunPlaceholder('kcal', 'kcal')}" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('kcal', 'kcal')}" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Ø Kadenz (Schritte/min)</label>
-          <input type="number" placeholder="${getRunPlaceholder('cadence', 'Schritte/min')}" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" />
+          <input type="number" placeholder="${getRunPlaceholder('cadence', 'Schritte/min')}" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field run-field-full">
           <label>Schmerz-Level (0 = nichts, 10 = abbrechen)</label>
@@ -205,17 +207,18 @@ function renderSession() {
               const prevPainVal = prevRun.pain;
               const painStale = notCompletedRun && typeof painVal === 'number' && typeof prevPainVal === 'number' && painVal === prevPainVal;
               const activePain = painStale ? -1 : painVal;
-              return Array.from({length: 11}, (_, i) => '<button class="pain-btn pain-' + i + (activePain === i ? ' active' : '') + '" data-pain="' + i + '">' + i + '</button>').join('');
+              const painDis = state.todayData.completed ? ' disabled' : '';
+              return Array.from({length: 11}, (_, i) => '<button class="pain-btn pain-' + i + (activePain === i ? ' active' : '') + '"' + painDis + ' data-pain="' + i + '">' + i + '</button>').join('');
             })()}
           </div>
         </div>
         <div class="run-field run-field-full">
           <label>Wo / Was hat geschmerzt</label>
-          <input type="text" placeholder="${prevRun.painLocation ? prevRun.painLocation : 'z.B. linkes Knie außen, ab km 5'}" data-run="painLocation" value="${(() => { const v = r.painLocation || ''; return (notCompletedRun && v && prevRun.painLocation && v === prevRun.painLocation) ? '' : v; })()}" class="${(() => { const v = r.painLocation || ''; return (notCompletedRun && (!v || (prevRun.painLocation && v === prevRun.painLocation)) && prevRun.painLocation) ? 'prefilled' : ''; })()}" />
+          <input type="text" placeholder="${prevRun.painLocation ? prevRun.painLocation : 'z.B. linkes Knie außen, ab km 5'}" data-run="painLocation" value="${(() => { const v = r.painLocation || ''; return (notCompletedRun && v && prevRun.painLocation && v === prevRun.painLocation) ? '' : v; })()}" class="${(() => { const v = r.painLocation || ''; return (notCompletedRun && (!v || (prevRun.painLocation && v === prevRun.painLocation)) && prevRun.painLocation) ? 'prefilled' : ''; })()}" ${state.todayData.completed ? 'disabled' : ''}/>
         </div>
         <div class="run-field run-field-full">
           <label>Notizen zum Lauf</label>
-          <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen...">${state.todayData.notes || ''}</textarea>
+          <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen..." ${state.todayData.completed ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
         </div>
         <div style="margin-top:12px;display:flex;justify-content:center;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Lauf löschen</button>
@@ -268,7 +271,7 @@ function renderSession() {
         ` : `
         <div style="display:flex;gap:8px;">
           <button class="secondary" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
-          <button class="primary" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
+          <button class="primary" onclick="enterEditMode()"><span style="font-size:16px;line-height:1;">✎</span> Editieren</button>
         </div>
         `}
         <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
@@ -497,7 +500,9 @@ async function markComplete() {
   if (state.todayData) {
     state.todayData.completed = true;
     state.todayData.completedAt = new Date().toISOString();
+    delete state.todayData.beingEdited;
     saveWorkout(state.todayData.date, state.todayData);
+    renderSession();
     renderWeekNav();
     renderStats();
     renderHistory();
@@ -542,6 +547,21 @@ function showToast(message, type = 'success') {
   if ('vibrate' in navigator) navigator.vibrate(type === 'error' ? [100, 50, 100] : 30);
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function enterEditMode() {
+  if (state.readOnly) return;
+  if (state.todayData) {
+    state.todayData.completed = false;
+    state.todayData.beingEdited = true;
+    delete state.todayData.completedAt;
+    saveWorkout(state.todayData.date, state.todayData);
+    renderSession();
+    renderWeekNav();
+    renderStats();
+    renderHistory();
+    renderDashboard();
+  }
 }
 
 function markIncomplete() {

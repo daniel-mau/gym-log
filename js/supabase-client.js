@@ -8,4 +8,24 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true }
 });
+
+if (window.location.hostname === 'localhost') {
+  const _from = supabaseClient.from.bind(supabaseClient);
+  supabaseClient.from = (table) => {
+    const builder = _from(table);
+    const noop = () => Promise.resolve({ data: null, error: null });
+    const chainNoop = () => {
+      const p = noop();
+      p.eq = () => p;
+      return p;
+    };
+    builder.upsert = noop;
+    builder.insert = noop;
+    builder.update = chainNoop;
+    builder.delete = chainNoop;
+    return builder;
+  };
+  console.log('[localhost] Supabase writes disabled — read-only mode');
+}
+
 window.supabaseClient = supabaseClient;
