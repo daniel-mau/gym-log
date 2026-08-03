@@ -157,6 +157,7 @@ function renderWendlerContent() {
     <div class="wendler-header">
       <div class="wendler-header-title">Wendler 5/3/1</div>
       <div class="wendler-header-sub">${weekGoals[weekIdx]}</div>
+      <div class="wendler-header-info">Nach Woche 4 (Deload) Training Max steigern: +2,5 kg Drücken · +5 kg Kreuzheben</div>
     </div>
     <div class="wendler-segments">${segsHTML}</div>
     <div class="wendler-day-tabs">${tabsHTML}</div>

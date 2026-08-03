@@ -374,9 +374,9 @@ function renderWeekNav() {
     const plan = WEEK_PLAN[dayKey];
     const isSelected = dayKey === state.selectedDay;
     const wo = loadWorkout(dateKey);
-    const isDone = (wo && wo.completed) || (plan.type === 'rest' && !isFuture);
-    const isPast = dateKey < todayKey;
     const isFuture = dateKey > todayKey;
+    const isPast = dateKey < todayKey;
+    const isDone = (wo && wo.completed) || (plan.type === 'rest' && !isFuture);
     const isToday = dateKey === todayKey;
 
     const btn = document.createElement('button');

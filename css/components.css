@@ -2057,6 +2057,13 @@ button.secondary:hover { opacity: 0.8; }
   color: var(--text-mute);
   margin-top: 4px;
 }
+.wendler-header-info {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
 
 /* Segments */
 .wendler-segments {
