@@ -26,9 +26,9 @@ const WENDLER_WEEKS = [
 ];
 
 const WENDLER_DEFAULT_LIFTS = [
-  { key: 'ohp',      name: 'Schulterdrücken', shortName: 'OHP',   tm: 60,  increment: 2.5 },
-  { key: 'bench',    name: 'Bankdrücken',     shortName: 'Bench', tm: 100, increment: 2.5 },
-  { key: 'deadlift', name: 'Deadlift (Trapbar)', shortName: 'DL', tm: 140, increment: 5   },
+  { key: 'ohp',      name: 'Schulterdrücken', shortName: 'Schulterdrücken', tinyName: 'Schulter', tm: 60,  increment: 2.5 },
+  { key: 'bench',    name: 'Bankdrücken',     shortName: 'Bankdrücken',     tinyName: 'Bank',     tm: 100, increment: 2.5 },
+  { key: 'deadlift', name: 'Kreuzheben',      shortName: 'Kreuzheben',      tinyName: 'Kreuz',    tm: 140, increment: 5   },
 ];
 
 let wendlerState = null;
@@ -37,7 +37,17 @@ let wendlerActiveDay = 0;
 function loadWendlerState() {
   try {
     const raw = localStorage.getItem('wendler:config');
-    if (raw) { wendlerState = JSON.parse(raw); return; }
+    if (raw) {
+      wendlerState = JSON.parse(raw);
+      // Migrate stale English names to German
+      wendlerState.lifts = wendlerState.lifts.map(l => {
+        const def = WENDLER_DEFAULT_LIFTS.find(d => d.key === l.key);
+        if (!def) return l;
+        return { ...l, name: def.name, shortName: def.shortName, tinyName: def.tinyName };
+      });
+      saveWendlerState();
+      return;
+    }
   } catch(e) {}
   wendlerState = {
     lifts: WENDLER_DEFAULT_LIFTS.map(l => ({ ...l })),
@@ -48,6 +58,15 @@ function loadWendlerState() {
 
 function saveWendlerState() {
   try { localStorage.setItem('wendler:config', JSON.stringify(wendlerState)); } catch(e) {}
+  pushWendlerToSupabase();
+}
+
+async function pushWendlerToSupabase() {
+  try {
+    await supabaseClient
+      .from('settings')
+      .upsert({ key: 'wendler:config', value: JSON.stringify(wendlerState) }, { onConflict: 'key' });
+  } catch(e) { console.error('Wendler push failed:', e); }
 }
 
 function roundWeight(kg) {
@@ -68,14 +87,20 @@ function openWendlerSheet() {
   const overlay = document.getElementById('wendlerOverlay');
   if (!overlay) return;
   renderWendlerContent();
+  document.body.style.overflow = 'hidden';
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('open'));
+  const sheet = document.getElementById('wendlerSheet');
+  if (sheet && !sheet._swipeInit) { sheet._swipeInit = true; addSwipeToDismiss(sheet, closeWendlerSheet); }
 }
 
 function closeWendlerSheet() {
   const overlay = document.getElementById('wendlerOverlay');
   if (!overlay) return;
   overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const sheet = document.getElementById('wendlerSheet');
+  if (sheet) sheet.style.transform = '';
   setTimeout(() => { overlay.style.display = 'none'; }, 320);
 }
 
@@ -89,7 +114,7 @@ function renderWendlerContent() {
 
   const segsHTML = WENDLER_WEEKS.map((w, i) => `
     <button class="wendler-seg${i === weekIdx ? ' active' : ''}" onclick="wendlerSetWeek(${i + 1})">
-      <span class="ws-week">W${i + 1}</span>
+      <span class="ws-week">Woche ${i + 1}</span>
       <span class="ws-label">${w.label}</span>
     </button>`).join('');
 
@@ -115,16 +140,23 @@ function renderWendlerContent() {
   const weekFills = [25, 50, 75, 100];
   const progressHTML = wendlerState.lifts.map((l, i) => `
     <div class="wendler-progress-item${i === wendlerActiveDay ? ' active' : ''}">
-      <div class="wpi-name">${l.shortName}</div>
+      <div class="wpi-name">${l.tinyName}</div>
       <div class="wpi-tm">${l.tm} <span class="wpi-unit">kg</span></div>
       <div class="wpi-bar"><div class="wpi-bar-fill" style="width:${weekFills[weekIdx]}%"></div></div>
       <div class="wpi-badge">+${l.increment} kg</div>
     </div>`).join('');
 
+  const weekGoals = [
+    'Volumen – 3 × 5 Wdh., letzter Satz AMRAP',
+    'Intensität – 3 × 3 Wdh., letzter Satz AMRAP',
+    'Kraft – 5 / 3 / 1+ Wdh., letzter Satz AMRAP',
+    'Deload – 3 × 5 Wdh., leichte Belastung',
+  ];
+
   inner.innerHTML = `
     <div class="wendler-header">
       <div class="wendler-header-title">Wendler 5/3/1</div>
-      <div class="wendler-header-sub">Zyklus ${wendlerState.cycle} · Woche ${wendlerState.week}</div>
+      <div class="wendler-header-sub">${weekGoals[weekIdx]}</div>
     </div>
     <div class="wendler-segments">${segsHTML}</div>
     <div class="wendler-day-tabs">${tabsHTML}</div>
@@ -133,12 +165,14 @@ function renderWendlerContent() {
         <div class="wendler-lift-title-row">
           <span class="wendler-lift-name">${lift.name}</span>
           <button class="wendler-edit-tm-btn" onclick="toggleWendlerTMEditor()" title="Training Max bearbeiten">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
         </div>
         <div class="wendler-tm-row">Training Max: <strong>${lift.tm} kg</strong></div>
+        <div class="wendler-tm-hint">90 % deines 1RM – alle Gewichte basieren darauf</div>
         <div class="wendler-tm-editor" id="wendlerTMEditor">
           <input type="number" class="wendler-tm-input" id="wendlerTMInput" value="${lift.tm}" step="2.5" min="20" inputmode="decimal">
           <button class="wendler-tm-save" onclick="saveWendlerTM()">Speichern</button>

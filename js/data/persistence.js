@@ -208,6 +208,20 @@ async function syncAllFromSupabase() {
       });
     }
 
+    // Sync Wendler config
+    const { data: wendlerData, error: wendlerError } = await supabaseClient
+      .from('settings')
+      .select('value')
+      .eq('key', 'wendler:config')
+      .maybeSingle();
+
+    if (wendlerError) {
+      console.error('Supabase wendler sync error:', wendlerError.message);
+    } else if (wendlerData) {
+      localStorage.setItem('wendler:config', wendlerData.value);
+      wendlerState = null; // force reload from fresh localStorage on next sheet open
+    }
+
     state.syncStatus = 'synced';
     console.log('Supabase full sync completed');
   } catch (e) {

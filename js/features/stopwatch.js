@@ -74,18 +74,49 @@ const TIMER_PRESETS = [
 
 let activeTimerPreset = 0;
 
+function addSwipeToDismiss(sheetEl, closeFn) {
+  let startY = 0, currentY = 0, dragging = false;
+  sheetEl.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    dragging = true;
+    sheetEl.style.transition = 'none';
+  }, { passive: true });
+  sheetEl.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const delta = Math.max(0, currentY - startY);
+    sheetEl.style.transform = `translateY(${delta}px)`;
+  }, { passive: true });
+  sheetEl.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheetEl.style.transition = '';
+    if (currentY - startY > 80) {
+      closeFn();
+    } else {
+      sheetEl.style.transform = '';
+    }
+  });
+}
+
 function openTimerSheet() {
   const overlay = document.getElementById('timerOverlay');
   if (!overlay) return;
   renderTimerSheet();
+  document.body.style.overflow = 'hidden';
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('open'));
+  const sheet = document.getElementById('timerSheet');
+  if (sheet && !sheet._swipeInit) { sheet._swipeInit = true; addSwipeToDismiss(sheet, closeTimerSheet); }
 }
 
 function closeTimerSheet() {
   const overlay = document.getElementById('timerOverlay');
   if (!overlay) return;
   overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const sheet = document.getElementById('timerSheet');
+  if (sheet) sheet.style.transform = '';
   setTimeout(() => { overlay.style.display = 'none'; }, 320);
 }
 
