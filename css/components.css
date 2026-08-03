@@ -59,6 +59,14 @@
   display: block;
   flex-shrink: 0;
 }
+.build-hash {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: var(--text);
+  opacity: 0.1;
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
 .header-meta {
   font-size: 13px;
   color: var(--text-mute);

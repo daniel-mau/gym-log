@@ -47,6 +47,8 @@ async function init() {
     console.error('Avatar loading error:', e);
   }
 
+  const buildEl = document.getElementById('buildHash');
+  if (buildEl) buildEl.textContent = APP_COMMIT;
   loadUserTitle();
   renderHeader();
   const todayIdx = DAYS.indexOf(getDayOfWeek(new Date()));
