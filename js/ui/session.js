@@ -246,19 +246,20 @@ function renderSession() {
     html += `
       <div class="save-bar gym-bar" style="justify-content:center;align-items:center;gap:10px;">
         ${!isCompleted ? `
-        <div class="stopwatch" style="flex:1;min-width:0;">
+        <button class="wendler-calc-btn" onclick="openWendlerSheet()" title="Wendler 5/3/1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;">
+            <rect x="4" y="2" width="16" height="20" rx="3"/>
+            <line x1="8" y1="7" x2="16" y2="7"/>
+            <line x1="8" y1="12" x2="10" y2="12"/><line x1="13" y1="12" x2="15" y2="12"/>
+            <line x1="16" y1="10.5" x2="16" y2="13.5"/>
+            <line x1="8" y1="16" x2="10" y2="16"/><line x1="13" y1="16" x2="15" y2="16"/>
+            <line x1="14.5" y1="14.5" x2="14.5" y2="17.5"/>
+          </svg>
+        </button>
+        <div class="stopwatch" style="flex:1;min-width:0;position:relative;">
           <button class="stopwatch-btn" id="stopwatchToggle" onclick="toggleStopwatch()" title="Start/Pause">▶</button>
-          <div class="stopwatch-display" id="stopwatchDisplay">0:00</div>
+          <div class="stopwatch-display" id="stopwatchDisplay" onclick="openTimerSheet()" title="Preset wählen" style="cursor:pointer;">0:00</div>
           <button class="stopwatch-btn" onclick="resetStopwatch()" title="Reset">↺</button>
-          <div class="stopwatch-presets">
-            <button class="preset-btn" onclick="toggleCountdownPicker(event)">1:00</button>
-            <div class="countdown-picker" id="countdownPicker">
-              <button onclick="pickCountdown(30)">0:30</button>
-              <button onclick="pickCountdown(60)">1:00</button>
-              <button onclick="pickCountdown(90)">1:30</button>
-              <button onclick="pickCountdown(120)">2:00</button>
-            </div>
-          </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="secondary icon-only" onclick="markIncomplete()" title="Zurücksetzen">↺</button>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wendler + Timer — Interaction States</title>
+  <style>
+    :root {
+      --bg: linear-gradient(160deg, #2A2E2A 0%, #302838 25%, #2E2838 45%, #1E2E30 70%, #302818 100%);
+      --bg-card: rgba(44,40,48,0.55);
+      --glass-blur: blur(40px);
+      --glass-border: 1px solid rgba(255,255,255,0.1);
+      --surface-inset: rgba(255,255,255,0.10);
+      --surface-overlay: rgba(255,255,255,0.08);
+      --surface-divider: rgba(255,255,255,0.08);
+      --text: #FFFFFF;
+      --text-dim: rgba(235,235,245,0.6);
+      --text-mute: rgba(235,235,245,0.3);
+      --accent: #3B82F6;
+      --success: #30D158;
+      --radius-sm: 14px;
+      --radius-md: 20px;
+      --radius-lg: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: #111113; min-height: 100vh; }
+    body {
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 28px;
+      padding: 32px 24px 60px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Phone frame ── */
+    .phone-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      width: 300px;
+    }
+    .phone-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.28);
+    }
+    .phone-desc {
+      font-size: 12px; color: rgba(255,255,255,0.22);
+      text-align: center; font-style: italic; line-height: 1.4;
+      max-width: 260px;
+    }
+    .phone {
+      background: var(--bg);
+      border-radius: 40px; overflow: hidden; position: relative;
+      width: 300px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 32px 64px rgba(0,0,0,0.7);
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 22px 5px;
+    }
+    .status-bar .time { font-size: 14px; font-weight: 700; letter-spacing: -0.02em; }
+    .status-icons { display: flex; align-items: center; gap: 4px; }
+
+    /* App content area */
+    .app-screen { padding: 2px 16px 0; height: 480px; overflow: hidden; position: relative; }
+
+    /* App header */
+    .app-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 0 12px;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 8px; }
+    .app-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); border: var(--glass-border); }
+    .app-user-name { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+    .app-sync { font-size: 10px; color: var(--text-mute); margin-top: 1px; }
+    .theme-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--surface-overlay); border: var(--glass-border);
+      display: flex; align-items: center; justify-content: center; color: var(--text-mute);
+    }
+
+    /* Week card */
+    .week-card {
+      background: var(--bg-card); backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border);
+      border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px;
+    }
+    .week-card-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); margin-bottom: 8px; }
+    .week-pills { display: flex; gap: 4px; }
+    .week-pill {
+      flex: 1; text-align: center; padding: 6px 2px; border-radius: 8px;
+      font-size: 10px; font-weight: 600; color: var(--text-mute); background: var(--surface-inset);
+    }
+    .week-pill.today { background: var(--accent); color: #fff; }
+
+    /* Session card */
+    .session-card {
+      background: var(--bg-card); backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border);
+      border-radius: var(--radius-sm); padding: 14px; margin-bottom: 8px;
+    }
+    .session-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .session-sub { font-size: 11px; color: var(--text-mute); margin-bottom: 10px; }
+    .ex-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; border-bottom: 1px solid var(--surface-divider);
+    }
+    .ex-row:last-child { border-bottom: none; }
+    .ex-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .ex-name { font-size: 12px; font-weight: 500; }
+    .ex-sets { font-size: 11px; color: var(--text-mute); margin-left: auto; }
+
+    /* ── SAVE BAR ── */
+    .save-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(22,22,26,0.96);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 14px 14px;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 10;
+    }
+
+    /* Calculator icon button */
+    .bar-icon-btn {
+      width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-overlay); border: var(--glass-border);
+      color: var(--text-dim); cursor: pointer;
+    }
+    .bar-icon-btn.active {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.35);
+      color: var(--accent);
+    }
+    .bar-icon-btn svg { width: 18px; height: 18px; }
+
+    /* Stopwatch area */
+    .stopwatch-area {
+      flex: 1; display: flex; align-items: center; gap: 6px;
+      background: var(--surface-inset); border-radius: 11px;
+      padding: 4px 10px; min-width: 0;
+    }
+    .sw-play {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .sw-play svg { width: 12px; height: 12px; fill: white; }
+    .sw-display {
+      flex: 1; font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums; text-align: center;
+      cursor: pointer; user-select: none;
+    }
+    .sw-display.countdown { color: var(--accent); }
+    .sw-display .tap-hint {
+      display: block; font-size: 9px; font-weight: 500;
+      color: var(--text-mute); letter-spacing: 0.02em; margin-top: 1px;
+    }
+    .sw-reset {
+      width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+      background: var(--surface-overlay); border: var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-mute); font-size: 14px; cursor: pointer;
+    }
+
+    /* Action buttons */
+    .bar-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-secondary {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: var(--surface-overlay); border: var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-mute); font-size: 15px; cursor: pointer;
+    }
+    .btn-primary {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: var(--accent); border: none;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 17px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(59,130,246,0.4);
+    }
+
+    /* Home indicator */
+    .home-indicator { display: flex; justify-content: center; padding: 6px 0 10px; }
+    .home-bar { width: 110px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    /* ── STATE 2: PRESET PICKER POPOVER ── */
+    .preset-popover {
+      position: absolute;
+      bottom: 66px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      background: rgba(38,38,42,0.98);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+      z-index: 20;
+      overflow: hidden;
+    }
+    /* Popover arrow */
+    .preset-popover::after {
+      content: '';
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px; height: 14px;
+      background: rgba(38,38,42,0.98);
+      border-right: 1px solid rgba(255,255,255,0.14);
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      transform: translateX(-50%) rotate(45deg);
+    }
+    .popover-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-mute);
+      padding: 11px 14px 6px;
+    }
+    .preset-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 6px; padding: 4px 10px 12px;
+    }
+    .preset-item {
+      background: var(--surface-inset); border-radius: 10px;
+      padding: 9px 6px; text-align: center; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .preset-item.zero {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .preset-item.zero .preset-time { color: var(--text-mute); }
+    .preset-item.zero .preset-sub { color: rgba(255,255,255,0.15); }
+    .preset-time { font-size: 14px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .preset-sub { font-size: 9px; color: var(--text-mute); margin-top: 2px; }
+
+    /* ── STATE 3: WENDLER SHEET ── */
+    .sheet-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      z-index: 15;
+    }
+    .wendler-sheet {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 87%; background: rgba(26,26,30,0.98);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border-top-left-radius: 26px; border-top-right-radius: 26px;
+      border-top: var(--glass-border);
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+      z-index: 20; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sheet-handle { display: flex; justify-content: center; padding: 9px 0 4px; flex-shrink: 0; }
+    .handle-bar { width: 34px; height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; }
+    .sheet-content {
+      flex: 1; overflow-y: auto; padding: 0 16px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .sheet-content::-webkit-scrollbar { display: none; }
+
+    .sheet-header-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+    .sheet-header-sub { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
+
+    .segment-control {
+      background: rgba(255,255,255,0.07); border: var(--glass-border);
+      border-radius: var(--radius-sm); padding: 3px; display: flex; gap: 2px;
+    }
+    .seg-item {
+      flex: 1; text-align: center; padding: 6px 2px; border-radius: 11px;
+      font-size: 10px; font-weight: 500; color: var(--text-mute); line-height: 1.3;
+    }
+    .seg-item .sw { font-size: 10px; font-weight: 700; display: block; }
+    .seg-item .sl { font-size: 9px; display: block; margin-top: 1px; }
+    .seg-item.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(59,130,246,0.35); }
+
+    .day-tabs { display: flex; gap: 5px; }
+    .day-tab {
+      flex: 1; background: rgba(255,255,255,0.07); border: var(--glass-border);
+      border-radius: 10px; padding: 7px 3px; text-align: center; line-height: 1.3;
+    }
+    .day-tab .tn { font-size: 9px; font-weight: 600; display: block; color: var(--text-mute); }
+    .day-tab .tl { font-size: 11px; font-weight: 600; display: block; margin-top: 2px; color: var(--text-mute); }
+    .day-tab.active { background: var(--accent); border-color: var(--accent); }
+    .day-tab.active .tn { color: rgba(255,255,255,0.7); }
+    .day-tab.active .tl { color: #fff; }
+
+    .lift-card {
+      background: var(--bg-card); backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border);
+      border-radius: var(--radius-md); overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .lift-card-hdr {
+      padding: 12px 14px 9px; border-bottom: 1px solid var(--surface-divider);
+    }
+    .lift-title-row { display: flex; align-items: center; gap: 7px; margin-bottom: 2px; }
+    .lift-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+    .edit-btn {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--surface-overlay); border: var(--glass-border);
+      display: flex; align-items: center; justify-content: center; color: var(--text-mute);
+    }
+    .edit-btn svg { width: 11px; height: 11px; }
+    .lift-tm { font-size: 11px; color: var(--text-mute); }
+    .lift-tm span { color: var(--text-dim); font-weight: 600; }
+
+    .set-row {
+      display: flex; align-items: center; padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-divider); gap: 9px;
+    }
+    .set-row:last-child { border-bottom: none; }
+    .set-row.amrap { background: rgba(59,130,246,0.07); }
+    .set-badge {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--surface-inset);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--text-mute); flex-shrink: 0;
+    }
+    .set-row.amrap .set-badge { background: var(--accent); color: #fff; }
+    .set-info { flex: 1; }
+    .set-primary { font-size: 13px; font-weight: 600; color: var(--text); }
+    .set-row.amrap .set-primary { color: var(--accent); }
+    .set-secondary { font-size: 10px; color: var(--text-mute); margin-top: 1px; }
+    .set-row.amrap .set-secondary { color: rgba(59,130,246,0.55); }
+    .set-pct {
+      font-size: 11px; font-weight: 600; color: var(--text-mute);
+      background: var(--surface-inset); padding: 2px 6px; border-radius: 6px;
+    }
+    .set-row.amrap .set-pct { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .amrap-tag {
+      font-size: 8px; font-weight: 700; text-transform: uppercase;
+      color: var(--accent); background: rgba(59,130,246,0.12);
+      padding: 1px 4px; border-radius: 4px; margin-left: 4px;
+    }
+
+    .cta-btn {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 13px 18px; width: 100%;
+      font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: -0.02em;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+    }
+
+    .progress-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-mute); padding-left: 2px;
+    }
+    .progress-row { display: flex; gap: 5px; }
+    .progress-item {
+      flex: 1; background: var(--bg-card); backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border);
+      border-radius: var(--radius-sm); padding: 9px 7px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .progress-item.active-lift { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
+    .p-name { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-mute); }
+    .p-tm { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+    .progress-item.active-lift .p-tm { color: var(--accent); }
+    .p-unit { font-size: 9px; color: var(--text-mute); }
+    .p-bar { width: 100%; height: 3px; background: var(--surface-inset); border-radius: 2px; overflow: hidden; }
+    .p-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+    .p-badge {
+      font-size: 9px; font-weight: 700; color: var(--success);
+      background: rgba(48,209,88,0.12); padding: 1px 5px; border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG defs for icons -->
+  <svg style="display:none">
+    <symbol id="icon-calc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="2" width="16" height="20" rx="3"/>
+      <line x1="8" y1="7" x2="16" y2="7"/>
+      <line x1="8" y1="12" x2="9.5" y2="12"/>
+      <line x1="12" y1="12" x2="13.5" y2="12"/>
+      <line x1="16" y1="12" x2="17" y2="12"/>
+      <line x1="8" y1="16" x2="9.5" y2="16"/>
+      <line x1="12" y1="16" x2="13.5" y2="16"/>
+      <line x1="16" y1="14.5" x2="16" y2="17.5"/>
+      <line x1="14.5" y1="16" x2="17.5" y2="16"/>
+    </symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></symbol>
+    <symbol id="icon-pencil" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/></symbol>
+  </svg>
+
+  <!-- ① NEUE BAR (Normalzustand) -->
+  <div class="phone-wrap">
+    <div class="phone-label">① Neue Bar</div>
+    <div class="phone">
+      <div class="status-bar">
+        <div class="time">9:41</div>
+        <div class="status-icons">
+          <svg width="14" height="11" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="3" width="3" height="9" rx="1" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="1" opacity="0.5"/><rect x="8" y="1" width="3" height="11" rx="1" opacity="0.7"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="14" height="10" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5C9.8 2.5 11.8 3.5 13.2 5.1L14.5 3.8C12.7 1.8 10.2 0.5 7.5 0.5C4.8 0.5 2.3 1.8 0.5 3.8L1.8 5.1C3.2 3.5 5.2 2.5 7.5 2.5Z" opacity="0.5"/><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7.1L12.6 5.8C11.2 4.4 9.4 3.5 7.5 3.5C5.6 3.5 3.8 4.4 2.4 5.8L3.7 7.1C4.7 6.1 6 5.5 7.5 5.5Z" opacity="0.75"/><circle cx="7.5" cy="10" r="1.5"/></svg>
+          <svg width="22" height="11" viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="1" width="21" height="10" rx="3" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/><rect x="22" y="4" width="2" height="4" rx="1" opacity="0.4"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" opacity="0.9"/></svg>
+        </div>
+      </div>
+      <div class="app-screen">
+        <div class="app-header">
+          <div class="app-header-left">
+            <div class="app-avatar"></div>
+            <div><div class="app-user-name">Daniel Mau</div><div class="app-sync">Synchronisiert</div></div>
+          </div>
+          <div class="theme-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+          </div>
+        </div>
+        <div class="week-card">
+          <div class="week-card-title">KW 31 · Aug 2026</div>
+          <div class="week-pills">
+            <div class="week-pill">Mo</div><div class="week-pill">Di</div><div class="week-pill">Mi</div>
+            <div class="week-pill today">Do</div><div class="week-pill">Fr</div><div class="week-pill">Sa</div><div class="week-pill">So</div>
+          </div>
+        </div>
+        <div class="session-card">
+          <div class="session-title">Donnerstag · Bankdrücken</div>
+          <div class="session-sub">Letztes Training: 28.07.2026</div>
+          <div class="ex-row"><div class="ex-dot"></div><div class="ex-name">Bankdrücken</div><div class="ex-sets">4 × 80 kg</div></div>
+          <div class="ex-row"><div class="ex-dot" style="background:rgba(255,255,255,0.12)"></div><div class="ex-name" style="color:var(--text-mute)">Dips</div><div class="ex-sets">3 × 12</div></div>
+          <div class="ex-row"><div class="ex-dot" style="background:rgba(255,255,255,0.12)"></div><div class="ex-name" style="color:var(--text-mute)">Trizeps</div><div class="ex-sets">3 × 15</div></div>
+        </div>
+
+        <!-- Save Bar -->
+        <div class="save-bar">
+          <!-- Calculator icon -->
+          <div class="bar-icon-btn">
+            <svg><use href="#icon-calc"/></svg>
+          </div>
+          <!-- Stopwatch -->
+          <div class="stopwatch-area">
+            <div class="sw-play"><svg width="10" height="10"><use href="#icon-play"/></svg></div>
+            <div class="sw-display">
+              0:00
+              <span class="tap-hint">Tippen für Presets</span>
+            </div>
+            <div class="sw-reset"><svg width="13" height="13"><use href="#icon-reset"/></svg></div>
+          </div>
+          <!-- Action buttons -->
+          <div class="bar-actions">
+            <div class="btn-secondary"><svg width="14" height="14"><use href="#icon-reset"/></svg></div>
+            <div class="btn-primary"><svg width="15" height="15"><use href="#icon-check"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator"><div class="home-bar"></div></div>
+    </div>
+    <div class="phone-desc">Taschenrechner-Icon links · Zeit antippen öffnet Preset-Picker</div>
+  </div>
+
+  <!-- ② PRESET PICKER OPEN -->
+  <div class="phone-wrap">
+    <div class="phone-label">② Preset-Picker</div>
+    <div class="phone">
+      <div class="status-bar">
+        <div class="time">9:41</div>
+        <div class="status-icons">
+          <svg width="14" height="11" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="3" width="3" height="9" rx="1" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="1" opacity="0.5"/><rect x="8" y="1" width="3" height="11" rx="1" opacity="0.7"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="14" height="10" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5C9.8 2.5 11.8 3.5 13.2 5.1L14.5 3.8C12.7 1.8 10.2 0.5 7.5 0.5C4.8 0.5 2.3 1.8 0.5 3.8L1.8 5.1C3.2 3.5 5.2 2.5 7.5 2.5Z" opacity="0.5"/><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7.1L12.6 5.8C11.2 4.4 9.4 3.5 7.5 3.5C5.6 3.5 3.8 4.4 2.4 5.8L3.7 7.1C4.7 6.1 6 5.5 7.5 5.5Z" opacity="0.75"/><circle cx="7.5" cy="10" r="1.5"/></svg>
+          <svg width="22" height="11" viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="1" width="21" height="10" rx="3" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/><rect x="22" y="4" width="2" height="4" rx="1" opacity="0.4"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" opacity="0.9"/></svg>
+        </div>
+      </div>
+      <div class="app-screen">
+        <div class="app-header">
+          <div class="app-header-left">
+            <div class="app-avatar"></div>
+            <div><div class="app-user-name">Daniel Mau</div><div class="app-sync">Synchronisiert</div></div>
+          </div>
+          <div class="theme-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+          </div>
+        </div>
+        <div class="week-card">
+          <div class="week-card-title">KW 31 · Aug 2026</div>
+          <div class="week-pills">
+            <div class="week-pill">Mo</div><div class="week-pill">Di</div><div class="week-pill">Mi</div>
+            <div class="week-pill today">Do</div><div class="week-pill">Fr</div><div class="week-pill">Sa</div><div class="week-pill">So</div>
+          </div>
+        </div>
+        <div class="session-card" style="opacity:0.4">
+          <div class="session-title">Donnerstag · Bankdrücken</div>
+          <div class="session-sub">Letztes Training: 28.07.2026</div>
+          <div class="ex-row"><div class="ex-dot"></div><div class="ex-name">Bankdrücken</div><div class="ex-sets">4 × 80 kg</div></div>
+          <div class="ex-row"><div class="ex-dot" style="background:rgba(255,255,255,0.12)"></div><div class="ex-name" style="color:var(--text-mute)">Dips</div><div class="ex-sets">3 × 12</div></div>
+        </div>
+
+        <!-- Preset Popover -->
+        <div class="preset-popover">
+          <div class="popover-title">Timer-Preset wählen</div>
+          <div class="preset-grid">
+            <div class="preset-item zero">
+              <div class="preset-time" style="color:var(--text-mute);">0:00</div>
+              <div class="preset-sub">Stoppuhr</div>
+            </div>
+            <div class="preset-item">
+              <div class="preset-time">0:30</div>
+              <div class="preset-sub">30 Sek</div>
+            </div>
+            <div class="preset-item" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);">
+              <div class="preset-time" style="color:var(--accent);">1:00</div>
+              <div class="preset-sub" style="color:rgba(59,130,246,0.6);">1 Min ✓</div>
+            </div>
+            <div class="preset-item">
+              <div class="preset-time">1:30</div>
+              <div class="preset-sub">1.5 Min</div>
+            </div>
+            <div class="preset-item">
+              <div class="preset-time">2:00</div>
+              <div class="preset-sub">2 Min</div>
+            </div>
+            <div class="preset-item">
+              <div class="preset-time">3:00</div>
+              <div class="preset-sub">3 Min</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Bar (dimmed) -->
+        <div class="save-bar" style="opacity:0.5;">
+          <div class="bar-icon-btn"><svg><use href="#icon-calc"/></svg></div>
+          <div class="stopwatch-area">
+            <div class="sw-play"><svg width="10" height="10"><use href="#icon-play"/></svg></div>
+            <div class="sw-display countdown">1:00<span class="tap-hint">aktives Preset</span></div>
+            <div class="sw-reset"><svg width="13" height="13"><use href="#icon-reset"/></svg></div>
+          </div>
+          <div class="bar-actions">
+            <div class="btn-secondary"><svg width="14" height="14"><use href="#icon-reset"/></svg></div>
+            <div class="btn-primary"><svg width="15" height="15"><use href="#icon-check"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator"><div class="home-bar"></div></div>
+    </div>
+    <div class="phone-desc">Tippen auf Zeit → Popover · "0:00" = Stoppuhr · aktives Preset blau markiert</div>
+  </div>
+
+  <!-- ③ WENDLER SHEET OPEN -->
+  <div class="phone-wrap">
+    <div class="phone-label">③ Wendler Sheet</div>
+    <div class="phone">
+      <div class="status-bar">
+        <div class="time">9:41</div>
+        <div class="status-icons">
+          <svg width="14" height="11" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="3" width="3" height="9" rx="1" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="1" opacity="0.5"/><rect x="8" y="1" width="3" height="11" rx="1" opacity="0.7"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="14" height="10" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5C9.8 2.5 11.8 3.5 13.2 5.1L14.5 3.8C12.7 1.8 10.2 0.5 7.5 0.5C4.8 0.5 2.3 1.8 0.5 3.8L1.8 5.1C3.2 3.5 5.2 2.5 7.5 2.5Z" opacity="0.5"/><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7.1L12.6 5.8C11.2 4.4 9.4 3.5 7.5 3.5C5.6 3.5 3.8 4.4 2.4 5.8L3.7 7.1C4.7 6.1 6 5.5 7.5 5.5Z" opacity="0.75"/><circle cx="7.5" cy="10" r="1.5"/></svg>
+          <svg width="22" height="11" viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="1" width="21" height="10" rx="3" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/><rect x="22" y="4" width="2" height="4" rx="1" opacity="0.4"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" opacity="0.9"/></svg>
+        </div>
+      </div>
+
+      <div style="position:relative; height:480px; overflow:hidden;">
+        <!-- Ghost app -->
+        <div style="padding:2px 16px 0; opacity:0.35;">
+          <div class="app-header">
+            <div class="app-header-left">
+              <div class="app-avatar"></div>
+              <div><div class="app-user-name">Daniel Mau</div></div>
+            </div>
+          </div>
+          <div class="week-card">
+            <div class="week-card-title">KW 31 · Aug 2026</div>
+            <div class="week-pills">
+              <div class="week-pill">Mo</div><div class="week-pill">Di</div><div class="week-pill">Mi</div>
+              <div class="week-pill today">Do</div><div class="week-pill">Fr</div><div class="week-pill">Sa</div><div class="week-pill">So</div>
+            </div>
+          </div>
+        </div>
+        <!-- Backdrop -->
+        <div class="sheet-backdrop"></div>
+        <!-- Sheet -->
+        <div class="wendler-sheet">
+          <div class="sheet-handle"><div class="handle-bar"></div></div>
+          <div class="sheet-content">
+            <div>
+              <div class="sheet-header-title">Wendler 5/3/1</div>
+              <div class="sheet-header-sub">Zyklus 3 · Woche 2</div>
+            </div>
+            <div class="segment-control">
+              <div class="seg-item"><span class="sw">W1</span><span class="sl">5er</span></div>
+              <div class="seg-item active"><span class="sw">W2</span><span class="sl">3er</span></div>
+              <div class="seg-item"><span class="sw">W3</span><span class="sl">531</span></div>
+              <div class="seg-item"><span class="sw">W4</span><span class="sl">Deload</span></div>
+            </div>
+            <div class="day-tabs">
+              <div class="day-tab"><span class="tn">Tag 1</span><span class="tl">OHP</span></div>
+              <div class="day-tab active"><span class="tn">Tag 2</span><span class="tl">Bench</span></div>
+              <div class="day-tab"><span class="tn">Tag 3</span><span class="tl">Deadlift</span></div>
+            </div>
+            <div class="lift-card">
+              <div class="lift-card-hdr">
+                <div class="lift-title-row">
+                  <span class="lift-title">Bankdrücken</span>
+                  <div class="edit-btn"><svg><use href="#icon-pencil"/></svg></div>
+                </div>
+                <div class="lift-tm">Training Max: <span>100 kg</span></div>
+              </div>
+              <div class="set-row">
+                <div class="set-badge">1</div>
+                <div class="set-info"><div class="set-primary">70 kg × 3</div><div class="set-secondary">Set 1</div></div>
+                <div class="set-pct">70%</div>
+              </div>
+              <div class="set-row">
+                <div class="set-badge">2</div>
+                <div class="set-info"><div class="set-primary">80 kg × 3</div><div class="set-secondary">Set 2</div></div>
+                <div class="set-pct">80%</div>
+              </div>
+              <div class="set-row amrap">
+                <div class="set-badge">3</div>
+                <div class="set-info">
+                  <div class="set-primary">90 kg × 3+ <span class="amrap-tag">AMRAP</span></div>
+                  <div class="set-secondary">Set 3 · Maximale Wiederholungen</div>
+                </div>
+                <div class="set-pct">90%</div>
+              </div>
+            </div>
+            <button class="cta-btn">Session starten <span style="font-size:16px;font-weight:300;">→</span></button>
+            <div class="progress-label">Zyklus-Fortschritt</div>
+            <div class="progress-row">
+              <div class="progress-item">
+                <div class="p-name">OHP</div>
+                <div class="p-tm">55 <span class="p-unit">kg</span></div>
+                <div class="p-bar"><div class="p-bar-fill" style="width:33%"></div></div>
+                <div class="p-badge">+2.5 kg</div>
+              </div>
+              <div class="progress-item active-lift">
+                <div class="p-name" style="color:rgba(59,130,246,0.6);">Bench</div>
+                <div class="p-tm">100 <span class="p-unit" style="color:rgba(59,130,246,0.5);">kg</span></div>
+                <div class="p-bar"><div class="p-bar-fill" style="width:66%"></div></div>
+                <div class="p-badge">+2.5 kg</div>
+              </div>
+              <div class="progress-item">
+                <div class="p-name">DL</div>
+                <div class="p-tm">145 <span class="p-unit">kg</span></div>
+                <div class="p-bar"><div class="p-bar-fill" style="width:0%"></div></div>
+                <div class="p-badge" style="background:rgba(255,255,255,0.05);color:var(--text-mute);">offen</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator"><div class="home-bar"></div></div>
+    </div>
+    <div class="phone-desc">Rechner-Icon antippen → Sheet hochfahren · Swipe-down schließt</div>
+  </div>
+
+</body>
+</html>

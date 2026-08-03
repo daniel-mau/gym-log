@@ -231,6 +231,26 @@
   </div>
 </div>
 
+<!-- Wendler Sheet -->
+<div id="wendlerOverlay" class="wendler-overlay" onclick="if(event.target===this)closeWendlerSheet()">
+  <div class="wendler-sheet" id="wendlerSheet">
+    <div class="wendler-handle"><div class="wendler-handle-bar"></div></div>
+    <div class="wendler-sheet-inner" id="wendlerSheetInner"></div>
+  </div>
+</div>
+
+<!-- Timer Preset Sheet -->
+<div id="timerOverlay" class="wendler-overlay" onclick="if(event.target===this)closeTimerSheet()">
+  <div class="wendler-sheet timer-sheet" id="timerSheet">
+    <div class="wendler-handle"><div class="wendler-handle-bar"></div></div>
+    <div class="timer-sheet-header">
+      <span class="timer-sheet-title">Timer</span>
+      <button class="timer-sheet-done" onclick="closeTimerSheet()">Fertig</button>
+    </div>
+    <div class="timer-preset-grid" id="timerPresetGrid"></div>
+  </div>
+</div>
+
 <!-- Toast Notification -->
 <div id="toast" class="toast" role="status" aria-live="polite">
   <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -248,6 +268,7 @@
 <script src="js/features/stopwatch.js"></script>
 <script src="js/features/sparklines.js"></script>
 <script src="js/features/body-metrics.js"></script>
+<script src="js/features/wendler.js"></script>
 <script src="js/ui/week-nav.js"></script>
 <script src="js/ui/session.js"></script>
 <script src="js/ui/stats.js"></script>

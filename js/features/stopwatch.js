@@ -63,24 +63,51 @@ function setCountdown(seconds) {
   startStopwatch();
 }
 
-function toggleCountdownPicker(e) {
-  e.stopPropagation();
-  const picker = document.getElementById('countdownPicker');
-  if (!picker) return;
-  picker.classList.toggle('open');
-  if (picker.classList.contains('open')) {
-    setTimeout(() => document.addEventListener('click', closeCountdownPicker, { once: true }), 0);
+const TIMER_PRESETS = [
+  { seconds: 0,   label: '0:00', sub: 'Stoppuhr' },
+  { seconds: 30,  label: '0:30', sub: '30 Sek'   },
+  { seconds: 60,  label: '1:00', sub: '1 Min'    },
+  { seconds: 90,  label: '1:30', sub: '1.5 Min'  },
+  { seconds: 120, label: '2:00', sub: '2 Min'    },
+  { seconds: 180, label: '3:00', sub: '3 Min'    },
+];
+
+let activeTimerPreset = 0;
+
+function openTimerSheet() {
+  const overlay = document.getElementById('timerOverlay');
+  if (!overlay) return;
+  renderTimerSheet();
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => overlay.classList.add('open'));
+}
+
+function closeTimerSheet() {
+  const overlay = document.getElementById('timerOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  setTimeout(() => { overlay.style.display = 'none'; }, 320);
+}
+
+function renderTimerSheet() {
+  const grid = document.getElementById('timerPresetGrid');
+  if (!grid) return;
+  grid.innerHTML = TIMER_PRESETS.map(p => `
+    <button class="timer-preset-tile${p.seconds === activeTimerPreset ? ' active' : ''}${p.seconds === 0 ? ' stopwatch-mode' : ''}"
+            onclick="pickTimerPreset(${p.seconds})">
+      <span class="tpt-time">${p.label}</span>
+      <span class="tpt-sub">${p.sub}</span>
+    </button>`).join('');
+}
+
+function pickTimerPreset(seconds) {
+  activeTimerPreset = seconds;
+  closeTimerSheet();
+  if (seconds === 0) {
+    resetStopwatch();
+  } else {
+    setCountdown(seconds);
   }
-}
-
-function closeCountdownPicker() {
-  const picker = document.getElementById('countdownPicker');
-  if (picker) picker.classList.remove('open');
-}
-
-function pickCountdown(seconds) {
-  closeCountdownPicker();
-  setCountdown(seconds);
 }
 
 function updateStopwatchDisplay() {
@@ -89,6 +116,7 @@ function updateStopwatchDisplay() {
   const m = Math.floor(stopwatch.seconds / 60);
   const s = stopwatch.seconds % 60;
   display.textContent = `${m}:${String(s).padStart(2, '0')}`;
+  display.classList.toggle('countdown', stopwatch.countdown);
 }
 
 function notifyTimerDone() {
