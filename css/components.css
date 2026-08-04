@@ -1918,7 +1918,10 @@ button.secondary:hover { opacity: 0.8; }
 .save-bar button.secondary {
   height: 44px;
   white-space: nowrap;
-  padding: 0 16px;
+  padding: 0 14px;
+  font-size: 13px;
+  gap: 4px;
+  flex: 1;
   justify-content: center;
 }
 

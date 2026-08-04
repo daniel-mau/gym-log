@@ -296,9 +296,9 @@ function renderSession() {
           <button class="primary icon-only" onclick="markComplete()" title="Einheit abschließen">✓</button>
         </div>
         ` : `
-        <div style="display:flex;gap:8px;flex:1;">
-          <button class="secondary" style="flex:1;" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
-          <button class="primary" style="flex:1;" onclick="enterEditMode()"><span style="font-size:16px;line-height:1;">✎</span> Editieren</button>
+        <div style="display:flex;gap:6px;width:100%;">
+          <button class="secondary" onclick="markIncomplete()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.36"/></svg>Zurücksetzen</button>
+          <button class="primary" onclick="enterEditMode()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editieren</button>
         </div>
         `}
         <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
@@ -308,9 +308,9 @@ function renderSession() {
     html += `
       <div class="save-bar">
         <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
-        <div style="display:flex;gap:8px;flex:1;">
-          <button class="secondary" style="flex:1;" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
-          <button class="primary" style="flex:1;" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
+        <div style="display:flex;gap:6px;width:100%;">
+          <button class="secondary" onclick="markIncomplete()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.36"/></svg>Zurücksetzen</button>
+          <button class="primary" onclick="markComplete()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Einheit abschließen</button>
         </div>
       </div>
     `;
