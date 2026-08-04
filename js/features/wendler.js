@@ -33,6 +33,7 @@ const WENDLER_DEFAULT_LIFTS = [
 
 let wendlerState = null;
 let wendlerActiveDay = 0;
+let wendlerEditMode = false;
 
 function loadWendlerState() {
   try {
@@ -104,6 +105,7 @@ function openWendlerSheet() {
 function closeWendlerSheet() {
   const overlay = document.getElementById('wendlerOverlay');
   if (!overlay) return;
+  wendlerEditMode = false;
   overlay.classList.remove('open');
   document.body.style.overflow = '';
   const sheet = document.getElementById('wendlerSheet');
@@ -160,6 +162,35 @@ function renderWendlerContent() {
     'Deload – 3 × 5 Wdh., leichte Belastung',
   ];
 
+  const editOrderBtnHTML = wendlerEditMode
+    ? `<button class="wendler-edit-order-btn active" onclick="toggleWendlerEditMode()">Fertig</button>`
+    : `<button class="wendler-edit-order-btn" onclick="toggleWendlerEditMode()" title="Reihenfolge bearbeiten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>`;
+
+  const reorderHTML = `
+    <div class="wendler-lift-reorder">
+      ${wendlerState.lifts.map((l, i) => `
+        <div class="wendler-reorder-row">
+          <div class="wendler-reorder-info">
+            <span class="wro-day">Tag ${i + 1}</span>
+            <span class="wro-name">${l.shortName}</span>
+          </div>
+          <div class="wendler-reorder-tm">${l.tm} kg</div>
+          <div class="wendler-reorder-arrows">
+            <button class="wendler-move-btn" onclick="wendlerMoveLift(${i},-1)"${i === 0 ? ' disabled' : ''}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="wendler-move-btn" onclick="wendlerMoveLift(${i},1)"${i === wendlerState.lifts.length - 1 ? ' disabled' : ''}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
   inner.innerHTML = `
     <div class="wendler-header">
       <div class="wendler-header-title">Wendler 5/3/1</div>
@@ -167,30 +198,36 @@ function renderWendlerContent() {
       <div class="wendler-header-info">Nach Woche 4 (Deload) Training Max steigern: +2,5 kg Drücken · +5 kg Kreuzheben</div>
     </div>
     <div class="wendler-segments">${segsHTML}</div>
-    <div class="wendler-day-tabs">${tabsHTML}</div>
-    <div class="wendler-lift-card">
-      <div class="wendler-lift-header">
-        <div class="wendler-lift-title-row">
-          <span class="wendler-lift-name">${lift.name}</span>
-          <button class="wendler-edit-tm-btn" onclick="toggleWendlerTMEditor()" title="Training Max bearbeiten">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="wendler-tm-row">Training Max: <strong>${lift.tm} kg</strong></div>
-        <div class="wendler-tm-hint">90 % deines 1RM – alle Gewichte basieren darauf</div>
-        <div class="wendler-tm-editor" id="wendlerTMEditor">
-          <input type="number" class="wendler-tm-input" id="wendlerTMInput" value="${lift.tm}" step="2.5" min="20" inputmode="decimal">
-          <button class="wendler-tm-save" onclick="saveWendlerTM()">Speichern</button>
-          <button class="wendler-tm-cancel" onclick="toggleWendlerTMEditor()">✕</button>
-        </div>
-      </div>
-      <div class="wendler-set-list">${setsHTML}</div>
+    <div class="wendler-days-header">
+      <span class="wendler-days-label">Trainingstage</span>
+      ${editOrderBtnHTML}
     </div>
-    <div class="wendler-progress-label">Zyklus-Fortschritt</div>
-    <div class="wendler-progress-row">${progressHTML}</div>
+    ${wendlerEditMode ? reorderHTML : `
+      <div class="wendler-day-tabs">${tabsHTML}</div>
+      <div class="wendler-lift-card">
+        <div class="wendler-lift-header">
+          <div class="wendler-lift-title-row">
+            <span class="wendler-lift-name">${lift.name}</span>
+            <button class="wendler-edit-tm-btn" onclick="toggleWendlerTMEditor()" title="Training Max bearbeiten">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="wendler-tm-row">Training Max: <strong>${lift.tm} kg</strong></div>
+          <div class="wendler-tm-hint">90 % deines 1RM – alle Gewichte basieren darauf</div>
+          <div class="wendler-tm-editor" id="wendlerTMEditor">
+            <input type="number" class="wendler-tm-input" id="wendlerTMInput" value="${lift.tm}" step="2.5" min="20" inputmode="decimal">
+            <button class="wendler-tm-save" onclick="saveWendlerTM()">Speichern</button>
+            <button class="wendler-tm-cancel" onclick="toggleWendlerTMEditor()">✕</button>
+          </div>
+        </div>
+        <div class="wendler-set-list">${setsHTML}</div>
+      </div>
+      <div class="wendler-progress-label">Zyklus-Fortschritt</div>
+      <div class="wendler-progress-row">${progressHTML}</div>
+    `}
   `;
 }
 
@@ -222,6 +259,21 @@ function saveWendlerTM() {
   const val = parseFloat(input.value);
   if (isNaN(val) || val < 20) return;
   wendlerState.lifts[wendlerActiveDay].tm = roundWeight(val);
+  saveWendlerState();
+  renderWendlerContent();
+}
+
+function toggleWendlerEditMode() {
+  wendlerEditMode = !wendlerEditMode;
+  renderWendlerContent();
+}
+
+function wendlerMoveLift(idx, dir) {
+  const target = idx + dir;
+  if (!wendlerState || target < 0 || target >= wendlerState.lifts.length) return;
+  const l = wendlerState.lifts;
+  [l[idx], l[target]] = [l[target], l[idx]];
+  wendlerActiveDay = 0;
   saveWendlerState();
   renderWendlerContent();
 }

@@ -2174,6 +2174,87 @@ button.secondary:hover { opacity: 0.8; }
 .wendler-day-tab.active .wdt-num { color: rgba(255, 255, 255, 0.7); }
 .wendler-day-tab.active .wdt-lift { color: #fff; }
 
+/* Day order header + edit button */
+.wendler-days-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: -4px;
+}
+.wendler-days-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.wendler-edit-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-overlay);
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.wendler-edit-order-btn svg { width: 15px; height: 15px; display: block; }
+.wendler-edit-order-btn.active {
+  background: var(--accent);
+  color: #fff;
+  width: auto;
+  padding: 0 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Lift reorder list */
+.wendler-lift-reorder { display: flex; flex-direction: column; gap: 8px; }
+.wendler-reorder-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: var(--glass-border);
+  border-radius: 14px;
+  padding: 13px 14px;
+}
+.wendler-reorder-info { flex: 1; }
+.wendler-reorder-arrows { display: flex; gap: 4px; flex-shrink: 0; }
+.wendler-move-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-overlay);
+  color: var(--text-mute);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.wendler-move-btn svg { width: 16px; height: 16px; }
+.wendler-move-btn:disabled { opacity: 0.25; cursor: default; }
+.wendler-move-btn:not(:disabled):active { background: var(--accent); color: #fff; }
+.wro-day {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  display: block;
+}
+.wro-name { font-size: 15px; font-weight: 600; color: var(--text); display: block; margin-top: 1px; }
+.wendler-reorder-tm { font-size: 13px; font-weight: 600; color: var(--text-mute); flex-shrink: 0; }
+
 /* Lift card */
 .wendler-lift-card {
   background: var(--bg-card);
