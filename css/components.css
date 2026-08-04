@@ -729,14 +729,14 @@ button.secondary:hover { opacity: 0.8; }
 .chart-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 50px;
   background: var(--text-mute);
   opacity: 0.3;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s, width 0.25s ease, background 0.2s;
 }
 .chart-dot.active {
   opacity: 1;
-  transform: scale(1.25);
+  width: 18px;
   background: var(--text-dim);
 }
 .stat-card {
@@ -1161,6 +1161,7 @@ button.secondary:hover { opacity: 0.8; }
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--surface-inset);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 .sparkline-header {
   display: flex;

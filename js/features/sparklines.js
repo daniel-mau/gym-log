@@ -439,7 +439,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Fill gradient in chart color
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0" y1="${t}" x2="0" y2="${chartBottom}" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0" y1="${t}" x2="0" y2="${chartBottom}" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.38"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
 
   // Grid lines + labels with extended height and gradient fade at top
   let gridLines = '';
@@ -623,22 +623,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     lineEl = `<path d="${pathD}" fill="none" stroke="${chartColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
 
-  // Dots - max 20 visible, dynamic step based on data count
   let dotsEl = '';
   let specialLabelsEl = '';
   if (!isBar && nonNull.length > 0) {
-    const step = Math.ceil(nonNull.length / 20);
-    dotsEl = nonNull.filter((p, i) => {
-      const distFromEnd = nonNull.length - 1 - i;
-      return distFromEnd % step === 0;
-    }).map(p =>
-      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${chartColor}" stroke="white" stroke-width="1.5"/>`
-    ).join('');
-
     const maxPt = nonNull.reduce((a, b) => a.value > b.value ? a : b);
     const minPt = nonNull.reduce((a, b) => a.value < b.value ? a : b);
     const seen = new Set();
-    // Only show tooltips for min and max
     specialLabelsEl = [maxPt, minPt].filter(p => {
       if (seen.has(p.idx)) return false;
       seen.add(p.idx);
