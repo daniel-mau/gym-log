@@ -91,7 +91,14 @@ function openWendlerSheet() {
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('open'));
   const sheet = document.getElementById('wendlerSheet');
-  if (sheet && !sheet._swipeInit) { sheet._swipeInit = true; addSwipeToDismiss(sheet, closeWendlerSheet); }
+  if (sheet && !sheet._swipeInit) {
+    sheet._swipeInit = true;
+    addSwipeToDismiss(sheet, closeWendlerSheet, e => {
+      const handle = sheet.querySelector('.wendler-handle');
+      const header = sheet.querySelector('.wendler-header');
+      return (handle && handle.contains(e.target)) || (header && header.contains(e.target));
+    });
+  }
 }
 
 function closeWendlerSheet() {

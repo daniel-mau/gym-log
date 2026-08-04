@@ -74,9 +74,10 @@ const TIMER_PRESETS = [
 
 let activeTimerPreset = 0;
 
-function addSwipeToDismiss(sheetEl, closeFn) {
+function addSwipeToDismiss(sheetEl, closeFn, shouldDrag) {
   let startY = 0, currentY = 0, dragging = false;
   sheetEl.addEventListener('touchstart', e => {
+    if (shouldDrag && !shouldDrag(e)) return;
     startY = e.touches[0].clientY;
     dragging = true;
     sheetEl.style.transition = 'none';
