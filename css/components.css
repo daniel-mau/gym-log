@@ -1937,6 +1937,7 @@ button.secondary:hover { opacity: 0.8; }
   align-items: center;
   gap: 8px;
   overflow: hidden;
+  padding-left: 6px;
 }
 .back-to-today-icon {
   width: 20px;
