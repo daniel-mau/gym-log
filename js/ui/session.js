@@ -296,9 +296,9 @@ function renderSession() {
           <button class="primary icon-only" onclick="markComplete()" title="Einheit abschließen">✓</button>
         </div>
         ` : `
-        <div style="display:flex;gap:8px;">
-          <button class="secondary" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
-          <button class="primary" onclick="enterEditMode()"><span style="font-size:16px;line-height:1;">✎</span> Editieren</button>
+        <div style="display:flex;gap:8px;flex:1;">
+          <button class="secondary" style="flex:1;" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
+          <button class="primary" style="flex:1;" onclick="enterEditMode()"><span style="font-size:16px;line-height:1;">✎</span> Editieren</button>
         </div>
         `}
         <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
@@ -307,10 +307,10 @@ function renderSession() {
   } else {
     html += `
       <div class="save-bar">
-        <div class="save-status" id="saveStatus">Auto-Save aktiv</div>
-        <div style="display:flex;gap:8px;">
-          <button class="secondary" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
-          <button class="primary" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
+        <div class="save-status" id="saveStatus" style="display:none;">Auto-Save aktiv</div>
+        <div style="display:flex;gap:8px;flex:1;">
+          <button class="secondary" style="flex:1;" onclick="markIncomplete()"><span style="font-size:18px;line-height:1;">↺</span> Zurücksetzen</button>
+          <button class="primary" style="flex:1;" onclick="markComplete()"><span style="font-size:20px;line-height:1;">✓</span> Einheit abschließen</button>
         </div>
       </div>
     `;
