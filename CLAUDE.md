@@ -80,6 +80,7 @@ You must strictly follow this interactive loop for EVERY change. Never bypass th
 - ONLY when the user explicitly states that everything works perfectly (e.g., "Keine Probleme", "Funktioniert", "Passt so", "Ready to commit"), you are authorized to commit.
 - Generate a clean, professional Conventional Commit message in the imperative mood (e.g., `feat: optimize exercise card transition performance` or `fix: resolve theme toggle layout shift`).
 - Execute the git commit automatically using your terminal capabilities.
+- **After every push**, read the current `APP_COMMIT` value from `js/supabase-client.js` and output it in the chat: `APP_COMMIT: <value>`
 
 ---
 
