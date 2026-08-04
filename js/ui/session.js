@@ -8,10 +8,19 @@ function renderSession() {
   const posIdx = effectiveDays.indexOf(state.selectedDay);
   const date = dates[posIdx >= 0 ? posIdx : 0];
   const dateKey = getDateKey(date);
+  const todayKey = getDateKey(new Date());
+  const isFuture = dateKey > todayKey;
   const plan = WEEK_PLAN[state.selectedDay];
 
-  state.todayData = loadWorkout(dateKey) || { date: dateKey, type: plan.type };
-  
+  if (state.editingPastDate === dateKey && state.editingPastData) {
+    state.todayData = state.editingPastData;
+  } else {
+    state.todayData = loadWorkout(dateKey) || { date: dateKey, type: plan.type };
+  }
+  const isPast = dateKey < todayKey;
+  const pastDayLocked = isPast && state.editingPastDate !== dateKey;
+  const editingPast = isPast && !pastDayLocked;
+
   const container = document.getElementById('sessionContent');
   
   // Session header — standalone for non-gym types, embedded in card for gym
@@ -79,7 +88,7 @@ function renderSession() {
       const exData = (state.todayData.exercises && state.todayData.exercises[ex.id]) || { sets: [] };
       const prevExData = (prevWeekWorkout && prevWeekWorkout.exercises && prevWeekWorkout.exercises[ex.id]) || { sets: [] };
       const isTimeBased = ex.target.includes('sec');
-      const notDone = !state.todayData.completed && !state.todayData.beingEdited;
+      const notDone = !state.todayData.completed && !state.todayData.beingEdited && !isFuture && !editingPast;
       const doneCount = (exData.sets || []).filter((s, i) => {
         if (!s) return false;
         const prev = (prevExData.sets && prevExData.sets[i]) || {};
@@ -108,8 +117,8 @@ function renderSession() {
             ${(() => {
               const isTimeBased = ex.target.includes('sec');
               let html = '';
-              const notCompleted = !state.todayData.completed && !state.todayData.beingEdited;
-              const isLocked = !!state.todayData.completed;
+              const notCompleted = !state.todayData.completed && !state.todayData.beingEdited && !isFuture && !editingPast;
+              const isLocked = !!state.todayData.completed || isFuture || pastDayLocked;
               const dis = isLocked ? 'disabled' : '';
               if (isTimeBased) {
                 html += '<div class="sets-grid header"><div>Satz</div><div colspan="2">Dauer (Sekunden)</div></div>';
@@ -150,7 +159,7 @@ function renderSession() {
     html += `
       <div style="padding: 16px;">
         <label style="font-size:13px;color:var(--text-mute);font-weight:500;display:block;margin-bottom:8px;">Notizen zur Einheit</label>
-        <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist..." ${state.todayData.completed ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
+        <textarea id="sessionNotes" placeholder="Wie war's? Energie, Form, was aufgefallen ist..." ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
         <div style="margin-top:12px;display:flex;justify-content:center;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Eintrag löschen</button>
         </div>
@@ -162,7 +171,7 @@ function renderSession() {
     const prevWeekWorkout = loadPreviousWeekWorkout(state.selectedDay);
     const prevRun = (prevWeekWorkout && prevWeekWorkout.run) || {};
 
-    const notCompletedRun = !state.todayData.completed && !state.todayData.beingEdited;
+    const notCompletedRun = !state.todayData.completed && !state.todayData.beingEdited && !isFuture && !editingPast;
     const getRunValue = (field) => {
       const val = r[field] || '';
       if (notCompletedRun && val && prevRun[field] && String(val) === String(prevRun[field])) return '';
@@ -177,11 +186,11 @@ function renderSession() {
       <div class="run-form" style="padding: 0 16px 16px;">
         <div class="run-field">
           <label>Distanz</label>
-          <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Gesamtzeit (mm:ss)</label>
-          <input type="text" placeholder="${getRunPlaceholder('time', 'z.B. 42:30')}" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="text" placeholder="${getRunPlaceholder('time', 'z.B. 42:30')}" data-run="time" value="${getRunValue('time')}" class="${isRunPrefilled('time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Pace (berechnet)</label>
@@ -189,15 +198,15 @@ function renderSession() {
         </div>
         <div class="run-field">
           <label>Ø Puls (Herzschläge/min)</label>
-          <input type="number" placeholder="${getRunPlaceholder('hr', 'Ziel: ' + plan.targetHR)}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="number" placeholder="${getRunPlaceholder('hr', 'Ziel: ' + plan.targetHR)}" inputmode="numeric" data-run="hr" value="${getRunValue('hr')}" class="${isRunPrefilled('hr') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Kalorien (kcal)</label>
-          <input type="number" placeholder="${getRunPlaceholder('kcal', 'kcal')}" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="number" placeholder="${getRunPlaceholder('kcal', 'kcal')}" inputmode="numeric" data-run="kcal" value="${getRunValue('kcal')}" class="${isRunPrefilled('kcal') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field">
           <label>Ø Kadenz (Schritte/min)</label>
-          <input type="number" placeholder="${getRunPlaceholder('cadence', 'Schritte/min')}" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="number" placeholder="${getRunPlaceholder('cadence', 'Schritte/min')}" inputmode="numeric" data-run="cadence" value="${getRunValue('cadence')}" class="${isRunPrefilled('cadence') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field run-field-full">
           <label>Schmerz-Level (0 = nichts, 10 = abbrechen)</label>
@@ -207,18 +216,18 @@ function renderSession() {
               const prevPainVal = prevRun.pain;
               const painStale = notCompletedRun && typeof painVal === 'number' && typeof prevPainVal === 'number' && painVal === prevPainVal;
               const activePain = painStale ? -1 : painVal;
-              const painDis = state.todayData.completed ? ' disabled' : '';
+              const painDis = (state.todayData.completed || isFuture || pastDayLocked) ? ' disabled' : '';
               return Array.from({length: 11}, (_, i) => '<button class="pain-btn pain-' + i + (activePain === i ? ' active' : '') + '"' + painDis + ' data-pain="' + i + '">' + i + '</button>').join('');
             })()}
           </div>
         </div>
         <div class="run-field run-field-full">
           <label>Wo / Was hat geschmerzt</label>
-          <input type="text" placeholder="${prevRun.painLocation ? prevRun.painLocation : 'z.B. linkes Knie außen, ab km 5'}" data-run="painLocation" value="${(() => { const v = r.painLocation || ''; return (notCompletedRun && v && prevRun.painLocation && v === prevRun.painLocation) ? '' : v; })()}" class="${(() => { const v = r.painLocation || ''; return (notCompletedRun && (!v || (prevRun.painLocation && v === prevRun.painLocation)) && prevRun.painLocation) ? 'prefilled' : ''; })()}" ${state.todayData.completed ? 'disabled' : ''}/>
+          <input type="text" placeholder="${prevRun.painLocation ? prevRun.painLocation : 'z.B. linkes Knie außen, ab km 5'}" data-run="painLocation" value="${(() => { const v = r.painLocation || ''; return (notCompletedRun && v && prevRun.painLocation && v === prevRun.painLocation) ? '' : v; })()}" class="${(() => { const v = r.painLocation || ''; return (notCompletedRun && (!v || (prevRun.painLocation && v === prevRun.painLocation)) && prevRun.painLocation) ? 'prefilled' : ''; })()}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
         </div>
         <div class="run-field run-field-full">
           <label>Notizen zum Lauf</label>
-          <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen..." ${state.todayData.completed ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
+          <textarea id="sessionNotes" placeholder="Wetter, Untergrund, Gefühl, Beobachtungen..." ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}>${state.todayData.notes || ''}</textarea>
         </div>
         <div style="margin-top:12px;display:flex;justify-content:center;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Lauf löschen</button>
@@ -228,20 +237,38 @@ function renderSession() {
     `;
   }
 
-  // Save bar — show warning banner if not viewing today, otherwise show normal controls
-  const today = new Date();
-  const todayIdx = DAYS.indexOf(getDayOfWeek(today));
+  // Save bar — future dates: warning only; past + today: full controls
+  const todayNav = new Date();
+  const todayIdxNav = DAYS.indexOf(getDayOfWeek(todayNav));
   const effectiveDaysSave = getEffectiveDays();
-  const todaySlotKey = effectiveDaysSave[todayIdx];
+  const todaySlotKey = effectiveDaysSave[todayIdxNav];
   const isViewingToday = state.weekOffset === 0 && state.selectedDay === todaySlotKey;
 
-  if (!isViewingToday) {
-    const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    const todayName = days[today.getDay()];
+  if (isFuture) {
     html += `
       <div class="save-bar back-to-today-bar">
-        <div class="back-to-today-left"><svg class="back-to-today-icon" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg><span class="back-to-today-label">Du siehst nicht den aktuellen Tag</span></div>
+        <div class="back-to-today-left"><svg class="back-to-today-icon" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg><span class="back-to-today-label">Zukünftiger Tag</span></div>
         <button class="back-to-today-btn" onclick="jumpToToday()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync</button>
+      </div>
+    `;
+  } else if (pastDayLocked) {
+    html += `
+      <div class="save-bar back-to-today-bar">
+        <div class="back-to-today-left"><svg class="back-to-today-icon" viewBox="0 0 24 24" fill="#FF453A" stroke="#fff" stroke-width="1.5"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="#fff" stroke="none"/></svg><span class="back-to-today-label">Nicht heute!</span></div>
+        <div style="display:flex;gap:8px;">
+          <button class="back-to-today-btn back-to-today-btn--sm" style="flex:none;" onclick="enterPastDayEdit()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Ändern</button>
+          <button class="back-to-today-btn back-to-today-btn--sm" style="flex:none;" onclick="jumpToToday()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sync</button>
+        </div>
+      </div>
+    `;
+  } else if (editingPast) {
+    html += `
+      <div class="save-bar back-to-today-bar">
+        <div style="display:flex;gap:6px;width:100%;">
+          <button class="back-to-today-btn back-to-today-btn--sm" onclick="resetPastDayValues()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.36"/></svg>Reset</button>
+          <button class="back-to-today-btn back-to-today-btn--sm" onclick="savePastDayEdit()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Speichern</button>
+          <button class="back-to-today-btn back-to-today-btn--sm back-to-today-btn--cancel" onclick="cancelPastDayEdit()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF453A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Abbrechen</button>
+        </div>
       </div>
     `;
   } else if (plan.type === 'gym') {
@@ -424,6 +451,7 @@ function updatePace() {
 
 function collectAndSave() {
   if (!state.todayData || state.readOnly || !state.dirty) return;
+  if (state.editingPastDate) return;
   const plan = WEEK_PLAN[state.selectedDay];
   if (!plan) return;
 
@@ -547,6 +575,63 @@ function showToast(message, type = 'success') {
   if ('vibrate' in navigator) navigator.vibrate(type === 'error' ? [100, 50, 100] : 30);
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function enterPastDayEdit() {
+  if (state.readOnly || !state.todayData) return;
+  state.editingPastDate = state.todayData.date;
+  state.editingPastData = JSON.parse(JSON.stringify(state.todayData));
+  renderSession();
+}
+
+function resetPastDayValues() {
+  if (!state.editingPastData) return;
+  state.editingPastData.exercises = {};
+  state.editingPastData.run = {};
+  state.editingPastData.notes = '';
+  renderSession();
+}
+
+function savePastDayEdit() {
+  if (!state.editingPastData) return;
+  const plan = WEEK_PLAN[state.selectedDay];
+  if (plan.type === 'gym') {
+    const exercises = {};
+    plan.exercises.forEach(ex => {
+      exercises[ex.id] = { sets: [] };
+      const isTimeBased = ex.target.includes('sec');
+      for (let i = 0; i < ex.sets; i++) {
+        if (isTimeBased) {
+          const d = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="duration"]`);
+          exercises[ex.id].sets.push({ duration: d ? d.value : '' });
+        } else {
+          const w = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="weight"]`);
+          const r = document.querySelector(`[data-ex="${ex.id}"][data-set="${i}"][data-field="reps"]`);
+          exercises[ex.id].sets.push({ weight: w ? w.value : '', reps: r ? r.value : '' });
+        }
+      }
+    });
+    state.editingPastData.exercises = exercises;
+  } else if (plan.type === 'run' || plan.type === 'long') {
+    const run = {};
+    document.querySelectorAll('[data-run]').forEach(el => { run[el.dataset.run] = el.value; });
+    const painActive = document.querySelector('.pain-btn.active');
+    if (painActive) run.pain = parseInt(painActive.dataset.pain, 10);
+    state.editingPastData.run = run;
+  }
+  const notes = document.getElementById('sessionNotes');
+  if (notes) state.editingPastData.notes = notes.value;
+  saveWorkout(state.editingPastData.date, state.editingPastData);
+  state.editingPastDate = null;
+  state.editingPastData = null;
+  renderSession();
+  renderWeekNav();
+}
+
+function cancelPastDayEdit() {
+  state.editingPastDate = null;
+  state.editingPastData = null;
+  renderSession();
 }
 
 function enterEditMode() {

@@ -92,6 +92,10 @@ async function init() {
 window.toggleExercise = toggleExercise;
 window.markComplete = markComplete;
 window.markIncomplete = markIncomplete;
+window.enterPastDayEdit = enterPastDayEdit;
+window.resetPastDayValues = resetPastDayValues;
+window.savePastDayEdit = savePastDayEdit;
+window.cancelPastDayEdit = cancelPastDayEdit;
 window.jumpToDate = jumpToDate;
 window.changeWeek = changeWeek;
 window.goToWeekOffset = goToWeekOffset;

@@ -69,7 +69,8 @@ You must strictly follow this interactive loop for EVERY change. Never bypass th
 - Do **NOT** create a commit yet.
 
 ### Step 2: Local Testing & Feedback Loop
-- Once the files are updated, stop and present a concise summary of what you changed (and why you built it that way as a senior dev).
+- Before asking the user to test, **check if the local server is running** by running `curl -s -o /dev/null -w "%{http_code}" http://localhost:8888/`. If the response is not `200`, start the server with `npx serve . -p 8888 &` (from the project root) and wait briefly before confirming it's up.
+- Once the files are updated and the server is confirmed running, stop and present a concise summary of what you changed (and why you built it that way as a senior dev).
 - Explicitly ask the user to **test the changes locally in their browser at this exact URL: http://localhost:8888/**
 - **CRITICAL:** Do NOT change this URL, do NOT suggest a different port, and do NOT use file-based paths. The local environment always runs on port 8888.
 - **Wait for user feedback.** 
