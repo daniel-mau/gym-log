@@ -285,6 +285,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const isBar = opts.type === 'bar';
   const labels = opts.labels || [];
   const hasLabels = labels.length > 0;
+  const isKWFormat = hasLabels && labels[0] && /^KW\d+$/.test(labels[0]);
+  const isWeeklyPills = isKWFormat && !isBar;
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const configs = {
@@ -346,8 +348,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   }
 
   const W = 400, H = 210;
-  const l = isRunVolumeCheck ? 10 : 24;
-  const r = isRunVolumeCheck ? 10 : 24;
+  const l = isWeeklyPills ? 10 : 24;
+  const r = isWeeklyPills ? 10 : 24;
   const t = 36;
   const b = hasLabels ? 44 : 24;
   const chartBottom = H - b;
@@ -373,7 +375,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
     return new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
   };
   let lineDates = null, lineFirstDate = null, lineTotalDays = 0;
-  if (!isBar && hasLabels && labels.length === n) {
+  if (!isBar && hasLabels && labels.length === n && !isWeeklyPills) {
     lineDates = labels.map(lbl => parseLabel(lbl));
     lineFirstDate = lineDates[0];
     const today = new Date(); today.setHours(0,0,0,0);
@@ -384,9 +386,8 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const allPts = numericValues.map((v, i) => {
     if (v === null || !isFinite(v)) return null;
     let x;
-    const isRunVolumeForPositioning = title === 'Laufvolumen';
-    if (isBar || isRunVolumeForPositioning) {
-      const slots = isRunVolumeForPositioning ? n : totalSlots;
+    if (isBar || isWeeklyPills) {
+      const slots = isWeeklyPills ? n : totalSlots;
       x = l + (i + 0.5) / slots * (W - l - r);
     } else if (lineDates) {
       const daysFromStart = Math.round((lineDates[i] - lineFirstDate)/(24*60*60*1000));
@@ -411,11 +412,10 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   function smoothPath(pts) {
     if (pts.length < 2) return '';
 
-    const isRunVolumeForPath = title === 'Laufvolumen';
     let startPt = pts[0];
     let endPt = pts[pts.length - 1];
 
-    if (isRunVolumeForPath) {
+    if (isWeeklyPills) {
       const pillW = Math.min(((W-l-r)/Math.max(n,1))*0.7, 50);
       const pillLeft = startPt.x - pillW / 2;
 
@@ -448,20 +448,20 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const isRunVolume = title === 'Laufvolumen';
   const gridGradId = `gridGrad_${title.replace(/\s/g,'')}_${Math.random().toString(36).slice(2,6)}`;
   const resolvedGridColor = getComputedStyle(document.documentElement).getPropertyValue('--text-mute').trim() || '#999';
-  const gridGradient = `<linearGradient id="${gridGradId}" x1="0" y1="${extendedTop}" x2="0" y2="${t}" gradientUnits="userSpaceOnUse">
+  const fadeStopPct = ((t - extendedTop) / (chartBottom - extendedTop) * 100).toFixed(1);
+  const gridGradient = `<linearGradient id="${gridGradId}" x1="0" y1="${extendedTop}" x2="0" y2="${chartBottom}" gradientUnits="userSpaceOnUse">
     <stop offset="0%" stop-color="${resolvedGridColor}" stop-opacity="0"/>
-    <stop offset="100%" stop-color="${resolvedGridColor}" stop-opacity="0.3"/>
+    <stop offset="${fadeStopPct}%" stop-color="${resolvedGridColor}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="${resolvedGridColor}" stop-opacity="1"/>
   </linearGradient>`;
 
   if (isBar && !isRunVolume) {
     gridLines = nonNull.map(p =>
-      `<line x1="${p.x.toFixed(1)}" y1="${extendedTop}" x2="${p.x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.8"/>
-       <line x1="${p.x.toFixed(1)}" y1="${t}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.4" stroke-width="0.8"/>`
+      `<line x1="${p.x.toFixed(1)}" y1="${extendedTop}" x2="${p.x.toFixed(1)}" y2="${chartBottom}" stroke="url(#${gridGradId})" opacity="0.25" stroke-width="0.8"/>`
     ).join('');
     for (let i = n; i < n+2; i++) {
       const x = l + (i+0.5)/totalSlots*(W-l-r);
-      gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.6"/>
-                    <line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.24" stroke-width="0.6"/>`;
+      gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="url(#${gridGradId})" opacity="0.15" stroke-width="0.6"/>`;
     }
   } else if (lineDates && lineTotalDays > 0) {
     // For KW labels, show the labels directly at all pill positions; for date labels, show every 2 days
@@ -485,8 +485,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
       for (let d = 0; d <= lineTotalDays; d++) {
         const x = l + (d/lineTotalDays)*(W-l-r);
-        gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${t}" stroke="url(#${gridGradId})" stroke-width="0.5"/>
-                      <line x1="${x.toFixed(1)}" y1="${t}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="${gridColor}" opacity="0.3" stroke-width="0.5"/>`;
+        gridLines += `<line x1="${x.toFixed(1)}" y1="${extendedTop}" x2="${x.toFixed(1)}" y2="${chartBottom}" stroke="url(#${gridGradId})" opacity="0.18" stroke-width="0.5"/>`;
         const distFromEnd = lineTotalDays - d;
         if (distFromEnd % labelStep === 0) {
           const date = new Date(lineFirstDate.getTime() + d*24*60*60*1000);
@@ -591,8 +590,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Gray background pills for line charts (Laufvolumen)
   let bgPillsEl = '';
-  const isRunVolumeForPills = title === 'Laufvolumen';
-  if (!isBar && isRunVolumeForPills && n >= 1) {
+  if (!isBar && isWeeklyPills && n >= 1) {
     const pillCount = n;
     const gap = (W - l - r) / pillCount;
     const pillW = Math.min(gap * 0.7, 50);
@@ -670,7 +668,16 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
       }
     }
   } else if (!isBar) {
-    labelEls = gridLabelEls;
+    if (gridLabelEls) {
+      labelEls = gridLabelEls;
+    } else if (hasLabels) {
+      labelEls = '';
+      for (let i = 0; i < n; i++) {
+        if (!labels[i]) continue;
+        const x = isWeeklyPills ? l + (i + 0.5) / n * (W - l - r) : l + (n === 1 ? (W-l-r)/2 : (i/(n-1))*(W-l-r));
+        labelEls += `<text x="${x.toFixed(1)}" y="${chartBottom+14}" font-size="10" fill="var(--text-mute)" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500">${labels[i]}</text>`;
+      }
+    }
   }
 
   // Avg badge (in HTML header)
@@ -681,21 +688,78 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const badgeBgOpacity = isDark ? 0.25 : 0.1;
   const iconBgOpacity = isDark ? 0.2 : 0.12;
 
-  // Build table rows from data (newest first)
+  // Build table rows — daily data grouped by week with per-week avg
+  const dailyValues = opts.dailyValues || null;
+  const dailyLabels = opts.dailyLabels || null;
+  const dailyFirstDate = opts.dailyFirstDate || null;
+
   const tableRows = [];
-  for (let i = numericValues.length - 1; i >= 0; i--) {
-    const v = numericValues[i];
-    if (v === null || isNaN(v)) continue;
-    const lbl = labels[i] || '';
-    const formatted = avgFormatter ? avgFormatter(v) : `${v.toFixed(1)} ${unit}`;
-    const prev = (() => { for (let j = i - 1; j >= 0; j--) { if (numericValues[j] !== null && !isNaN(numericValues[j])) return numericValues[j]; } return null; })();
-    let delta = '';
-    if (prev !== null) {
-      const diff = v - prev;
-      const sign = diff > 0 ? '+' : '';
-      delta = `<span class="sparkline-table-delta ${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${sign}${diff.toFixed(1)}</span>`;
+
+  const getKW = (dateStr) => {
+    const p = dateStr.split('.');
+    const d = new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const w1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+  };
+
+  if (dailyValues && dailyLabels && dailyFirstDate) {
+    // Group daily entries by ISO week, newest first
+    const byWeek = new Map();
+    for (let i = 0; i < dailyValues.length; i++) {
+      const v = dailyValues[i];
+      if (v === null || isNaN(v)) continue;
+      const lbl = dailyLabels[i];
+      if (!lbl) continue;
+      const kw = getKW(lbl);
+      if (!byWeek.has(kw)) byWeek.set(kw, []);
+      byWeek.get(kw).push({ lbl, v });
     }
-    tableRows.push(`<tr><td>${lbl}</td><td>${formatted}</td><td>${delta}</td></tr>`);
+    // Collect all entries chronologically for cross-week delta tracking
+    const allEntries = [];
+    const sortedWeeksAsc = [...byWeek.keys()].sort((a, b) => a - b);
+    for (const kw of sortedWeeksAsc) {
+      byWeek.get(kw).forEach(e => allEntries.push({ ...e, kw }));
+    }
+    const deltaMap = new Map();
+    for (let i = 0; i < allEntries.length; i++) {
+      const e = allEntries[i];
+      const key = `${e.kw}_${e.lbl}`;
+      if (i === 0) {
+        deltaMap.set(key, { diff: 0, first: true });
+      } else {
+        deltaMap.set(key, { diff: e.v - allEntries[i - 1].v, first: false });
+      }
+    }
+
+    const sortedWeeks = [...byWeek.keys()].sort((a, b) => b - a);
+    for (const kw of sortedWeeks) {
+      const entries = byWeek.get(kw);
+      const weekAvg = entries.reduce((s, e) => s + e.v, 0) / entries.length;
+      const avgFormatted = avgFormatter ? avgFormatter(weekAvg) : `${weekAvg.toFixed(1)} ${unit}`;
+      let rows = '';
+      for (let j = entries.length - 1; j >= 0; j--) {
+        const { lbl, v } = entries[j];
+        const formatted = avgFormatter ? avgFormatter(v) : `${v.toFixed(1)} ${unit}`;
+        const d = deltaMap.get(`${kw}_${lbl}`) || { diff: 0, first: true };
+        const diff = d.diff;
+        const cls = d.first ? 'neutral' : diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral';
+        const delta = `<span class="sl-delta ${cls}"><span class="sl-arrow-icon"></span>${Math.abs(diff).toFixed(1)}</span>`;
+        rows += `<div class="sl-row"><span class="sl-date">${lbl}</span><span class="sl-val">${formatted}</span>${delta}</div>`;
+      }
+      tableRows.push(`<div class="sl-section"><div class="sl-header"><span>KW${kw}</span><span>Ø ${avgFormatted}</span></div><div class="sl-group">${rows}</div></div>`);
+    }
+  } else {
+    // Fallback: weekly values (e.g. Laufvolumen)
+    let rows = '';
+    for (let i = numericValues.length - 1; i >= 0; i--) {
+      const v = numericValues[i];
+      if (v === null || isNaN(v)) continue;
+      const lbl = labels[i] || '';
+      const formatted = avgFormatter ? avgFormatter(v) : `${v.toFixed(1)} ${unit}`;
+      rows += `<div class="sl-row"><span class="sl-date">${lbl}</span><span class="sl-val">${formatted}</span></div>`;
+    }
+    if (rows) tableRows.push(`<div class="sl-group">${rows}</div>`);
   }
 
   const tableId = `table_${(title||'x').replace(/\s/g,'')}`;
@@ -721,10 +785,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
         ${labelEls}
       </svg>
       <div class="sparkline-table-wrap" id="${tableId}">
-        <table class="sparkline-table">
-          <thead><tr><th>Datum</th><th>Wert</th><th>Δ</th></tr></thead>
-          <tbody>${tableRows.join('')}</tbody>
-        </table>
+        <div class="sl-list">${tableRows.join('')}</div>
       </div>
     </div>
   `;

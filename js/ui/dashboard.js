@@ -266,6 +266,29 @@ function renderDashboard() {
       }
     }
 
+    // Aggregate daily arrays to weekly averages using the same 6-week window
+    const weeklyAvg = (dailyValues, dailyLabels) => {
+      const buckets = weeks.map(() => []);
+      for (let i = 0; i < dailyValues.length; i++) {
+        if (dailyValues[i] === null) continue;
+        const lbl = dailyLabels[i];
+        if (!lbl) continue;
+        const p = lbl.split('.');
+        if (p.length < 2 || !p[0] || !p[1]) continue;
+        const d = new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
+        const wk = getDateKey(getWeekStart(d));
+        const idx = weeks.indexOf(wk);
+        if (idx >= 0) buckets[idx].push(dailyValues[i]);
+      }
+      return buckets.map(b => b.length > 0 ? b.reduce((a, v) => a + v, 0) / b.length : null);
+    };
+
+    const weeklyPace = weeklyAvg(paceValues, paceLabels);
+    const weeklyCadence = weeklyAvg(cadenceValues, cadenceLabels);
+    const weeklyPain = weeklyAvg(painValues, painLabels);
+    const weeklyWeight = weeklyAvg(weightValues, weightLabels);
+    const weeklyFat = weeklyAvg(fatValues, fatLabels);
+
     const formatPace = v => {
       const mins = Math.floor(v);
       const secs = Math.round((v - mins) * 60);
@@ -280,11 +303,11 @@ function renderDashboard() {
     const fEl  = document.getElementById('fatStatSparkline');
 
     if (rvEl) rvEl.innerHTML = buildSparklineSVG(volumeValues, 'km', v => `${v.toFixed(1)} km`, 'Laufvolumen', { labels: volumeLabels });
-    if (paEl) paEl.innerHTML = buildSparklineSVG(paceValues, 'min/km', formatPace, 'Pace', { labels: paceLabels });
-    if (caEl) caEl.innerHTML = buildSparklineSVG(cadenceValues, 'spm', v => `${Math.round(v)} spm`, 'Kadenz', { labels: cadenceLabels });
-    if (piEl) piEl.innerHTML = buildSparklineSVG(painValues, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: painLabels });
-    if (wEl)  wEl.innerHTML  = buildSparklineSVG(weightValues, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: weightLabels });
-    if (fEl)  fEl.innerHTML  = buildSparklineSVG(fatValues, '%', v => `${v.toFixed(1)} %`, 'KFA', { labels: fatLabels });
+    if (paEl) paEl.innerHTML = buildSparklineSVG(weeklyPace, 'min/km', formatPace, 'Pace', { labels: volumeLabels, dailyValues: paceValues, dailyLabels: paceLabels, dailyFirstDate: paceDataDates[0] });
+    if (caEl) caEl.innerHTML = buildSparklineSVG(weeklyCadence, 'spm', v => `${Math.round(v)} spm`, 'Kadenz', { labels: volumeLabels, dailyValues: cadenceValues, dailyLabels: cadenceLabels, dailyFirstDate: cadenceDataDates[0] });
+    if (piEl) piEl.innerHTML = buildSparklineSVG(weeklyPain, '/10', v => `${v.toFixed(1)}/10`, 'Schmerz', { labels: volumeLabels, dailyValues: painValues, dailyLabels: painLabels, dailyFirstDate: painDataDates[0] });
+    if (wEl)  wEl.innerHTML  = buildSparklineSVG(weeklyWeight, 'kg', v => `${v.toFixed(1)} kg`, 'Gewicht', { labels: volumeLabels, dailyValues: weightValues, dailyLabels: weightLabels, dailyFirstDate: weightDataDates[0] });
+    if (fEl)  fEl.innerHTML  = buildSparklineSVG(weeklyFat, '%', v => `${v.toFixed(1)} %`, 'KFA', { labels: volumeLabels, dailyValues: fatValues, dailyLabels: fatLabels, dailyFirstDate: fatDataDates[0] });
 
     initChartCarousel();
 

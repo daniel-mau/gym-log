@@ -701,7 +701,7 @@ button.secondary:hover { opacity: 0.8; }
 }
 .chart-grid {
   display: flex;
-  gap: 0;
+  gap: 10px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -1226,47 +1226,58 @@ button.secondary:hover { opacity: 0.8; }
   overflow: hidden;
   transition: max-height 0.25s ease-out;
 }
-.sparkline-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  padding: 0 14px;
-}
-.sparkline-table thead th {
+.sl-list { padding: 4px 14px 14px; }
+.sl-section { margin-bottom: 10px; }
+.sl-section:last-child { margin-bottom: 0; }
+.sl-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 2px 4px;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-mute);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  padding: 8px 14px 6px;
-  text-align: left;
+}
+.sl-group {
+  background: var(--surface-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.sl-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
   border-bottom: 1px solid var(--surface-divider);
 }
-.sparkline-table thead th:last-child,
-.sparkline-table tbody td:last-child {
-  text-align: right;
-}
-.sparkline-table thead th:nth-child(2),
-.sparkline-table tbody td:nth-child(2) {
-  text-align: right;
-}
-.sparkline-table tbody tr {
-  border-bottom: 1px solid var(--surface-divider);
-}
-.sparkline-table tbody tr:last-child {
-  border-bottom: none;
-}
-.sparkline-table tbody td {
-  padding: 8px 14px;
-  color: var(--text);
+.sl-row:last-child { border-bottom: none; }
+.sl-date { color: var(--text); }
+.sl-val { margin-left: auto; color: var(--text); font-weight: 500; }
+.sl-delta {
+  font-size: 10px;
+  font-weight: 600;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
   font-variant-numeric: tabular-nums;
 }
-.sparkline-table-delta {
-  font-size: 11px;
-  font-weight: 600;
+.sl-arrow-icon {
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-bottom: 5px solid currentColor;
+  flex-shrink: 0;
 }
-.sparkline-table-delta.up { color: var(--success); }
-.sparkline-table-delta.down { color: var(--warn); }
+.sl-delta.down .sl-arrow-icon { transform: rotate(180deg); }
+.sl-delta.neutral .sl-arrow-icon { transform: rotate(90deg); }
+.sl-delta.up { color: var(--success); }
+.sl-delta.down { color: var(--warn); }
+.sl-delta.neutral { color: var(--text-mute); }
 .sparkline-stats {
   display: flex;
   justify-content: flex-end;
