@@ -208,7 +208,7 @@ function renderBodyMetricSparkline(metric) {
   const pathD = smoothPath(points);
 
   const gradId = `grad_${metric}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0" y1="${t}" x2="0" y2="${H-b}" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
   const fillPath = pathD + ` L${W-r},${H-b} L${l},${H-b} Z`;
 
   // Gridlines: normal from dataTop to bottom, fade zone from t to dataTop
@@ -439,7 +439,7 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   // Fill gradient in chart color
   const gradId = `grad_${(title||'x').replace(/\s/g,'')}_${Date.now()}`;
-  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
+  const fillGradient = `<defs><linearGradient id="${gradId}" x1="0" y1="${t}" x2="0" y2="${chartBottom}" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/><stop offset="100%" stop-color="${chartColor}" stop-opacity="0"/></linearGradient></defs>`;
 
   // Grid lines + labels with extended height and gradient fade at top
   let gridLines = '';
@@ -610,14 +610,12 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   if (!isBar && nonNull.length > 0) {
     const pathD = smoothPath(nonNull);
     if (nonNull.length > 1) {
-      const isRunVolumeForFill = title === 'Laufvolumen';
       let startPt = nonNull[0];
       let endPt = nonNull[nonNull.length - 1];
 
-      if (isRunVolumeForFill) {
+      if (isWeeklyPills) {
         const pillW = Math.min(((W-l-r)/Math.max(n,1))*0.7, 50);
         startPt = { x: startPt.x - pillW / 2, y: startPt.y };
-        // Do NOT extend endPt to right - keep it at the data point
       }
 
       fillEl = `<path d="${pathD} L${endPt.x.toFixed(1)},${chartBottom} L${startPt.x.toFixed(1)},${chartBottom} Z" fill="url(#${gradId})" stroke="none"/>`;
