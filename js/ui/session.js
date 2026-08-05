@@ -183,7 +183,7 @@ function renderSession() {
     html += `
       <div class="gym-session-card">
         ${sessionHeaderHtml}
-      <div class="run-form${plan.runType === 'tempo' ? ' run-form--stacked' : ''}" style="padding: 0 16px 16px;">
+      <div class="run-form${(plan.runType === 'tempo' || plan.runType === 'interval') ? ' run-form--stacked' : ''}" style="padding: 0 16px 16px;">
         ${plan.runType === 'tempo' ? `
         <div class="run-section-header run-section-header--first">Warm-up</div>
         <div class="run-field">
@@ -214,6 +214,65 @@ function renderSession() {
         <div class="run-field">
           <label>Puls (bpm)</label>
           <input type="number" placeholder="${getRunPlaceholder('tempo_hr', 'bpm')}" inputmode="numeric" data-run="tempo_hr" value="${getRunValue('tempo_hr')}" class="${isRunPrefilled('tempo_hr') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-section-header">Cool-Down</div>
+        <div class="run-field">
+          <label>Distanz (km)</label>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('cooldown_distance', 'km')}" inputmode="decimal" data-run="cooldown_distance" value="${getRunValue('cooldown_distance')}" class="${isRunPrefilled('cooldown_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Zeit (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('cooldown_time', 'z.B. 10:00')}" data-run="cooldown_time" value="${getRunValue('cooldown_time')}" class="${isRunPrefilled('cooldown_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Pace (berechnet)</label>
+          <div class="computed" id="computedCooldownPace">—</div>
+        </div>
+        <div class="run-section-header">Zusammenfassung</div>
+        ` : ''}
+        ${plan.runType === 'interval' ? `
+        <div class="run-section-header run-section-header--first">Warm-up</div>
+        <div class="run-field">
+          <label>Distanz (km)</label>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('warmup_distance', 'km')}" inputmode="decimal" data-run="warmup_distance" value="${getRunValue('warmup_distance')}" class="${isRunPrefilled('warmup_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Zeit (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('warmup_time', 'z.B. 10:00')}" data-run="warmup_time" value="${getRunValue('warmup_time')}" class="${isRunPrefilled('warmup_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Pace (berechnet)</label>
+          <div class="computed" id="computedWarmupPace">—</div>
+        </div>
+        <div class="run-section-header">Intervalltraining</div>
+        <div class="run-field">
+          <label>Intervall-Distanz (m)</label>
+          <input type="number" step="1" placeholder="${getRunPlaceholder('interval_distance', 'z.B. 400')}" inputmode="numeric" data-run="interval_distance" value="${getRunValue('interval_distance')}" class="${isRunPrefilled('interval_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Ø Zeit / Intervall (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('interval_avg_time', 'z.B. 1:45')}" data-run="interval_avg_time" value="${getRunValue('interval_avg_time')}" class="${isRunPrefilled('interval_avg_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Ø Puls / Intervall (bpm)</label>
+          <input type="number" placeholder="${getRunPlaceholder('interval_hr', 'bpm')}" inputmode="numeric" data-run="interval_hr" value="${getRunValue('interval_hr')}" class="${isRunPrefilled('interval_hr') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field run-field-full">
+          <label>Ø Pace / Intervall (berechnet)</label>
+          <div class="computed" id="computedIntervalPace">—</div>
+        </div>
+        <div class="run-field run-field-full">
+          <label>Anzahl Intervalle</label>
+          <div class="interval-count-scale">
+            ${(() => {
+              const countVal = r.interval_count;
+              const prevCountVal = prevRun.interval_count;
+              const countStale = notCompletedRun && typeof countVal === 'number' && typeof prevCountVal === 'number' && countVal === prevCountVal;
+              const activeCount = countStale ? -1 : countVal;
+              const dis = (state.todayData.completed || isFuture || pastDayLocked) ? ' disabled' : '';
+              return Array.from({length: 10}, (_, i) => '<button class="interval-count-btn interval-count-' + (i + 1) + (activeCount === (i + 1) ? ' active' : '') + '"' + dis + ' data-count="' + (i + 1) + '">' + (i + 1) + '</button>').join('');
+            })()}
+          </div>
         </div>
         <div class="run-section-header">Cool-Down</div>
         <div class="run-field">
@@ -409,14 +468,16 @@ function bindInputs() {
     el.addEventListener('input', onInputChange);
     el.addEventListener('blur', collectAndSave);
   });
-  document.querySelectorAll('.pain-btn').forEach(btn => {
+  const bindToggleBtns = cls => document.querySelectorAll(cls).forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(cls).forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       onInputChange();
       collectAndSave();
     });
   });
+  bindToggleBtns('.pain-btn');
+  bindToggleBtns('.interval-count-btn');
 }
 
 function updateExerciseCounters() {
@@ -507,6 +568,15 @@ function updatePace() {
   computeSegmentPace('warmup_distance', 'warmup_time', 'computedWarmupPace');
   computeSegmentPace('tempo_distance', 'tempo_time', 'computedTempoPace');
   computeSegmentPace('cooldown_distance', 'cooldown_time', 'computedCooldownPace');
+
+  const iDistInput = document.querySelector('[data-run="interval_distance"]');
+  const iTimeInput = document.querySelector('[data-run="interval_avg_time"]');
+  const iPacePanel = document.getElementById('computedIntervalPace');
+  if (iDistInput && iTimeInput && iPacePanel) {
+    const distKm = parseFloat(iDistInput.value) / 1000;
+    const time = parseTime(iTimeInput.value);
+    iPacePanel.textContent = (distKm && time) ? formatPace(time / distKm) : '—';
+  }
 }
 
 function collectAndSave() {
@@ -544,6 +614,8 @@ function collectAndSave() {
     });
     const painActive = document.querySelector('.pain-btn.active');
     if (painActive) run.pain = parseInt(painActive.dataset.pain, 10);
+    const intervalCountActive = document.querySelector('.interval-count-btn.active');
+    if (intervalCountActive) run.interval_count = parseInt(intervalCountActive.dataset.count, 10);
     state.todayData.run = run;
   }
 
@@ -677,6 +749,8 @@ function savePastDayEdit() {
     document.querySelectorAll('[data-run]').forEach(el => { run[el.dataset.run] = el.value; });
     const painActive = document.querySelector('.pain-btn.active');
     if (painActive) run.pain = parseInt(painActive.dataset.pain, 10);
+    const intervalCountActive = document.querySelector('.interval-count-btn.active');
+    if (intervalCountActive) run.interval_count = parseInt(intervalCountActive.dataset.count, 10);
     state.editingPastData.run = run;
   }
   const notes = document.getElementById('sessionNotes');

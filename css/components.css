@@ -510,6 +510,49 @@ button.pain-btn:disabled {
 }
 .run-section-header--first { border-top: none; margin-top: 0; }
 
+/* Interval count selector */
+.interval-count-scale {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+button.interval-count-btn {
+  background: var(--surface-input);
+  border: 1px solid var(--surface-input-border);
+  border-radius: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: var(--text) !important;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+button.interval-count-btn:hover { opacity: 0.8; }
+button.interval-count-btn.active {
+  color: white !important;
+  font-weight: 700;
+  transform: scale(1.05);
+}
+button.interval-count-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+button.interval-count-btn.interval-count-1.active,
+button.interval-count-btn.interval-count-2.active,
+button.interval-count-btn.interval-count-3.active { background: var(--success); }
+button.interval-count-btn.interval-count-4.active,
+button.interval-count-btn.interval-count-5.active,
+button.interval-count-btn.interval-count-6.active,
+button.interval-count-btn.interval-count-7.active { background: var(--warn); }
+button.interval-count-btn.interval-count-8.active,
+button.interval-count-btn.interval-count-9.active,
+button.interval-count-btn.interval-count-10.active { background: var(--error); }
+
 /* Pain scale */
 .pain-scale {
   display: grid;
