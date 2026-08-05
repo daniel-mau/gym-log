@@ -495,6 +495,20 @@ button.pain-btn:disabled {
   font-variant-numeric: tabular-nums;
 }
 .run-field-full { grid-column: span 2; }
+.run-form--stacked { grid-template-columns: 1fr; }
+.run-form--stacked .run-field-full { grid-column: 1; }
+.run-section-header {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  padding: 4px 0 2px;
+  border-top: 1px solid var(--surface-input-border);
+  margin-top: 4px;
+}
+.run-section-header--first { border-top: none; margin-top: 0; }
 
 /* Pain scale */
 .pain-scale {

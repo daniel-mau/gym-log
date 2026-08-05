@@ -183,7 +183,53 @@ function renderSession() {
     html += `
       <div class="gym-session-card">
         ${sessionHeaderHtml}
-      <div class="run-form" style="padding: 0 16px 16px;">
+      <div class="run-form${plan.runType === 'tempo' ? ' run-form--stacked' : ''}" style="padding: 0 16px 16px;">
+        ${plan.runType === 'tempo' ? `
+        <div class="run-section-header run-section-header--first">Warm-up</div>
+        <div class="run-field">
+          <label>Distanz (km)</label>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('warmup_distance', 'km')}" inputmode="decimal" data-run="warmup_distance" value="${getRunValue('warmup_distance')}" class="${isRunPrefilled('warmup_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Zeit (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('warmup_time', 'z.B. 10:00')}" data-run="warmup_time" value="${getRunValue('warmup_time')}" class="${isRunPrefilled('warmup_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Pace (berechnet)</label>
+          <div class="computed" id="computedWarmupPace">—</div>
+        </div>
+        <div class="run-section-header">Tempo-Lauf</div>
+        <div class="run-field">
+          <label>Distanz (km)</label>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('tempo_distance', 'km')}" inputmode="decimal" data-run="tempo_distance" value="${getRunValue('tempo_distance')}" class="${isRunPrefilled('tempo_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Zeit (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('tempo_time', 'z.B. 22:00')}" data-run="tempo_time" value="${getRunValue('tempo_time')}" class="${isRunPrefilled('tempo_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Pace (berechnet)</label>
+          <div class="computed" id="computedTempoPace">—</div>
+        </div>
+        <div class="run-field">
+          <label>Puls (bpm)</label>
+          <input type="number" placeholder="${getRunPlaceholder('tempo_hr', 'bpm')}" inputmode="numeric" data-run="tempo_hr" value="${getRunValue('tempo_hr')}" class="${isRunPrefilled('tempo_hr') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-section-header">Cool-Down</div>
+        <div class="run-field">
+          <label>Distanz (km)</label>
+          <input type="number" step="0.01" placeholder="${getRunPlaceholder('cooldown_distance', 'km')}" inputmode="decimal" data-run="cooldown_distance" value="${getRunValue('cooldown_distance')}" class="${isRunPrefilled('cooldown_distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Zeit (mm:ss)</label>
+          <input type="text" placeholder="${getRunPlaceholder('cooldown_time', 'z.B. 10:00')}" data-run="cooldown_time" value="${getRunValue('cooldown_time')}" class="${isRunPrefilled('cooldown_time') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
+        </div>
+        <div class="run-field">
+          <label>Pace (berechnet)</label>
+          <div class="computed" id="computedCooldownPace">—</div>
+        </div>
+        <div class="run-section-header">Zusammenfassung</div>
+        ` : ''}
         <div class="run-field">
           <label>Distanz</label>
           <input type="number" step="0.01" placeholder="${getRunPlaceholder('distance', plan.targetDistance)}" inputmode="decimal" data-run="distance" value="${getRunValue('distance')}" class="${isRunPrefilled('distance') ? 'prefilled' : ''}" ${(state.todayData.completed || isFuture || pastDayLocked) ? 'disabled' : ''}/>
@@ -443,15 +489,24 @@ function updatePace() {
   const distInput = document.querySelector('[data-run="distance"]');
   const timeInput = document.querySelector('[data-run="time"]');
   const pacePanel = document.getElementById('computedPace');
-  if (!distInput || !timeInput || !pacePanel) return;
-  
-  const dist = parseFloat(distInput.value);
-  const time = parseTime(timeInput.value);
-  if (dist && time) {
-    pacePanel.textContent = formatPace(time / dist);
-  } else {
-    pacePanel.textContent = '—';
+  if (distInput && timeInput && pacePanel) {
+    const dist = parseFloat(distInput.value);
+    const time = parseTime(timeInput.value);
+    pacePanel.textContent = (dist && time) ? formatPace(time / dist) : '—';
   }
+
+  const computeSegmentPace = (distKey, timeKey, panelId) => {
+    const d = document.querySelector(`[data-run="${distKey}"]`);
+    const t = document.querySelector(`[data-run="${timeKey}"]`);
+    const p = document.getElementById(panelId);
+    if (!d || !t || !p) return;
+    const dist = parseFloat(d.value);
+    const time = parseTime(t.value);
+    p.textContent = (dist && time) ? formatPace(time / dist) : '—';
+  };
+  computeSegmentPace('warmup_distance', 'warmup_time', 'computedWarmupPace');
+  computeSegmentPace('tempo_distance', 'tempo_time', 'computedTempoPace');
+  computeSegmentPace('cooldown_distance', 'cooldown_time', 'computedCooldownPace');
 }
 
 function collectAndSave() {
