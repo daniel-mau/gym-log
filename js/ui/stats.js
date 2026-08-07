@@ -71,13 +71,13 @@ function renderStats() {
 
         // Activity Rings style (concentric arcs)
         const cx = 100;
-        const cy = 92;
+        const cy = 100;
 
         // Outer ring (6 weeks) - thick, bright
-        const outerR = 76;
+        const outerR = 82;
         const outerWidth = 18;
         // Inner ring (total) - same width
-        const innerR = 52;
+        const innerR = 58;
         const innerWidth = 18;
 
         const outerFillAngle = (sixWeekProgress / 100) * 180;
@@ -128,7 +128,7 @@ function renderStats() {
           '<div class="stat-label">Gewichtsverlust</div>' +
           '<div style="display:flex;flex-direction:column;flex:1;gap:8px;">' +
             '<div style="position:relative;flex:1;">' +
-              '<svg width="100%" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet" style="display:block;height:100%;">' +
+              '<svg width="100%" viewBox="0 -10 200 120" preserveAspectRatio="xMidYMid meet" style="display:block;height:100%;">' +
                 segmentsSvg +
               '</svg>' +
               '<div class="stat-value" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);white-space:nowrap;line-height:1;font-size:24px;">' +
