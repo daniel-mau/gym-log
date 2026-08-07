@@ -359,20 +359,22 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
   const n = numericValues.length;
   const totalSlots = isBar ? n + 2 : n;
 
+  // Derive context year from dailyFirstDate if available, else use current year
+  const contextYear = opts.dailyFirstDate ? parseInt(opts.dailyFirstDate.split('-')[0]) : new Date().getFullYear();
+
   const parseLabel = (lbl) => {
     // Week number format: "23", "24" or "KW23", "KW24" etc. Map to approximate date (Monday of that week)
     const kwMatch = lbl.match(/^(?:KW)?(\d+)$/);
     if (kwMatch) {
       const week = parseInt(kwMatch[1]);
-      const year = 2026;
-      const d = new Date(year, 0, 4);
+      const d = new Date(contextYear, 0, 4);
       d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
       const monday = new Date(d.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
       return monday;
     }
     // Day.Month format: "15.06."
     const p = lbl.split('.');
-    return new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
+    return new Date(contextYear, parseInt(p[1]) - 1, parseInt(p[0]));
   };
   let lineDates = null, lineFirstDate = null, lineTotalDays = 0;
   if (!isBar && hasLabels && labels.length === n && !isWeeklyPills) {
@@ -685,7 +687,9 @@ function buildSparklineSVG(numericValues, unit, avgFormatter, title, opts) {
 
   const getKW = (dateStr) => {
     const p = dateStr.split('.');
-    const d = new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
+    // Use contextYear from dailyFirstDate if available
+    const year = dailyFirstDate ? parseInt(dailyFirstDate.split('-')[0]) : new Date().getFullYear();
+    const d = new Date(year, parseInt(p[1]) - 1, parseInt(p[0]));
     d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
     const w1 = new Date(d.getFullYear(), 0, 4);
     return 1 + Math.round(((d - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);

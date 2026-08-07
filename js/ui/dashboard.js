@@ -134,12 +134,10 @@ function renderDashboard() {
     if (paceDataDates.length > 0) {
       const firstDate = new Date(paceDataDates[0]);
       firstDate.setHours(0, 0, 0, 0);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
 
-      for (let i = 0; i <= daysDiff; i++) {
-        const d = new Date(firstDate);
-        d.setDate(firstDate.getDate() + i);
+      for (let d = new Date(firstDate); d <= today; d.setDate(d.getDate() + 1)) {
         const wo = workoutMap[getDateKey(d)];
         const label = `${d.getDate()}.${d.getMonth()+1}.`;
         if (wo && (wo.type === 'run' || wo.type === 'long')) {
@@ -168,12 +166,10 @@ function renderDashboard() {
     if (cadenceDataDates.length > 0) {
       const firstDate = new Date(cadenceDataDates[0]);
       firstDate.setHours(0, 0, 0, 0);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
 
-      for (let i = 0; i <= daysDiff; i++) {
-        const d = new Date(firstDate);
-        d.setDate(firstDate.getDate() + i);
+      for (let d = new Date(firstDate); d <= today; d.setDate(d.getDate() + 1)) {
         const wo = workoutMap[getDateKey(d)];
         const label = `${d.getDate()}.${d.getMonth()+1}.`;
         if (wo && (wo.type === 'run' || wo.type === 'long')) {
@@ -195,12 +191,10 @@ function renderDashboard() {
     if (painDataDates.length > 0) {
       const firstDate = new Date(painDataDates[0]);
       firstDate.setHours(0, 0, 0, 0);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
 
-      for (let i = 0; i <= daysDiff; i++) {
-        const d = new Date(firstDate);
-        d.setDate(firstDate.getDate() + i);
+      for (let d = new Date(firstDate); d <= today; d.setDate(d.getDate() + 1)) {
         const wo = workoutMap[getDateKey(d)];
         const label = `${d.getDate()}.${d.getMonth()+1}.`;
         if (wo && wo.run && typeof wo.run.pain === 'number') {
@@ -233,12 +227,10 @@ function renderDashboard() {
     if (weightDataDates.length > 0) {
       const firstDate = new Date(weightDataDates[0]);
       firstDate.setHours(0, 0, 0, 0);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
 
-      for (let i = 0; i <= daysDiff; i++) {
-        const d = new Date(firstDate);
-        d.setDate(firstDate.getDate() + i);
+      for (let d = new Date(firstDate); d <= today; d.setDate(d.getDate() + 1)) {
         const dateKey = getDateKey(d);
         const label = `${d.getDate()}.${d.getMonth()+1}.`;
         const metrics = metricsMap[dateKey];
@@ -251,12 +243,10 @@ function renderDashboard() {
     if (fatDataDates.length > 0) {
       const firstDate = new Date(fatDataDates[0]);
       firstDate.setHours(0, 0, 0, 0);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const daysDiff = Math.floor((today - firstDate) / (24 * 60 * 60 * 1000));
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
 
-      for (let i = 0; i <= daysDiff; i++) {
-        const d = new Date(firstDate);
-        d.setDate(firstDate.getDate() + i);
+      for (let d = new Date(firstDate); d <= today; d.setDate(d.getDate() + 1)) {
         const dateKey = getDateKey(d);
         const label = `${d.getDate()}.${d.getMonth()+1}.`;
         const metrics = metricsMap[dateKey];
@@ -267,15 +257,17 @@ function renderDashboard() {
     }
 
     // Aggregate daily arrays to weekly averages using the same 6-week window
-    const weeklyAvg = (dailyValues, dailyLabels) => {
+    const weeklyAvg = (dailyValues, dailyLabels, firstDateStr) => {
       const buckets = weeks.map(() => []);
+      // Derive year from firstDateStr (format: "YYYY-MM-DD")
+      const contextYear = firstDateStr ? parseInt(firstDateStr.split('-')[0]) : new Date().getFullYear();
       for (let i = 0; i < dailyValues.length; i++) {
         if (dailyValues[i] === null) continue;
         const lbl = dailyLabels[i];
         if (!lbl) continue;
         const p = lbl.split('.');
         if (p.length < 2 || !p[0] || !p[1]) continue;
-        const d = new Date(2026, parseInt(p[1]) - 1, parseInt(p[0]));
+        const d = new Date(contextYear, parseInt(p[1]) - 1, parseInt(p[0]));
         const wk = getDateKey(getWeekStart(d));
         const idx = weeks.indexOf(wk);
         if (idx >= 0) buckets[idx].push(dailyValues[i]);
@@ -283,11 +275,11 @@ function renderDashboard() {
       return buckets.map(b => b.length > 0 ? b.reduce((a, v) => a + v, 0) / b.length : null);
     };
 
-    const weeklyPace = weeklyAvg(paceValues, paceLabels);
-    const weeklyCadence = weeklyAvg(cadenceValues, cadenceLabels);
-    const weeklyPain = weeklyAvg(painValues, painLabels);
-    const weeklyWeight = weeklyAvg(weightValues, weightLabels);
-    const weeklyFat = weeklyAvg(fatValues, fatLabels);
+    const weeklyPace = weeklyAvg(paceValues, paceLabels, paceDataDates[0]);
+    const weeklyCadence = weeklyAvg(cadenceValues, cadenceLabels, cadenceDataDates[0]);
+    const weeklyPain = weeklyAvg(painValues, painLabels, painDataDates[0]);
+    const weeklyWeight = weeklyAvg(weightValues, weightLabels, weightDataDates[0]);
+    const weeklyFat = weeklyAvg(fatValues, fatLabels, fatDataDates[0]);
 
     const formatPace = v => {
       const mins = Math.floor(v);
