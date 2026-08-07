@@ -1,9 +1,9 @@
 // ============================================================
-// TRAININGSPLAN-DEFINITION & ÜBUNGS-BILDER
+// SESSION POOL — wiederverwendbare Trainings-Templates
 // ============================================================
 
-const WEEK_PLAN = {
-  mon: {
+const SESSIONS = {
+  shoulder_pull: {
     type: 'gym',
     name: 'Schultern & Zug',
     subtitle: '5/3/1-Welle Schulterdrücken · Druck & Zug Assistenzübungen · Knie-Stabilisierung',
@@ -17,29 +17,20 @@ const WEEK_PLAN = {
       { id: 'wall_sit', name: 'Wandsitz', target: '3 × 45 sec · 90s Pause', sets: 3, detail: 'Rücken an einer Wand, Knie sind etwa 60 Grad gebeugt. Aktiv mit den Fersen nach unten in den Boden drücken, Knie leicht nach außen. Dies ist eine statische Halteübung zur Stabilisierung der Kniestrecker.' }
     ]
   },
-  tue: {
-    type: 'run',
-    name: 'Easy Run',
-    subtitle: '5–6 km · Tempo nach Puls · max. 135 Herzschläge/min',
-    runType: 'easy',
-    targetDistance: 5.5,
-    targetPace: '7:45-8:15',
-    targetHR: '130-135'
-  },
-  wed: {
+  back_deadlift: {
     type: 'gym',
     name: 'Rücken & Trap Bar Deadlift',
     subtitle: '5/3/1-Welle Trap Bar Deadlift · Rückseite Muskelkette · Bizeps-Fokus',
     exercises: [
       { id: 'trap_bar_deadlift', name: 'Trap Bar Deadlift', target: '5/3/1-Welle · Hauptlift', sets: 3, detail: 'Hauptlift. In die Mitte der Trap Bar stellen, neutraler Griff an den seitlichen Griffen, Hüfte nach hinten, Brust raus, Rücken neutral halten und mit den Beinen hochdrücken. Aufrechter Oberkörper schont den unteren Rücken.' },
       { id: 'db_rows', name: 'Kurzhantel-Ruderungen einarmig', target: '4 × 10–12 pro Seite · 90s', sets: 4, detail: 'Eine Hand auf einer Bank abstützen, anderes Bein nach vorne. Kurzhantel zum Hüftbereich hochziehen, dabei das Schulterblatt zusammenziehen. Dies ist die Hauptzugsübung des Trainings.' },
-      { id: 'back_extension', name: 'Rückenstrecker-Maschine 45°', target: '3 × 12–15 · 60s Pause', sets: 3, detail: 'Mit der Hüfte auf dem Polster, kontrolliert nach vorne hängen, dann durch Rückenstrecker-Kontraction wieder hochkommen. Die Wirbelsäule bleibt dabei neutral. Optional eine Hantelscheibe vor der Brust halten für mehr Gewicht.' },
+      { id: 'back_extension', name: 'Rückenstrecker-Maschine 45°', target: '3 × 12–15 · 60s Pause', sets: 3, detail: 'Mit der Hüfte auf dem Polster, kontrolliert nach vorne hängen, dann durch Rückenstrecker-Contraction wieder hochkommen. Die Wirbelsäule bleibt dabei neutral. Optional eine Hantelscheibe vor der Brust halten für mehr Gewicht.' },
       { id: 'hip_abduction', name: 'Kabel-Hüftabduktion stehend', target: '3 × 12 pro Seite · 60s', sets: 3, detail: 'Manschette am Knöchel, Bein kontrolliert seitlich weg gegen den Kabelwiderstand. Das Stützbein bleibt leicht gebeugt. Diese Übung aktiviert den äußeren Gesäßmuskel, der für Hüftstabilität wichtig ist.' },
       { id: 'bicep_curl', name: 'Bizeps-Curls Langhantel', target: '3 × 10 · 60s Pause', sets: 3, detail: 'Ellbogen fixiert am Körper, kein Schwung aus dem Rücken. Volle Streckung unten, volle Beugung oben.' },
       { id: 'side_plank', name: 'Seitstütz mit Hüfthub', target: '2 × 8 pro Seite · 60s', sets: 2, detail: 'Seitlich gestützt (Unterarm oder Hand auf dem Boden), Hüfte ab und hoch. Diese Übung aktiviert den äußeren Gesäßmuskel isoliert. Beim Hochdrücken der Hüfte Spannung in den Hüftmuskeln halten.' }
     ]
   },
-  thu: {
+  chest_press: {
     type: 'gym',
     name: 'Brust & Druck',
     subtitle: '5/3/1-Welle Bankdrücken · Druck Assistenzübungen · Beine knieschonend',
@@ -52,16 +43,16 @@ const WEEK_PLAN = {
       { id: 'calf_raise', name: 'Wadenheben stehend', target: '3 × 15 · 60s Pause', sets: 3, detail: 'An einer Maschine oder mit Kurzhanteln auf einer Stufe. Vollständig auf die Zehenspitzen hochkommen oben, kurze Pause halten, kontrolliert wieder absenken. Diese Übung ist wichtig für Lauf-Effizienz und schützt die Achillessehne.' }
     ]
   },
-  fri: {
+  easy_run: {
     type: 'run',
     name: 'Easy Run',
-    subtitle: '5–7 km · optional Kadenz-Blöcke 3 × 1 min @ 160 Schritte/min',
+    subtitle: '5–6 km · Tempo nach Puls · max. 135 Herzschläge/min',
     runType: 'easy',
-    targetDistance: 6,
+    targetDistance: 5.5,
     targetPace: '7:45-8:15',
     targetHR: '130-135'
   },
-  sat: {
+  long_run: {
     type: 'long',
     name: 'Long Run',
     subtitle: '10 km · Wiederholung · 2× still = Steigerung möglich',
@@ -70,12 +61,7 @@ const WEEK_PLAN = {
     targetPace: '7:45-8:30',
     targetHR: '130-140'
   },
-  sun: {
-    type: 'rest',
-    name: 'Ruhe',
-    subtitle: 'Spaziergang · Mobility · Stretching · sonst nichts',
-  },
-  interval: {
+  interval_run: {
     type: 'run',
     name: 'Intervalltraining',
     subtitle: '8–10× 400m @ 5K-Tempo · Pause = Intervalldauer',
@@ -84,7 +70,7 @@ const WEEK_PLAN = {
     targetPace: 'variabel',
     targetHR: '160-175'
   },
-  tempo: {
+  tempo_run: {
     type: 'run',
     name: 'Templauf',
     subtitle: '20–25 min comfortably hard · knapp unter Schwellentempo',
@@ -92,7 +78,29 @@ const WEEK_PLAN = {
     targetDistance: 5,
     targetPace: '5:30-6:00',
     targetHR: '155-165'
+  },
+  rest_day: {
+    type: 'rest',
+    name: 'Ruhe',
+    subtitle: 'Spaziergang · Mobility · Stretching · sonst nichts'
   }
+};
+
+// ============================================================
+// WEEKLY SCHEDULE — Wochenplan mit morning/evening slots
+// ============================================================
+
+const WEEK_PLAN = {
+  mon: { morning: 'easy_run', evening: 'chest_press' },
+  tue: { evening: 'back_deadlift' },
+  wed: { evening: 'interval_run' },
+  thu: { rest: true },  // Ruhetag
+  fri: { evening: 'shoulder_pull' },
+  sat: { morning: 'long_run' },
+  sun: { rest: true },  // Ruhetag
+  // Ersatzbank — einzelne Sessions
+  easy_run_bench: { evening: 'easy_run' },
+  chest_press_bench: { evening: 'chest_press' }
 };
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -132,4 +140,40 @@ function exerciseImageHTML(exId, exName) {
   }
   return `<img src="${IMG_BASE}${path}" alt="${exName}" loading="lazy"
     onerror="this.outerHTML='<div class=\\'exercise-icon-fallback\\'>${initials}</div>'" />`;
+}
+
+// ============================================================
+// HELPER — Session-Lookup mit morning/evening Support
+// ============================================================
+
+function getSessionsForDay(dayKey) {
+  const schedule = WEEK_PLAN[dayKey];
+  if (!schedule) return [{ timeOfDay: null, session: SESSIONS.rest_day }];
+
+  // Explizite Ruhetage
+  if (schedule.rest) {
+    return [{ timeOfDay: null, session: SESSIONS.rest_day }];
+  }
+
+  const sessions = [];
+  if (schedule.morning) {
+    sessions.push({ timeOfDay: 'morning', session: SESSIONS[schedule.morning] });
+  }
+  if (schedule.evening) {
+    sessions.push({ timeOfDay: 'evening', session: SESSIONS[schedule.evening] });
+  }
+
+  // Wenn keine Sessions definiert sind, ist es ein Ruhetag
+  if (sessions.length === 0) {
+    sessions.push({ timeOfDay: null, session: SESSIONS.rest_day });
+  }
+
+  return sessions;
+}
+
+function getPrimarySessionForDay(dayKey) {
+  const sessions = getSessionsForDay(dayKey);
+  // Abendeinheit hat Priorität (oder erste Session)
+  const primary = sessions.find(s => s.timeOfDay === 'evening') || sessions[0];
+  return primary ? primary.session : SESSIONS.rest_day;
 }

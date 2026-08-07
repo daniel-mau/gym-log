@@ -41,6 +41,12 @@
 .badge-run { background: rgba(0, 122, 255, 0.12); color: var(--run); }
 .badge-long { background: rgba(255, 149, 0, 0.12); color: var(--long); }
 .badge-rest { background: rgba(142, 142, 147, 0.12); color: var(--text-mute); }
+.badge-multi { background: rgba(191, 90, 242, 0.12); color: #BF5AF2; }
+
+/* Morning Session Container */
+.morning-session-container {
+  margin-bottom: 24px;
+}
 
 .gym-session-card {
   background: var(--bg-card);

@@ -181,17 +181,34 @@ function renderWeekEditorList() {
   const gripSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg>';
 
   days.forEach((dayKey, idx) => {
-    const plan = WEEK_PLAN[dayKey];
+    const sessions = getSessionsForDay(dayKey);
+    const primarySession = getPrimarySessionForDay(dayKey);
     const slotDay = DAYS[idx] || DAYS[DAYS.length - 1];
 
     const row = document.createElement('div');
     row.className = 'we-ios-row';
     row.dataset.day = dayKey;
 
+    // Multi-Session Badge
+    let badgeHtml = '';
+    if (sessions.length > 1) {
+      const labels = sessions.map(s => {
+        const t = s.session.type;
+        return DAY_TYPE_LABELS[t] || t;
+      });
+      badgeHtml = `<span class="session-badge badge-multi">${labels.join(' + ')}</span>`;
+    } else {
+      const t = primarySession.type;
+      badgeHtml = `<span class="session-badge badge-${t}">${DAY_TYPE_LABELS[t] || t}</span>`;
+    }
+
+    // Title zeigt alle Sessions
+    let titleHtml = sessions.map(s => s.session.name).join(' + ');
+
     row.innerHTML = `
       <span class="we-ios-day">${DAY_LABELS[slotDay]}</span>
-      <span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type] || plan.type}</span>
-      <span class="we-ios-title">${plan.name}</span>
+      ${badgeHtml}
+      <span class="we-ios-title">${titleHtml}</span>
       <span class="we-ios-grip drag-handle">${gripSvg}</span>
     `;
     group.appendChild(row);
@@ -204,16 +221,31 @@ function renderWeekEditorList() {
     group.appendChild(divider);
 
     benchKeys.forEach((dayKey) => {
-      const plan = WEEK_PLAN[dayKey];
+      const sessions = getSessionsForDay(dayKey);
+      const primarySession = getPrimarySessionForDay(dayKey);
 
       const row = document.createElement('div');
       row.className = 'we-ios-row we-bench';
       row.dataset.day = dayKey;
 
+      let badgeHtml = '';
+      if (sessions.length > 1) {
+        const labels = sessions.map(s => {
+          const t = s.session.type;
+          return DAY_TYPE_LABELS[t] || t;
+        });
+        badgeHtml = `<span class="session-badge badge-multi">${labels.join(' + ')}</span>`;
+      } else {
+        const t = primarySession.type;
+        badgeHtml = `<span class="session-badge badge-${t}">${DAY_TYPE_LABELS[t] || t}</span>`;
+      }
+
+      let titleHtml = sessions.map(s => s.session.name).join(' + ');
+
       row.innerHTML = `
         <span class="we-ios-day"></span>
-        <span class="session-badge badge-${plan.type}">${DAY_TYPE_LABELS[plan.type] || plan.type}</span>
-        <span class="we-ios-title">${plan.name}</span>
+        ${badgeHtml}
+        <span class="we-ios-title">${titleHtml}</span>
         <span class="we-ios-grip drag-handle">${gripSvg}</span>
       `;
       group.appendChild(row);
@@ -371,12 +403,13 @@ function renderWeekNav() {
     const dayKey = effectiveDays[i];
     const date = dates[i];
     const dateKey = getDateKey(date);
-    const plan = WEEK_PLAN[dayKey];
+    const sessions = getSessionsForDay(dayKey);
+    const primarySession = getPrimarySessionForDay(dayKey);
     const isSelected = dayKey === state.selectedDay;
     const wo = loadWorkout(dateKey);
     const isFuture = dateKey > todayKey;
     const isPast = dateKey < todayKey;
-    const isDone = (wo && wo.completed) || (plan.type === 'rest' && !isFuture);
+    const isDone = (wo && wo.completed) || (primarySession.type === 'rest' && !isFuture);
     const isToday = dateKey === todayKey;
 
     const btn = document.createElement('button');
@@ -396,8 +429,18 @@ function renderWeekNav() {
       statusIcon = '×';
     }
 
-    let typeLabel = plan.type === 'gym' ? 'Gym' : plan.type === 'run' || plan.type === 'long' ? 'Lauf' : plan.type;
-    if (typeLabel === 'rest') typeLabel = 'Ruhe';
+    // Type label zeigt Mehrfach-Sessions
+    let typeLabel = '';
+    if (sessions.length > 1) {
+      const labels = sessions.map(s => {
+        const t = s.session.type;
+        return t === 'gym' ? 'Gym' : t === 'run' || t === 'long' ? 'Lauf' : t === 'rest' ? 'Ruhe' : t;
+      });
+      typeLabel = labels.join(' + ');
+    } else {
+      const t = primarySession.type;
+      typeLabel = t === 'gym' ? 'Gym' : t === 'run' || t === 'long' ? 'Lauf' : t === 'rest' ? 'Ruhe' : t;
+    }
 
     const dayNumber = String(date.getDate()).padStart(2, '0');
     const positionDayKey = DAYS[i] || dayKey;

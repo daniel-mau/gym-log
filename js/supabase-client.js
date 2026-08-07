@@ -2,7 +2,7 @@
 // SUPABASE SETUP
 // ============================================================
 
-const APP_COMMIT = '2026-08-07 14:11';
+const APP_COMMIT = '2026-08-07 17:54';
 
 const SUPABASE_URL = 'https://ulhlpnqqdgrphoqgqavl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsaGxwbnFxZGdycGhvcWdxYXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMDg1NzEsImV4cCI6MjA5NTg4NDU3MX0.jE5b7SQjPEO6uupySgltbYFdh9FBM5ZTgpUfKHD7kYE';
