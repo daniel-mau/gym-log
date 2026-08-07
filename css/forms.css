@@ -1,0 +1,325 @@
+/* Forms — inputs, scales, buttons */
+input[type="number"], input[type="text"], textarea {
+  background: var(--surface-input);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--surface-input-border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 17px;
+  width: 100%;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+input[type="number"]:focus, input[type="text"]:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+input[type="number"].prefilled, input[type="text"].prefilled {
+  background: rgba(128, 128, 128, 0.08);
+  border-color: rgba(128, 128, 128, 0.15);
+}
+input[type="number"].prefilled::placeholder, input[type="text"].prefilled::placeholder {
+  color: var(--text-mute);
+  opacity: 1;
+}
+input[type="number"].prefilled:focus, input[type="text"].prefilled:focus {
+  background: var(--surface-input);
+  border-color: var(--accent);
+}
+input[type="number"]:disabled, input[type="text"]:disabled, textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+button.pain-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+textarea { resize: vertical; min-height: 60px; font-family: inherit; font-size: 17px; }
+
+.run-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.run-field { display: flex; flex-direction: column; gap: 6px; }
+.run-field label {
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--text-mute);
+  font-weight: 500;
+}
+.run-field .computed {
+  background: var(--surface-input);
+  border: 1px solid var(--surface-input-border);
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 17px;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.run-field-full { grid-column: span 2; }
+.run-form--stacked { grid-template-columns: 1fr; }
+.run-form--stacked .run-field-full { grid-column: 1; }
+.run-section-header {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  padding: 4px 0 2px;
+  border-top: 1px solid var(--surface-input-border);
+  margin-top: 4px;
+}
+.run-section-header--first { border-top: none; margin-top: 0; }
+
+.interval-count-scale {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+button.interval-count-btn {
+  background: var(--surface-input);
+  border: 1px solid var(--surface-input-border);
+  border-radius: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: var(--text) !important;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+button.interval-count-btn:hover { opacity: 0.8; }
+button.interval-count-btn.active {
+  color: white !important;
+  font-weight: 700;
+  transform: scale(1.05);
+}
+button.interval-count-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+button.interval-count-btn.interval-count-1.active,
+button.interval-count-btn.interval-count-2.active,
+button.interval-count-btn.interval-count-3.active { background: var(--success); }
+button.interval-count-btn.interval-count-4.active,
+button.interval-count-btn.interval-count-5.active,
+button.interval-count-btn.interval-count-6.active,
+button.interval-count-btn.interval-count-7.active { background: var(--warn); }
+button.interval-count-btn.interval-count-8.active,
+button.interval-count-btn.interval-count-9.active,
+button.interval-count-btn.interval-count-10.active { background: var(--error); }
+
+.pain-scale {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+.pain-btn {
+  background: var(--surface-input);
+  border: 1px solid var(--surface-input-border);
+  border-radius: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.pain-btn:hover { opacity: 0.8; }
+.pain-btn.active {
+  color: white;
+  font-weight: 700;
+  transform: scale(1.05);
+}
+.pain-btn.pain-0.active { background: var(--success); }
+.pain-btn.pain-1.active, .pain-btn.pain-2.active, .pain-btn.pain-3.active {
+  background: var(--success);
+}
+.pain-btn.pain-4.active, .pain-btn.pain-5.active, .pain-btn.pain-6.active {
+  background: var(--warn);
+}
+.pain-btn.pain-7.active, .pain-btn.pain-8.active, .pain-btn.pain-9.active, .pain-btn.pain-10.active {
+  background: #FF3B30;
+}
+
+button.primary {
+  background: rgba(255, 255, 255, 0.95);
+  color: rgba(0, 0, 0, 0.9);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+button.primary:hover { opacity: 0.85; }
+button.primary:active { transform: scale(0.97); }
+button.primary.icon-only {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+button.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-weight: 500;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+button.secondary.icon-only {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+button.secondary:hover { opacity: 0.8; }
+
+.save-bar {
+  position: sticky;
+  bottom: 16px;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 8px;
+  margin: 20px 16px 0;
+  min-height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+}
+.save-status {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-weight: 400;
+  display: none;
+}
+.save-status.saved { color: var(--success); }
+
+.save-bar button.primary,
+.save-bar button.secondary {
+  height: 44px;
+  white-space: nowrap;
+  padding: 0 14px;
+  font-size: 13px;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+}
+
+.save-bar.back-to-today-bar {
+  background: rgba(255, 59, 48, 0.35);
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  box-shadow: 0 8px 32px rgba(255, 59, 48, 0.15), 0 2px 8px rgba(0,0,0,0.1);
+}
+.back-to-today-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  padding-left: 6px;
+}
+.back-to-today-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.back-to-today-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.back-to-today-btn {
+  background: #FF453A;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.02em;
+  height: 44px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-to-today-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+.back-to-today-btn--cancel {
+  background: #fff;
+  color: #FF453A;
+}
+.back-to-today-btn--sm {
+  font-size: 13px;
+  padding: 0 14px;
+  height: 44px;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .run-form { grid-template-columns: 1fr; gap: 12px; }
+  .run-field-full { grid-column: span 1; }
+  .pain-scale { gap: 3px; }
+  .pain-btn { font-size: 13px; padding: 8px 0; }
+  .save-bar { padding: 8px; margin: 16px 16px 0; border-radius: 9999px; }
+}

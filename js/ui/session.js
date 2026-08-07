@@ -337,6 +337,7 @@ function renderSession() {
         <div style="margin-top:12px;display:flex;justify-content:center;">
           <button class="secondary" onclick="deleteCurrentWorkout()" style="color:#FF3B30;">🗑 Diesen Lauf löschen</button>
         </div>
+        ${(plan.runType === 'tempo' || plan.runType === 'interval') ? renderRunPaceSparkline(plan.runType) : ''}
       </div>
       </div>
     `;
@@ -468,14 +469,12 @@ function bindInputs() {
     el.addEventListener('input', onInputChange);
     el.addEventListener('blur', collectAndSave);
   });
-  const bindToggleBtns = cls => document.querySelectorAll(cls).forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll(cls).forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      onInputChange();
-      collectAndSave();
-    });
-  });
+  const bindToggleBtns = cls => document.querySelectorAll(cls).forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll(cls).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    onInputChange();
+    collectAndSave();
+  }));
   bindToggleBtns('.pain-btn');
   bindToggleBtns('.interval-count-btn');
 }
@@ -541,8 +540,7 @@ function parseTime(str) {
 
 function formatPace(secPerKm) {
   if (!secPerKm || !isFinite(secPerKm)) return '—';
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
+  const m = Math.floor(secPerKm / 60), s = Math.round(secPerKm % 60);
   return `${m}:${String(s).padStart(2, '0')} /km`;
 }
 
@@ -650,6 +648,8 @@ function collectAndSave() {
   if (plan.type === 'gym') {
     document.querySelectorAll('.exercise-card.expanded').forEach(checkAutoCollapseExercise);
     refreshExerciseSparklines();
+  } else if (plan.type === 'run' && (plan.runType === 'tempo' || plan.runType === 'interval')) {
+    refreshRunPaceSparklines();
   }
 }
 

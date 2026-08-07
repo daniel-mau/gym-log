@@ -1,0 +1,106 @@
+/* Toast Notification (completed workouts) */
+.toast {
+  position: fixed;
+  top: max(20px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -140%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  background: rgba(0, 0, 0, 0.88);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+}
+.toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+.toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--success);
+  filter: drop-shadow(0 0 6px rgba(52, 199, 89, 0.5));
+}
+.toast.toast-error .toast-icon {
+  color: var(--danger);
+  filter: drop-shadow(0 0 6px rgba(255, 59, 48, 0.5));
+}
+.toast-message { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: reduce) {
+  .toast { transition: opacity 0.2s ease; transform: translate(-50%, 0); }
+  .toast:not(.show) { opacity: 0; }
+}
+button.primary {
+  background: rgba(255, 255, 255, 0.95);
+  color: rgba(0, 0, 0, 0.9);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+button.primary:hover { opacity: 0.85; }
+button.primary:active { transform: scale(0.97); }
+button.primary.icon-only {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+button.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-weight: 500;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+button.secondary.icon-only {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+button.secondary:hover { opacity: 0.8; }
+
