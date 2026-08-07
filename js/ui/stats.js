@@ -69,72 +69,66 @@ function renderStats() {
           }
         }
 
-        // Single wedge segments progress bar (6 weeks)
-        const totalSegments = 10;
-        const activeSegments = Math.round((sixWeekProgress / 100) * totalSegments);
-        const gapAngle = 4;
-        const innerRadius = 55;
-        const outerRadius = 88;
+        // Activity Rings style (concentric arcs)
         const cx = 100;
-        const cy = 100;
+        const cy = 92;
 
-        const totalGapAngle = gapAngle * (totalSegments - 1);
-        const segmentAngle = (180 - totalGapAngle) / totalSegments;
+        // Outer ring (6 weeks) - thick, bright
+        const outerR = 76;
+        const outerWidth = 18;
+        // Inner ring (total) - same width
+        const innerR = 52;
+        const innerWidth = 18;
 
-        function createFullyRoundedWedgePath(cx, cy, Ro, Ri, startDeg, endDeg) {
-          const t1 = startDeg * Math.PI / 180;
-          const t2 = endDeg * Math.PI / 180;
-          const alpha = ((endDeg - startDeg) * Math.PI / 180) / 2;
+        const outerFillAngle = (sixWeekProgress / 100) * 180;
+        const innerFillAngle = (progress / 100) * 180;
 
-          const sinAlpha = Math.sin(alpha);
-          const cosAlpha = Math.cos(alpha);
-
-          const dOut = Ro / (1 + sinAlpha);
-          const rOut = dOut * sinAlpha;
-          const rOutLine = dOut * cosAlpha;
-
-          const dIn = Ri / (1 - sinAlpha);
-          const rIn = dIn * sinAlpha;
-          const rInLine = dIn * cosAlpha;
-
-          const p_bl = { x: cx + rInLine * Math.cos(t1), y: cy + rInLine * Math.sin(t1) };
-          const p_tl = { x: cx + rOutLine * Math.cos(t1), y: cy + rOutLine * Math.sin(t1) };
-          const p_tr = { x: cx + rOutLine * Math.cos(t2), y: cy + rOutLine * Math.sin(t2) };
-          const p_br = { x: cx + rInLine * Math.cos(t2), y: cy + rInLine * Math.sin(t2) };
-
-          return 'M ' + p_bl.x + ' ' + p_bl.y +
-                 ' L ' + p_tl.x + ' ' + p_tl.y +
-                 ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + p_tr.x + ' ' + p_tr.y +
-                 ' L ' + p_br.x + ' ' + p_br.y +
-                 ' A ' + rIn + ' ' + rIn + ' 0 0 1 ' + p_bl.x + ' ' + p_bl.y +
-                 ' Z';
+        function arcPath(cx, cy, r, startDeg, endDeg) {
+          const s = startDeg * Math.PI / 180;
+          const e = endDeg * Math.PI / 180;
+          const x1 = cx + r * Math.cos(s);
+          const y1 = cy + r * Math.sin(s);
+          const x2 = cx + r * Math.cos(e);
+          const y2 = cy + r * Math.sin(e);
+          const large = (endDeg - startDeg) > 180 ? 1 : 0;
+          return 'M ' + x1 + ' ' + y1 + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2;
         }
 
-        const gradientId = 'weightGradient_' + Date.now();
+        const uid = Date.now();
+        const outerGradId = 'weightGradOuter_' + uid;
+        const innerGradId = 'weightGradInner_' + uid;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const trackColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
         let segmentsSvg = '<defs>' +
-          '<linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
-            '<stop offset="0%" stop-color="#34C759" stop-opacity="1"/>' +
-            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.6"/>' +
+          '<linearGradient id="' + outerGradId + '" x1="0%" y1="0%" x2="100%" y2="0%">' +
+            '<stop offset="0%" stop-color="#34C759" stop-opacity="0.8"/>' +
+            '<stop offset="100%" stop-color="#34C759" stop-opacity="1"/>' +
+          '</linearGradient>' +
+          '<linearGradient id="' + innerGradId + '" x1="0%" y1="0%" x2="100%" y2="0%">' +
+            '<stop offset="0%" stop-color="#34C759" stop-opacity="0.25"/>' +
+            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.35"/>' +
           '</linearGradient>' +
         '</defs>';
 
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const emptySegmentColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
+        // Outer track + fill
+        segmentsSvg += '<path d="' + arcPath(cx, cy, outerR, 180, 360) + '" fill="none" stroke="' + trackColor + '" stroke-width="' + outerWidth + '" stroke-linecap="round"/>';
+        if (outerFillAngle > 0.5) {
+          segmentsSvg += '<path d="' + arcPath(cx, cy, outerR, 180, 180 + outerFillAngle) + '" fill="none" stroke="url(#' + outerGradId + ')" stroke-width="' + outerWidth + '" stroke-linecap="round"/>';
+        }
 
-        for (let i = 0; i < totalSegments; i++) {
-          const startAngle = 180 + (i * (segmentAngle + gapAngle));
-          const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? 'url(#' + gradientId + ')' : emptySegmentColor;
-          const pathD = createFullyRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle);
-
-          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
+        // Inner track + fill
+        segmentsSvg += '<path d="' + arcPath(cx, cy, innerR, 180, 360) + '" fill="none" stroke="' + trackColor + '" stroke-width="' + innerWidth + '" stroke-linecap="round"/>';
+        if (innerFillAngle > 0.5) {
+          segmentsSvg += '<path d="' + arcPath(cx, cy, innerR, 180, 180 + innerFillAngle) + '" fill="none" stroke="url(#' + innerGradId + ')" stroke-width="' + innerWidth + '" stroke-linecap="round"/>';
         }
 
         weightLossCard = '<div class="stat-card">' +
           '<div class="stat-label">Gewichtsverlust</div>' +
           '<div style="display:flex;flex-direction:column;flex:1;gap:8px;">' +
             '<div style="position:relative;flex:1;">' +
-              '<svg width="100%" viewBox="10 0 180 100" preserveAspectRatio="xMidYMid meet" style="display:block;height:100%;">' +
+              '<svg width="100%" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet" style="display:block;height:100%;">' +
                 segmentsSvg +
               '</svg>' +
               '<div class="stat-value" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);white-space:nowrap;line-height:1;font-size:24px;">' +
