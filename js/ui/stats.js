@@ -49,25 +49,44 @@ function renderStats() {
 
       // Calculate progress if target exists
       if (targetWeight && !isNaN(targetWeight) && targetWeight < firstWeight) {
+        const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
+
+        // Inner bar: total progress from first weight to target
         const totalGoal = firstWeight - targetWeight;
         const achieved = firstWeight - currentWeight;
         const progress = Math.min(Math.max((achieved / totalGoal) * 100, 0), 100);
-        const remaining = Math.max(currentWeight - targetWeight, 0).toFixed(1);
 
-        // SVG wedge segments progress bar - mathematisch exakte Version
+        // Outer bar: 6-week progress from 6-week-start to target
+        const recentMetrics = allMetrics.filter(m => m.date >= cutoffKey);
+        let sixWeekLoss = 0;
+        let sixWeekProgress = 0;
+        if (recentMetrics.length >= 1) {
+          const sixWeekStartWeight = parseFloat(recentMetrics[0].data.weight);
+          if (!isNaN(sixWeekStartWeight) && sixWeekStartWeight > 0) {
+            sixWeekLoss = Math.max(sixWeekStartWeight - currentWeight, 0);
+            const sixWeekGoal = sixWeekStartWeight - targetWeight;
+            sixWeekProgress = Math.min(Math.max((sixWeekLoss / sixWeekGoal) * 100, 0), 100);
+          }
+        }
+
+        // Dual wedge segments progress bar
         const totalSegments = 10;
-        const activeSegments = Math.round((progress / 100) * totalSegments);
+        const outerActive = Math.round((sixWeekProgress / 100) * totalSegments);
+        const innerActive = Math.round((progress / 100) * totalSegments);
         const gapAngle = 4;
-        const innerRadius = 55;
-        const outerRadius = 88;
-        const cornerRounding = 4.5;
         const cx = 100;
         const cy = 100;
+
+        // Outer ring (6 weeks)
+        const outerOuter = 88;
+        const outerInner = 60;
+        // Inner ring (total)
+        const innerOuter = 56;
+        const innerInner = 40;
 
         const totalGapAngle = gapAngle * (totalSegments - 1);
         const segmentAngle = (180 - totalGapAngle) / totalSegments;
 
-        // Vollständig abgerundete Enden mit perfekten Halbkreisen
         function createFullyRoundedWedgePath(cx, cy, Ro, Ri, startDeg, endDeg) {
           const t1 = startDeg * Math.PI / 180;
           const t2 = endDeg * Math.PI / 180;
@@ -97,24 +116,38 @@ function renderStats() {
                  ' Z';
         }
 
-        const gradientId = 'weightGradient_' + Date.now();
+        const uid = Date.now();
+        const outerGradId = 'weightGradOuter_' + uid;
+        const innerGradId = 'weightGradInner_' + uid;
+
         let segmentsSvg = '<defs>' +
-          '<linearGradient id="' + gradientId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+          '<linearGradient id="' + outerGradId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
             '<stop offset="0%" stop-color="#34C759" stop-opacity="1"/>' +
             '<stop offset="100%" stop-color="#34C759" stop-opacity="0.6"/>' +
+          '</linearGradient>' +
+          '<linearGradient id="' + innerGradId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+            '<stop offset="0%" stop-color="#34C759" stop-opacity="0.25"/>' +
+            '<stop offset="100%" stop-color="#34C759" stop-opacity="0.15"/>' +
           '</linearGradient>' +
         '</defs>';
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const emptySegmentColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
+        // Outer wedges (6 weeks)
         for (let i = 0; i < totalSegments; i++) {
           const startAngle = 180 + (i * (segmentAngle + gapAngle));
           const endAngle = startAngle + segmentAngle;
-          const color = i < activeSegments ? 'url(#' + gradientId + ')' : emptySegmentColor;
-          const pathD = createFullyRoundedWedgePath(cx, cy, outerRadius, innerRadius, startAngle, endAngle);
+          const color = i < outerActive ? 'url(#' + outerGradId + ')' : emptySegmentColor;
+          segmentsSvg += '<path d="' + createFullyRoundedWedgePath(cx, cy, outerOuter, outerInner, startAngle, endAngle) + '" fill="' + color + '"/>';
+        }
 
-          segmentsSvg += '<path d="' + pathD + '" fill="' + color + '"/>';
+        // Inner wedges (total)
+        for (let i = 0; i < totalSegments; i++) {
+          const startAngle = 180 + (i * (segmentAngle + gapAngle));
+          const endAngle = startAngle + segmentAngle;
+          const color = i < innerActive ? 'url(#' + innerGradId + ')' : emptySegmentColor;
+          segmentsSvg += '<path d="' + createFullyRoundedWedgePath(cx, cy, innerOuter, innerInner, startAngle, endAngle) + '" fill="' + color + '"/>';
         }
 
         weightLossCard = '<div class="stat-card">' +
@@ -125,17 +158,17 @@ function renderStats() {
                 segmentsSvg +
               '</svg>' +
               '<div class="stat-value" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);white-space:nowrap;line-height:1;font-size:24px;">' +
-                weightLoss + '<span class="stat-unit">kg</span>' +
+                sixWeekLoss.toFixed(1) + '<span class="stat-unit">kg</span>' +
               '</div>' +
             '</div>' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
               '<div>' +
-                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Verbleibend</div>' +
-                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + remaining + ' kg</span>' +
+                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Seit Start</div>' +
+                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + weightLoss + ' kg</span>' +
               '</div>' +
               '<div style="text-align:right;">' +
-                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Ziel</div>' +
-                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + targetWeight + ' kg</span>' +
+                '<div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">Verbleibend</div>' +
+                '<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(52,199,89,0.12);color:#34C759;font-size:13px;font-weight:600;padding:3px 8px;border-radius:20px;font-variant-numeric:tabular-nums;line-height:1.3;">' + remaining + ' kg</span>' +
               '</div>' +
             '</div>' +
           '</div>' +
