@@ -208,12 +208,34 @@
   <div class="week-editor-overlay" id="weekEditorOverlay" onclick="if(event.target===this)closeWeekEditor()">
     <div class="week-editor-sheet">
       <div class="week-picker-handle"></div>
-      <div class="week-editor-header">
-        <span class="week-editor-title">Woche bearbeiten</span>
-        <button class="week-editor-reset" onclick="resetWeekOverride()">Zurücksetzen</button>
-        <button class="week-picker-done" onclick="closeWeekEditor()">Fertig</button>
+
+      <!-- Content Container mit Horizontal Slide -->
+      <div class="week-editor-content-wrapper">
+        <!-- Main Screen: Week List -->
+        <div class="week-editor-screen" id="weekEditorMainScreen">
+          <div class="week-editor-header">
+            <span class="week-editor-title">Woche bearbeiten</span>
+            <button class="week-editor-reset" onclick="resetWeekOverride()">Zurücksetzen</button>
+            <button class="week-picker-done" onclick="closeWeekEditor()">Fertig</button>
+          </div>
+          <div class="week-editor-list" id="weekEditorList"></div>
+        </div>
+
+        <!-- Session Picker Screen (slides in from right) -->
+        <div class="week-editor-screen" id="sessionPickerScreen">
+          <div class="week-editor-header">
+            <button class="week-editor-back-btn" onclick="closeSessionPicker()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+              <span>Zurück</span>
+            </button>
+            <span class="week-editor-title">Training wählen</span>
+            <span style="width:60px"></span>
+          </div>
+          <div class="session-picker-list" id="sessionPickerList"></div>
+        </div>
       </div>
-      <div class="week-editor-list" id="weekEditorList"></div>
     </div>
   </div>
 

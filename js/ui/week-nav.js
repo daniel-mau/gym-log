@@ -171,14 +171,10 @@ function resetWeekOverride() {
 function renderWeekEditorList() {
   const list = document.getElementById('weekEditorList');
   const days = getEffectiveDays();
-  const allPlanKeys = Object.keys(WEEK_PLAN);
-  const benchKeys = allPlanKeys.filter(k => !days.includes(k));
   list.innerHTML = '';
 
   const group = document.createElement('div');
   group.className = 'we-ios-group';
-
-  const gripSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg>';
 
   days.forEach((dayKey, idx) => {
     const sessions = getSessionsForDay(dayKey);
@@ -209,54 +205,12 @@ function renderWeekEditorList() {
       <span class="we-ios-day">${DAY_LABELS[slotDay]}</span>
       ${badgeHtml}
       <span class="we-ios-title">${titleHtml}</span>
-      <span class="we-ios-grip drag-handle">${gripSvg}</span>
+      <button class="we-ios-edit-btn" onclick="event.stopPropagation(); openSessionPicker('${dayKey}')">✏️</button>
     `;
     group.appendChild(row);
   });
 
-  if (benchKeys.length > 0) {
-    const divider = document.createElement('div');
-    divider.className = 'we-ios-bench-divider';
-    divider.textContent = 'Ersatzbank';
-    group.appendChild(divider);
-
-    benchKeys.forEach((dayKey) => {
-      const sessions = getSessionsForDay(dayKey);
-      const primarySession = getPrimarySessionForDay(dayKey);
-
-      const row = document.createElement('div');
-      row.className = 'we-ios-row we-bench';
-      row.dataset.day = dayKey;
-
-      let badgeHtml = '';
-      if (sessions.length > 1) {
-        const labels = sessions.map(s => {
-          const t = s.session.type;
-          return DAY_TYPE_LABELS[t] || t;
-        });
-        badgeHtml = `<span class="session-badge badge-multi">${labels.join(' + ')}</span>`;
-      } else {
-        const t = primarySession.type;
-        badgeHtml = `<span class="session-badge badge-${t}">${DAY_TYPE_LABELS[t] || t}</span>`;
-      }
-
-      let titleHtml = sessions.map(s => s.session.name).join(' + ');
-
-      row.innerHTML = `
-        <span class="we-ios-day"></span>
-        ${badgeHtml}
-        <span class="we-ios-title">${titleHtml}</span>
-        <span class="we-ios-grip drag-handle">${gripSvg}</span>
-      `;
-      group.appendChild(row);
-    });
-  }
-
   list.appendChild(group);
-  if (!list._dragInitialized) {
-    initWeekEditorDrag(list);
-    list._dragInitialized = true;
-  }
 }
 
 function deleteWeekDay(dayKey) {
@@ -271,124 +225,6 @@ function deleteWeekDay(dayKey) {
   renderSession();
 }
 
-function initWeekEditorDrag(list) {
-  let origIdx = -1;
-  let targetIdx = -1;
-  let startY = 0;
-  let rowHeight = 0;
-  let rows = [];
-  let dragRow = null;
-
-  function getGroup() {
-    return list.querySelector('.we-ios-group');
-  }
-
-  function startDrag(row, clientY) {
-    const group = getGroup();
-    if (!group) return;
-    rows = Array.from(group.querySelectorAll('.we-ios-row'));
-    origIdx = rows.indexOf(row);
-    if (origIdx < 0) return;
-    targetIdx = origIdx;
-    dragRow = row;
-    startY = clientY;
-    rowHeight = row.getBoundingClientRect().height;
-
-    row.classList.add('we-ios-dragging');
-    rows.forEach((r, i) => {
-      if (i !== origIdx) r.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    });
-  }
-
-  function moveDrag(clientY) {
-    if (origIdx < 0) return;
-    const dy = clientY - startY;
-    dragRow.style.transform = `translateY(${dy}px) scale(1.03)`;
-
-    const rawTarget = origIdx + Math.round(dy / rowHeight);
-    const newTarget = Math.max(0, Math.min(rows.length - 1, rawTarget));
-
-    if (newTarget !== targetIdx) {
-      targetIdx = newTarget;
-      rows.forEach((row, i) => {
-        if (i === origIdx) return;
-        if (i >= targetIdx && i < origIdx) {
-          row.style.transform = `translateY(${rowHeight}px)`;
-        } else if (i <= targetIdx && i > origIdx) {
-          row.style.transform = `translateY(${-rowHeight}px)`;
-        } else {
-          row.style.transform = '';
-        }
-      });
-    }
-  }
-
-  function endDrag() {
-    if (origIdx < 0 || !dragRow) return;
-
-    rows.forEach(row => {
-      row.style.transform = '';
-      row.style.transition = '';
-      row.classList.remove('we-ios-dragging');
-    });
-
-    if (targetIdx !== origIdx) {
-      const removed = rows.splice(origIdx, 1)[0];
-      rows.splice(targetIdx, 0, removed);
-    }
-
-    dragRow = null;
-    origIdx = -1;
-    targetIdx = -1;
-
-    const activeKeys = rows.slice(0, 7).map(r => r.dataset.day);
-    saveWeekOverride(activeKeys);
-    renderWeekEditorList();
-  }
-
-  // Mouse
-  list.addEventListener('mousedown', function(e) {
-    const grip = e.target.closest('.drag-handle');
-    if (!grip) return;
-    const row = grip.closest('.we-ios-row');
-    if (!row) return;
-    e.preventDefault();
-    startDrag(row, e.clientY);
-
-    function onMove(ev) { moveDrag(ev.clientY); }
-    function onUp() {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      endDrag();
-    }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-
-  // Touch
-  list.addEventListener('touchstart', function(e) {
-    const grip = e.target.closest('.drag-handle');
-    if (!grip) return;
-    const row = grip.closest('.we-ios-row');
-    if (!row) return;
-    e.preventDefault();
-    startDrag(row, e.touches[0].clientY);
-
-    function onMove(ev) {
-      ev.preventDefault();
-      moveDrag(ev.touches[0].clientY);
-    }
-    function onEnd() {
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-      document.removeEventListener('touchcancel', onEnd);
-      endDrag();
-    }
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onEnd);
-    document.addEventListener('touchcancel', onEnd);
-  }, { passive: false });
-}
 
 function renderWeekNav() {
   const dates = getWeekDates();
@@ -464,4 +300,80 @@ function selectDay(dayKey) {
   renderSession();
   renderHistory();
 }
+
+// ============================================================
+// SESSION PICKER — iOS-style Bottom Sheet
+// ============================================================
+
+let sessionPickerTargetDay = null;
+
+function openSessionPicker(dayKey) {
+  sessionPickerTargetDay = dayKey;
+  const wrapper = document.querySelector('.week-editor-content-wrapper');
+  const list = document.getElementById('sessionPickerList');
+
+  // Render alle verfügbaren Sessions
+  const sessionKeys = ['shoulder_pull', 'back_deadlift', 'chest_press', 'easy_run', 'long_run', 'interval_run', 'tempo_run', 'rest_day'];
+
+  list.innerHTML = '';
+  sessionKeys.forEach(key => {
+    const session = SESSIONS[key];
+    if (!session) return;
+
+    const item = document.createElement('div');
+    item.className = 'session-picker-item';
+    item.onclick = () => {
+      addSessionToDay(dayKey, key);
+      closeSessionPicker();
+    };
+
+    // Icon je nach Session-Type
+    let icon = '💪';
+    if (session.type === 'run' || session.type === 'long') icon = '🏃';
+    if (session.type === 'rest') icon = '😴';
+
+    item.innerHTML = `
+      <div class="session-picker-item-icon">${icon}</div>
+      <div class="session-picker-item-info">
+        <div class="session-picker-item-name">${session.name}</div>
+        <div class="session-picker-item-subtitle">${session.subtitle || ''}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  // Slide nach rechts (Session Picker wird sichtbar)
+  wrapper.classList.add('show-picker');
+
+  // Haptic Feedback (falls Browser unterstützt)
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function closeSessionPicker() {
+  const wrapper = document.querySelector('.week-editor-content-wrapper');
+  wrapper.classList.remove('show-picker');
+  sessionPickerTargetDay = null;
+}
+
+function addSessionToDay(dayKey, sessionKey) {
+  // Phase 1: Ersetze die Session (noch kein Multi-Session Support)
+  // In Phase 2 würden wir hier die Session zum Tag hinzufügen statt zu ersetzen
+
+  const currentPlan = WEEK_PLAN[dayKey];
+
+  // Update WEEK_PLAN (temporär, nur für diese Woche)
+  WEEK_PLAN[dayKey] = { evening: sessionKey };
+
+  // Triggere Re-Render
+  renderWeekEditorList();
+  renderWeekNav();
+
+  // Speichere Änderung
+  const days = getEffectiveDays();
+  saveWeekOverride(days);
+
+  // Haptic Feedback
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
 

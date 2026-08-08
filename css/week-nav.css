@@ -271,13 +271,26 @@
   box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
   width: 100%;
   max-width: 500px;
-  padding: 0 0 env(safe-area-inset-bottom, 16px) 0;
+  max-height: 75vh;
+  padding: 0;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   overflow: hidden;
 }
 .week-editor-overlay.open .week-editor-sheet {
   transform: none;
+}
+.week-editor-content-wrapper {
+  display: flex;
+  width: 200%;
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.week-editor-content-wrapper.show-picker {
+  transform: translateX(-50%);
+}
+.week-editor-screen {
+  width: 50%;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 .week-editor-header {
   display: flex;
@@ -304,6 +317,25 @@
 .week-editor-reset:hover { color: var(--danger, #ff3b30); }
 .week-editor-list {
   padding: 0 12px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+.week-editor-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+}
+.week-editor-back-btn svg {
+  flex-shrink: 0;
 }
 .we-ios-group {
   background: var(--surface-overlay);
@@ -323,14 +355,6 @@
 .we-ios-row:last-child {
   border-bottom: none;
 }
-.we-ios-dragging {
-  background: var(--bg-card-solid);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-  border-radius: 10px;
-  border-bottom: none;
-  position: relative;
-  z-index: 10;
-}
 .we-ios-day {
   font-size: 13px;
   font-weight: 600;
@@ -348,31 +372,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.we-ios-grip {
-  color: var(--text-mute);
-  cursor: grab;
+.we-ios-edit-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+.we-ios-edit-btn:hover {
+  opacity: 1;
+}
+.we-ios-edit-btn:active {
+  transform: scale(0.9);
+}
+
+.session-picker-list {
+  overflow-y: auto;
+  max-height: 55vh;
+  padding: 0 12px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.session-picker-item {
   display: flex;
   align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 2px 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  background: var(--surface-overlay);
+  border: 1px solid var(--surface-input-border);
+}
+.session-picker-item:active {
+  background: rgba(0,122,255,0.08);
+  transform: scale(0.98);
+}
+.session-picker-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   flex-shrink: 0;
-  padding: 8px;
-  touch-action: none;
+  background: var(--bg-card);
 }
-.we-ios-grip:active { cursor: grabbing; }
-.we-ios-bench-divider {
-  padding: 14px 16px 6px;
-  font-size: 11px;
-  font-weight: 600;
+.session-picker-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.session-picker-item-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.session-picker-item-subtitle {
+  font-size: 12px;
   color: var(--text-mute);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 0.5px solid var(--surface-input-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.we-ios-row.we-bench {
-  opacity: 0.5;
-}
-.we-ios-row.we-bench .we-ios-day {
-  visibility: hidden;
-}
+
 
 @media (max-width: 768px) {
   .week-nav-card { padding: 10px 10px 8px; gap: 8px; }
